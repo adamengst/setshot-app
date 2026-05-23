@@ -1,0 +1,22 @@
+name: SetShot
+options:
+  bundleIdPrefix: com.tidbits
+  deploymentTarget:
+    macOS: "13.0"
+
+targets:
+  SetShot:
+    type: application
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - SetShot
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tidbits.SetShot
+        SWIFT_VERSION: 5.9
+        MACOSX_DEPLOYMENT_TARGET: "13.0"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: SetShot
+        INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        ENABLE_HARDENED_RUNTIME: YES

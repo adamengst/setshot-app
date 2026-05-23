@@ -1,0 +1,12 @@
+import Foundation
+
+struct KnowledgeBase {
+    let entries: [KBEntry]
+    let version: Int
+
+    static let empty = KnowledgeBase(entries: [], version: 0)
+
+    func entry(forDomain domain: String, key: String) -> KBEntry? {
+        entries.first { $0.domain == domain && $0.key == key }
+    }
+}

@@ -427,16 +427,15 @@ You are checking: does the description make sense? Is the UI location plausible?
 
 Complete manual setup steps 1–10 first. Then proceed in this order:
 
-1. **Code session** — Write the Cloudflare Worker code and deploy it to the target created in manual step 8.
-2. **Code session** — Generate the Xcode project scaffold: SwiftUI app, folder structure, placeholder views.
-3. **Cowork session** — Move the generated files into the `setshot-app` folder, open the project in Xcode, confirm it builds.
-4. **Code session** — Implement KB fetching and caching (`KBFetcher.swift`).
-5. **Code session** — Implement snapshot running (shell script invocation) and diff engine.
-6. **Code session** — Implement the results view with recognised/unrecognised/noise sections.
-7. **Code session** — Implement the submission flow and Worker integration.
-8. **Cowork session** — End-to-end test: take two snapshots with a planted canary value, verify it appears in results, verify submission flow reaches GitHub issues.
-9. **Code session** — Seed the KB with the confirmed-working entries from the original SetShot testing (Private Relay, three-finger drag, Reduce Motion, Stage Manager, TCC permissions, Focus modes, scroll bar visibility, natural scrolling, Siri, App Store update settings, font smoothing, Control Center items, notification settings, firewall).
-10. **Cowork session** — Run the first real curation batch against any issues that have accumulated during development.
+1. Code session Claude Code — Write and deploy the Cloudflare Worker ✓ done
+2. Claude Code — Generate the Xcode project scaffold, open it in Xcode, confirm it builds
+3. Claude Code — Implement KB fetching and caching
+4. Claude Code — Implement snapshot running and diff engine
+5. Claude Code — Implement the results view
+6. Claude Code — Implement the submission flow and Worker integration
+7. Claude Code — Seed the KB with confirmed-working entries from SetShot testing
+8. Claude Code + you — End-to-end test with a canary value
+9. Cowork — First real curation batch
 
 ---
 
