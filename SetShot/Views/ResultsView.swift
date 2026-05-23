@@ -10,7 +10,9 @@ struct ResultsView: View {
             VStack(alignment: .leading, spacing: 32) {
                 recognisedSection
                 unrecognisedSection
-                noiseSection
+                if !diff.noise.isEmpty {
+                    noiseSection
+                }
             }
             .padding(32)
         }
@@ -24,10 +26,10 @@ struct ResultsView: View {
 
     private var recognisedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recognised Changes")
-                .font(.headline)
+            SectionHeader("Recognised Changes", count: diff.recognised.count)
             if diff.recognised.isEmpty {
-                Text("None").foregroundStyle(.secondary)
+                Text("No recognised changes.")
+                    .foregroundStyle(.secondary)
             } else {
                 ForEach(diff.recognised, id: \.diff.id) { item in
                     RecognisedRow(entry: item.entry, diff: item.diff)
@@ -38,10 +40,10 @@ struct ResultsView: View {
 
     private var unrecognisedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Unrecognised Changes")
-                .font(.headline)
+            SectionHeader("Unrecognised Changes", count: diff.unrecognised.count)
             if diff.unrecognised.isEmpty {
-                Text("None").foregroundStyle(.secondary)
+                Text("All changes were identified.")
+                    .foregroundStyle(.secondary)
             } else {
                 ForEach(diff.unrecognised) { line in
                     UnrecognisedRow(diff: line)
@@ -64,12 +66,29 @@ struct ResultsView: View {
             .buttonStyle(.plain)
 
             if showNoise {
-                ForEach(diff.noise, id: \.diff.id) { item in
-                    Text(item.diff.rawLine)
-                        .font(.system(.body, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(diff.noise, id: \.diff.id) { item in
+                        NoiseRow(entry: item.entry, diff: item.diff)
+                    }
                 }
             }
+        }
+    }
+}
+
+private struct SectionHeader: View {
+    let title: String
+    let count: Int
+
+    init(_ title: String, count: Int) {
+        self.title = title
+        self.count = count
+    }
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(title).font(.headline)
+            Text("(\(count))").font(.subheadline).foregroundStyle(.secondary)
         }
     }
 }
@@ -79,26 +98,35 @@ private struct RecognisedRow: View {
     let diff: DiffLine
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(entry.description)
-                .fontWeight(.medium)
-            if let location = entry.uiLocation {
-                Text(location)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            HStack {
-                Text("\(diff.beforeValue) → \(diff.afterValue)")
-                    .font(.system(.caption, design: .monospaced))
+        let settingsURL = validatedSettingsURL(entry.settingsURL)
+
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(entry.description)
+                        .fontWeight(.medium)
+                    if let location = entry.uiLocation {
+                        Text(location)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 Spacer()
-                if validatedSettingsURL(entry.settingsURL) != nil {
+                if let url = settingsURL {
                     Button("Open in Settings") {
-                        if let url = validatedSettingsURL(entry.settingsURL) {
-                            NSWorkspace.shared.open(url)
-                        }
+                        NSWorkspace.shared.open(url)
                     }
                     .controlSize(.small)
                 }
+            }
+            HStack {
+                Text(diff.rawLine)
+                    .font(.system(.caption2, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+                Spacer()
+                Text("\(diff.beforeValue) → \(diff.afterValue)")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(12)
@@ -121,14 +149,19 @@ private struct UnrecognisedRow: View {
     @State private var showSheet = false
 
     var body: some View {
-        HStack {
-            Text(diff.rawLine)
-                .font(.system(.body, design: .monospaced))
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(diff.rawLine)
+                    .font(.system(.body, design: .monospaced))
+                Text("\(diff.beforeValue) → \(diff.afterValue)")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
             Spacer()
             if submitted {
                 Label("Submitted", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                    .controlSize(.small)
+                    .font(.caption)
             } else {
                 Button("Submit") { showSheet = true }
                     .controlSize(.small)
@@ -142,5 +175,27 @@ private struct UnrecognisedRow: View {
                 submitted = true
             })
         }
+    }
+}
+
+private struct NoiseRow: View {
+    let entry: KBEntry
+    let diff: DiffLine
+
+    var body: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(diff.rawLine)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                if let reason = entry.noiseReason {
+                    Text(reason)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            Spacer()
+        }
+        .padding(.vertical, 2)
     }
 }
