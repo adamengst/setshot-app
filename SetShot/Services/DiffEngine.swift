@@ -121,6 +121,10 @@ struct DiffEngine {
         if domain.hasSuffix(".plist") {
             domain = String(domain.dropLast(6))
         }
+        // .GlobalPreferences is the direct-plist path to NSGlobalDomain
+        if domain == ".GlobalPreferences" {
+            domain = "NSGlobalDomain"
+        }
         return domain
     }
 
