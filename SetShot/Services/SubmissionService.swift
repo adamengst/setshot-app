@@ -14,8 +14,8 @@ actor SubmissionService {
             "domain": diff.domain,
             "key": diff.key,
             "source": diff.source,
-            "before_value": diff.beforeValue,
-            "after_value": diff.afterValue,
+            "before_value": diff.beforeValue.isEmpty ? "(not set)" : diff.beforeValue,
+            "after_value": diff.afterValue.isEmpty ? "(not set)" : diff.afterValue,
             "macos_version": diff.macOSVersion
         ]
         request.httpBody = try JSONEncoder().encode(body)
