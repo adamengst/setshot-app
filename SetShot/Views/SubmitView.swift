@@ -53,13 +53,13 @@ struct SubmitView: View {
             }
 
             HStack {
-                Button("Cancel") { isPresented = false }
+                Button(errorMessage != nil ? "Dismiss" : "Cancel") { isPresented = false }
                     .disabled(isSubmitting)
                 Spacer()
                 if isSubmitting {
                     ProgressView().controlSize(.small)
                 }
-                Button("Submit") {
+                Button(errorMessage != nil ? "Retry" : "Submit") {
                     Task { await submit() }
                 }
                 .buttonStyle(.borderedProminent)
