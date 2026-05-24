@@ -31,6 +31,11 @@ struct SchedulerSettingsView: View {
                             }
                     }
                 }
+                if isEnabled {
+                    Text(nextRunDescription)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             if let error = errorMessage {
@@ -63,6 +68,25 @@ struct SchedulerSettingsView: View {
         } catch {
             errorMessage = "Failed: \(error.localizedDescription)"
             isEnabled = !enabled
+        }
+    }
+
+    private var nextRunDescription: String {
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: scheduleTime)
+        var todayComps = Calendar.current.dateComponents([.year, .month, .day], from: .now)
+        todayComps.hour = comps.hour ?? 8
+        todayComps.minute = comps.minute ?? 0
+        todayComps.second = 0
+        guard let todayRun = Calendar.current.date(from: todayComps) else { return "" }
+
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        let timeStr = formatter.string(from: todayRun)
+
+        if todayRun > .now {
+            return "Next run: today at \(timeStr)"
+        } else {
+            return "Next run: tomorrow at \(timeStr)"
         }
     }
 
