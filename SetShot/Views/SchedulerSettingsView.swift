@@ -53,7 +53,7 @@ struct SchedulerSettingsView: View {
             }
         }
         .padding(24)
-        .frame(width: 420, height: 220)
+        .frame(width: 420, height: 280)
     }
 
     private func toggleScheduler(enabled: Bool) {
