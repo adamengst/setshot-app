@@ -30,6 +30,18 @@ actor KBFetcher {
         return (.empty, true)
     }
 
+    func forceRefresh() async -> (KnowledgeBase, unavailable: Bool) {
+        if let remoteVersion = await fetchRemoteVersion(),
+           let kb = await fetchAndCacheKB(version: remoteVersion) {
+            return (kb, false)
+        }
+        if let cachedData = UserDefaults.standard.data(forKey: entriesKey),
+           let entries = try? JSONDecoder().decode([KBEntry].self, from: cachedData) {
+            return (KnowledgeBase(entries: entries, version: UserDefaults.standard.integer(forKey: versionKey)), false)
+        }
+        return (.empty, true)
+    }
+
     private func fetchRemoteVersion() async -> Int? {
         guard let (data, _) = try? await URLSession.shared.data(from: kbVersionURL) else { return nil }
         struct VersionResponse: Decodable { let version: Int }

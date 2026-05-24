@@ -4,11 +4,44 @@ import Foundation
 class AppModel: ObservableObject {
     @Published var kb: KnowledgeBase = .empty
     @Published var kbUnavailable = false
-    var beforeSnapshot: Snapshot?
+    @Published var snapshots: [StoredSnapshot] = []
+
+    private let store = SnapshotStore.shared
 
     func loadKB() async {
         let (kb, unavailable) = await KBFetcher.shared.fetchIfNeeded()
         self.kb = kb
         self.kbUnavailable = unavailable
+    }
+
+    func refreshKB() async {
+        let (kb, unavailable) = await KBFetcher.shared.forceRefresh()
+        self.kb = kb
+        self.kbUnavailable = unavailable
+    }
+
+    func loadSnapshots() async {
+        snapshots = (try? await store.list()) ?? []
+    }
+
+    func takeSnapshot() async throws -> StoredSnapshot {
+        let snapshot = try await SnapshotRunner().run()
+        let stored = try await store.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
+        snapshots = (try? await store.list()) ?? []
+        return stored
+    }
+
+    func deleteSnapshot(_ snapshot: StoredSnapshot) async {
+        try? await store.delete(snapshot)
+        snapshots = (try? await store.list()) ?? []
+    }
+
+    func diff(before: StoredSnapshot, after: StoredSnapshot) async throws -> DiffResult {
+        async let beforeText = store.load(before)
+        async let afterText = store.load(after)
+        let (b, a) = try await (beforeText, afterText)
+        let bSnap = Snapshot(takenAt: before.date, rawOutput: b)
+        let aSnap = Snapshot(takenAt: after.date, rawOutput: a)
+        return try await DiffEngine().diff(before: bSnap, after: aSnap, kb: kb)
     }
 }

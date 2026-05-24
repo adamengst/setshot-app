@@ -2,8 +2,12 @@ import SwiftUI
 
 struct ResultsView: View {
     let diff: DiffResult
+    let before: StoredSnapshot
+    let after: StoredSnapshot
     @Binding var appState: AppState
+    @EnvironmentObject var appModel: AppModel
     @State private var showNoise = false
+    @State private var isRechecking = false
 
     var body: some View {
         ScrollView {
@@ -18,10 +22,29 @@ struct ResultsView: View {
         }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Start Over") { appState = .ready }
+                Button("Back to Library") { appState = .library }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                if isRechecking {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Button("Recheck") { recheck() }
+                        .help("Re-fetch the knowledge base and re-run the diff on the same snapshot pair")
+                }
             }
         }
         .frame(minWidth: 600, minHeight: 400)
+    }
+
+    private func recheck() {
+        isRechecking = true
+        Task {
+            await appModel.refreshKB()
+            if let newDiff = try? await appModel.diff(before: before, after: after) {
+                appState = .results(newDiff, before: before, after: after)
+            }
+            isRechecking = false
+        }
     }
 
     private var recognisedSection: some View {

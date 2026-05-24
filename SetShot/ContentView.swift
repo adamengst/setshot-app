@@ -1,25 +1,22 @@
 import SwiftUI
 
 enum AppState {
-    case ready
-    case snapshotTaken(at: Date)
-    case results(DiffResult)
+    case library
+    case results(DiffResult, before: StoredSnapshot, after: StoredSnapshot)
 }
 
 struct ContentView: View {
     @EnvironmentObject var appModel: AppModel
-    @State private var appState: AppState = .ready
+    @State private var appState: AppState = .library
 
     var body: some View {
         VStack(spacing: 0) {
             Group {
                 switch appState {
-                case .ready:
-                    ReadyView(appState: $appState)
-                case .snapshotTaken(let date):
-                    SnapshotTakenView(snapshotDate: date, appState: $appState)
-                case .results(let diff):
-                    ResultsView(diff: diff, appState: $appState)
+                case .library:
+                    SnapshotLibraryView(appState: $appState)
+                case .results(let diff, let before, let after):
+                    ResultsView(diff: diff, before: before, after: after, appState: $appState)
                 }
             }
 
@@ -34,6 +31,6 @@ struct ContentView: View {
                 .background(Color.yellow.opacity(0.15))
             }
         }
-        .frame(minWidth: 560, minHeight: 340)
+        .frame(minWidth: 680, minHeight: 420)
     }
 }
