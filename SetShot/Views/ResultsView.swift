@@ -8,6 +8,9 @@ struct ResultsView: View {
     @EnvironmentObject var appModel: AppModel
     @State private var showNoise = false
     @State private var isRechecking = false
+    @State private var submittedIDs: Set<UUID> = []
+    @State private var isSubmittingAll = false
+    @State private var submitAllProgress = 0
 
     var body: some View {
         ScrollView {
@@ -63,15 +66,56 @@ struct ResultsView: View {
 
     private var unrecognisedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader("Unrecognised Changes", count: diff.unrecognised.count)
+            HStack(alignment: .firstTextBaseline) {
+                SectionHeader("Unrecognised Changes", count: diff.unrecognised.count)
+                Spacer()
+                submitAllButton
+            }
             if diff.unrecognised.isEmpty {
                 Text("All changes were identified.")
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(diff.unrecognised) { line in
-                    UnrecognisedRow(diff: line)
+                    UnrecognisedRow(
+                        diff: line,
+                        isSubmitted: submittedIDs.contains(line.id),
+                        onMarkSubmitted: { submittedIDs.insert(line.id) }
+                    )
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var submitAllButton: some View {
+        let unsubmitted = diff.unrecognised.filter { !submittedIDs.contains($0.id) }
+        if !unsubmitted.isEmpty {
+            if isSubmittingAll {
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.mini)
+                    Text("Submitting \(submitAllProgress) / \(unsubmitted.count)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Button("Submit All (\(unsubmitted.count))") {
+                    submitAll(unsubmitted)
+                }
+                .controlSize(.small)
+            }
+        }
+    }
+
+    private func submitAll(_ items: [DiffLine]) {
+        isSubmittingAll = true
+        submitAllProgress = 0
+        Task {
+            for item in items {
+                try? await SubmissionService.shared.submit(item)
+                submittedIDs.insert(item.id)
+                submitAllProgress += 1
+            }
+            isSubmittingAll = false
         }
     }
 
@@ -168,7 +212,8 @@ private struct RecognisedRow: View {
 
 private struct UnrecognisedRow: View {
     let diff: DiffLine
-    @State private var submitted = false
+    let isSubmitted: Bool
+    let onMarkSubmitted: () -> Void
     @State private var showSheet = false
 
     var body: some View {
@@ -181,7 +226,7 @@ private struct UnrecognisedRow: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            if submitted {
+            if isSubmitted {
                 Label("Submitted", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.green)
                     .font(.caption)
@@ -194,9 +239,7 @@ private struct UnrecognisedRow: View {
         .background(Color.secondary.opacity(0.08))
         .cornerRadius(8)
         .sheet(isPresented: $showSheet) {
-            SubmitView(diff: diff, isPresented: $showSheet, onSubmitted: {
-                submitted = true
-            })
+            SubmitView(diff: diff, isPresented: $showSheet, onSubmitted: onMarkSubmitted)
         }
     }
 }
