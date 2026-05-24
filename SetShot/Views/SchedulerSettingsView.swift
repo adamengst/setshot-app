@@ -3,7 +3,7 @@ import SwiftUI
 struct SchedulerSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isEnabled = SchedulerManager.isInstalled
-    @State private var scheduleTime = defaultTime()
+    @State private var scheduleTime = SchedulerManager.installedTime() ?? defaultTime()
     @State private var errorMessage: String?
 
     var body: some View {

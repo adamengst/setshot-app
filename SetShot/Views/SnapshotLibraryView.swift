@@ -48,6 +48,7 @@ struct SnapshotLibraryView: View {
                 Image(systemName: "gear")
             }
             .buttonStyle(.plain)
+            .focusable(false)
             .help("Snapshot settings")
 
             if isTakingSnapshot {

@@ -16,6 +16,19 @@ struct SchedulerManager {
         FileManager.default.fileExists(atPath: plistURL.path)
     }
 
+    static func installedTime() -> Date? {
+        guard isInstalled,
+              let plist = NSDictionary(contentsOf: plistURL),
+              let interval = plist["StartCalendarInterval"] as? [String: Int],
+              let hour = interval["Hour"],
+              let minute = interval["Minute"]
+        else { return nil }
+        var comps = Calendar.current.dateComponents([.year, .month, .day], from: .now)
+        comps.hour = hour
+        comps.minute = minute
+        return Calendar.current.date(from: comps)
+    }
+
     static func install(hour: Int, minute: Int) throws {
         // Use `open -g -a SetShot --args --background-snapshot` so macOS attributes
         // the background item to SetShot, not to bash.
