@@ -65,13 +65,35 @@ struct SnapshotLibraryView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             Text("No snapshots yet.")
                 .font(.headline)
             Text("Take a snapshot before and after making changes to compare what shifted.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 340)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("On your first snapshot, macOS will ask for permission twice:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack(alignment: .top, spacing: 4) {
+                    Text("•").font(.caption).foregroundStyle(.secondary)
+                    Text("\"SetShot would like to access data from other apps.\" — click Allow, or grant Full Disk Access to SetShot in System Settings \u{203A} Privacy & Security if the prompt recurs.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                HStack(alignment: .top, spacing: 4) {
+                    Text("•").font(.caption).foregroundStyle(.secondary)
+                    Text("\"SetShot would like to access Apple Music, your music and video activity, and your media library.\" — click Allow.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: 420)
+            .padding(12)
+            .background(Color.secondary.opacity(0.07))
+            .cornerRadius(8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()

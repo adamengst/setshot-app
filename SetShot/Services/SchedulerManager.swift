@@ -17,15 +17,12 @@ struct SchedulerManager {
     }
 
     static func install(hour: Int, minute: Int) throws {
-        let scriptPath = Bundle.main.bundlePath + "/Contents/Resources/setshot.sh"
-        let snapshotsDir = SnapshotStore.shared.directory.path
-        let command = """
-            "\(scriptPath)" snapshot "\(snapshotsDir)/setshot_$(date +%Y-%m-%d_%H%M).txt.gz" 2>/dev/null; true
-            """
-
+        // Use `open -g -a SetShot --args --background-snapshot` so macOS attributes
+        // the background item to SetShot, not to bash.
+        let appPath = Bundle.main.bundlePath
         let plist: NSDictionary = [
             "Label": label,
-            "ProgramArguments": ["/bin/bash", "-c", command],
+            "ProgramArguments": ["/usr/bin/open", "-g", "-a", appPath, "--args", "--background-snapshot"],
             "StartCalendarInterval": ["Hour": hour, "Minute": minute],
             "StandardOutPath": "/tmp/setshot-daily.log",
             "StandardErrorPath": "/tmp/setshot-daily.log",
