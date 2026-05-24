@@ -2645,7 +2645,19 @@ NOISE_PATTERN='(
   sirisuggestions.*:: currentIndexVersion\s*=|
 
   # FileVault: transient analytics event
-  filevault.*:: lastAnalyticsEvent\.
+  filevault.*:: lastAnalyticsEvent\.|
+
+  # Affinity Designer/Photo/Publisher: window restore blob (NSKeyedArchiver, changes on every open)
+  affinity.*:: .*\.restore\.windows|
+
+  # Affinity: crash-watcher flag (True while app is running, reverts on clean exit)
+  affinity.*:: .*\.watchForCrash\s*=|
+
+  # Affinity: floating tool panel position (drifts with every open)
+  affinity.*:: .*\.tools\.[^:]*\.frame\s*=|
+
+  # macOS Diagnostics: PID-based log filter (PID changes every process restart)
+  diagnosticd\.filter.*:: logicalExp\.[^:]*\.pid\.
 )'
 
 # Collapse to single-line regex.
