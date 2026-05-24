@@ -74,18 +74,18 @@ struct SnapshotLibraryView: View {
                 .frame(maxWidth: 340)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("On your first snapshot, macOS will ask for permission twice:")
+                Text("On your first snapshot, macOS will ask for permission twice — click Allow each time:")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 HStack(alignment: .top, spacing: 4) {
                     Text("•").font(.caption).foregroundStyle(.secondary)
-                    Text("\"SetShot would like to access data from other apps.\" — click Allow, or grant Full Disk Access to SetShot in System Settings \u{203A} Privacy & Security if the prompt recurs.")
+                    Text("\"SetShot.app\" would like to access data from other apps.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 HStack(alignment: .top, spacing: 4) {
                     Text("•").font(.caption).foregroundStyle(.secondary)
-                    Text("\"SetShot would like to access Apple Music, your music and video activity, and your media library.\" — click Allow.")
+                    Text("\"SetShot.app\" would like to access Apple Music, your music and video activity, and your media library.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
