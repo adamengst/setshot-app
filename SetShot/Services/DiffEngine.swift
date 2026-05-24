@@ -113,15 +113,16 @@ struct DiffEngine {
         if domain.contains("/") {
             domain = URL(fileURLWithPath: domain).lastPathComponent
         }
+        // Strip .plist before UUID: ByHost filenames are "com.apple.foo.UUID.plist",
+        // and the UUID regex anchors at $, so it won't match when .plist trails.
+        if domain.hasSuffix(".plist") {
+            domain = String(domain.dropLast(6))
+        }
         let ns = domain as NSString
         let range = NSRange(location: 0, length: ns.length)
         domain = Self.uuidSuffixRegex.stringByReplacingMatches(
             in: domain, range: range, withTemplate: ""
         )
-        if domain.hasSuffix(".plist") {
-            domain = String(domain.dropLast(6))
-        }
-        // .GlobalPreferences is the direct-plist path to NSGlobalDomain
         if domain == ".GlobalPreferences" {
             domain = "NSGlobalDomain"
         }
