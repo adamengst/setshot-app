@@ -13,19 +13,19 @@ actor SnapshotStore {
 
     func save(_ rawOutput: String, takenAt: Date = .now) async throws -> StoredSnapshot {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        let url = directory.appendingPathComponent(filename(for: takenAt))
-        let compressed = try await gzip(Data(rawOutput.utf8), decompress: false)
-        try compressed.write(to: url)
-        return StoredSnapshot(url: url, date: takenAt)
+        let dest = directory.appendingPathComponent(filename(for: takenAt))
+        let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: tmp) }
+        try Data(rawOutput.utf8).write(to: tmp)
+        try await gzipFile(input: tmp, output: dest)
+        return StoredSnapshot(url: dest, date: takenAt)
     }
 
     func load(_ snapshot: StoredSnapshot) async throws -> String {
-        let data = try Data(contentsOf: snapshot.url)
         if snapshot.url.lastPathComponent.hasSuffix(".gz") {
-            let raw = try await gzip(data, decompress: true)
-            return String(decoding: raw, as: UTF8.self)
+            return try await gunzipFile(snapshot.url)
         }
-        return String(decoding: data, as: UTF8.self)
+        return try String(contentsOf: snapshot.url, encoding: .utf8)
     }
 
     func list() throws -> [StoredSnapshot] {
@@ -65,24 +65,48 @@ actor SnapshotStore {
         return f.date(from: String(s.dropFirst(8)))
     }
 
-    private func gzip(_ data: Data, decompress: Bool) async throws -> Data {
-        try await withCheckedThrowingContinuation { cont in
-            let process = Process()
-            let inPipe = Pipe()
-            let outPipe = Pipe()
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/gzip")
-            process.arguments = decompress ? ["-dc"] : ["-9c"]
-            process.standardInput = inPipe
-            process.standardOutput = outPipe
-            process.standardError = FileHandle.nullDevice
-            process.terminationHandler = { _ in
-                let output = outPipe.fileHandleForReading.readDataToEndOfFile()
-                cont.resume(returning: output)
-            }
+    // Use file-based I/O for gzip to avoid Pipe buffer deadlock on large snapshots.
+    // Pipe buffers are only 64 KB; a snapshot can be several MB.
+
+    private func gzipFile(input: URL, output: URL) async throws {
+        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             do {
+                FileManager.default.createFile(atPath: output.path, contents: nil)
+                let outHandle = try FileHandle(forWritingTo: output)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/gzip")
+                process.arguments = ["-9c", input.path]
+                process.standardOutput = outHandle
+                process.standardError = FileHandle.nullDevice
+                process.terminationHandler = { _ in
+                    try? outHandle.close()
+                    cont.resume()
+                }
                 try process.run()
-                inPipe.fileHandleForWriting.write(data)
-                inPipe.fileHandleForWriting.closeFile()
+            } catch {
+                cont.resume(throwing: error)
+            }
+        }
+    }
+
+    private func gunzipFile(_ url: URL) async throws -> String {
+        try await withCheckedThrowingContinuation { cont in
+            do {
+                let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+                FileManager.default.createFile(atPath: tmp.path, contents: nil)
+                let outHandle = try FileHandle(forWritingTo: tmp)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/usr/bin/gzip")
+                process.arguments = ["-dc", url.path]
+                process.standardOutput = outHandle
+                process.standardError = FileHandle.nullDevice
+                process.terminationHandler = { _ in
+                    try? outHandle.close()
+                    let text = (try? String(contentsOf: tmp, encoding: .utf8)) ?? ""
+                    try? FileManager.default.removeItem(at: tmp)
+                    cont.resume(returning: text)
+                }
+                try process.run()
             } catch {
                 cont.resume(throwing: error)
             }
