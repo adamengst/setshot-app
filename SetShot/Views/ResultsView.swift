@@ -143,6 +143,14 @@ struct ResultsView: View {
     }
 }
 
+private func formatValue(_ raw: String) -> String {
+    switch raw.lowercased() {
+    case "true", "yes", "1": return "On"
+    case "false", "no", "0": return "Off"
+    default: return raw
+    }
+}
+
 private struct SectionHeader: View {
     let title: String
     let count: Int
@@ -192,11 +200,11 @@ private struct RecognisedRow: View {
                     .foregroundStyle(.tertiary)
                 Spacer()
                 HStack(spacing: 4) {
-                    Text(diff.beforeValue.isEmpty ? "(none)" : diff.beforeValue)
+                    Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue))
                         .foregroundStyle(.red.opacity(0.8))
                     Text("→")
                         .foregroundStyle(.secondary)
-                    Text(diff.afterValue.isEmpty ? "(none)" : diff.afterValue)
+                    Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue))
                         .foregroundStyle(.green.opacity(0.9))
                 }
                 .font(.system(.caption, design: .monospaced))
@@ -228,11 +236,11 @@ private struct UnrecognisedRow: View {
                 Text(diff.rawLine)
                     .font(.system(.body, design: .monospaced))
                 HStack(spacing: 4) {
-                    Text(diff.beforeValue.isEmpty ? "(none)" : diff.beforeValue)
+                    Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue))
                         .foregroundStyle(.red.opacity(0.8))
                     Text("→")
                         .foregroundStyle(.secondary)
-                    Text(diff.afterValue.isEmpty ? "(none)" : diff.afterValue)
+                    Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue))
                         .foregroundStyle(.green.opacity(0.9))
                 }
                 .font(.system(.caption, design: .monospaced))
