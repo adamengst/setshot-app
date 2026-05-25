@@ -182,14 +182,14 @@ private struct RecognisedRow: View {
     var body: some View {
         let settingsURL = validatedSettingsURL(entry.settingsURL)
 
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(entry.description)
                         .fontWeight(.medium)
                     if let location = entry.uiLocation {
                         Text(location)
-                            .font(.caption)
+                            .font(.callout)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -201,21 +201,15 @@ private struct RecognisedRow: View {
                     .controlSize(.small)
                 }
             }
-            HStack(alignment: .firstTextBaseline) {
-                Text(diff.rawLine)
-                    .font(.system(.caption2, design: .monospaced))
-                    .foregroundStyle(.tertiary)
-                Spacer()
-                HStack(spacing: 4) {
-                    Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key))
-                        .foregroundStyle(.red.opacity(0.8))
-                    Text("→")
-                        .foregroundStyle(.secondary)
-                    Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key))
-                        .foregroundStyle(.green.opacity(0.9))
-                }
-                .font(.system(.caption, design: .monospaced))
+            HStack(spacing: 6) {
+                Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key))
+                    .foregroundStyle(.orange)
+                Text("→")
+                    .foregroundStyle(.secondary)
+                Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key))
+                    .foregroundStyle(.blue)
             }
+            .font(.system(.callout, design: .monospaced))
         }
         .padding(12)
         .background(Color.secondary.opacity(0.08))
@@ -239,23 +233,24 @@ private struct UnrecognisedRow: View {
 
     var body: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(diff.rawLine)
-                    .font(.system(.body, design: .monospaced))
-                HStack(spacing: 4) {
+                    .font(.system(.callout, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 6) {
                     Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key))
-                        .foregroundStyle(.red.opacity(0.8))
+                        .foregroundStyle(.orange)
                     Text("→")
                         .foregroundStyle(.secondary)
                     Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key))
-                        .foregroundStyle(.green.opacity(0.9))
+                        .foregroundStyle(.blue)
                 }
-                .font(.system(.caption, design: .monospaced))
+                .font(.system(.callout, design: .monospaced))
             }
             Spacer()
             if isSubmitted {
                 Label("Submitted", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                    .foregroundStyle(.secondary)
                     .font(.caption)
             } else {
                 Button("Submit") { showSheet = true }
