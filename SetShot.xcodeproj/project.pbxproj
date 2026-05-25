@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AA11BB22CC33DD44EE55FF66 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AA11BB22CC33DD44EE55FF77 /* Sparkle */; };
 		0E16E6D8791F4D87DDFECD0D /* DiffResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83C43C69E85AC39B6A1FDC4 /* DiffResult.swift */; };
 		1143463B88FBF9957A156950 /* SubmissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1334AD759BA9369F202E6779 /* SubmissionService.swift */; };
 		177A74A9B34AA5B0A987A5D5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0D699B589A9EFAC3D051F1 /* ContentView.swift */; };
@@ -141,6 +142,7 @@
 			buildPhases = (
 				0646D4907EFB33B9B40A8105 /* Sources */,
 				DAFA9D27173244CFE997A74D /* Resources */,
+				AA11BB22CC33DD44EE55FF88 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -148,6 +150,7 @@
 			);
 			name = SetShot;
 			packageProductDependencies = (
+				AA11BB22CC33DD44EE55FF77 /* Sparkle */,
 			);
 			productName = SetShot;
 			productReference = FB1F3AEF104A368A0785F1AE /* SetShot.app */;
@@ -176,12 +179,26 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1E35D5D6AF998D6A5DB193BE /* Products */;
 			projectDirPath = "";
+			packageReferences = (
+				AA11BB22CC33DD44EE55FF99 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			projectRoot = "";
 			targets = (
 				D59E8417A0D666DFD74562C9 /* SetShot */,
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AA11BB22CC33DD44EE55FF88 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA11BB22CC33DD44EE55FF66 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXResourcesBuildPhase section */
 		DAFA9D27173244CFE997A74D /* Resources */ = {
@@ -356,6 +373,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SetShot;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -379,6 +398,8 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = SetShot;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml";
+				INFOPLIST_KEY_SUPublicEDKey = "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg=";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -391,6 +412,25 @@
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AA11BB22CC33DD44EE55FF99 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AA11BB22CC33DD44EE55FF77 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA11BB22CC33DD44EE55FF99 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 
 /* Begin XCConfigurationList section */
 		5F3A5E15E94C597CC3807581 /* Build configuration list for PBXProject "SetShot" */ = {

@@ -1,9 +1,15 @@
 import SwiftUI
+import Sparkle
 
 @main
 struct SetShotApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appModel = AppModel()
+    private let updaterController = SPUStandardUpdaterController(
+        startingUpdater: true,
+        updaterDelegate: nil,
+        userDriverDelegate: nil
+    )
 
     private static let isBackgroundLaunch =
         CommandLine.arguments.contains("--background-snapshot")
