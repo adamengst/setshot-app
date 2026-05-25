@@ -6,7 +6,6 @@ struct ResultsView: View {
     let after: StoredSnapshot
     @Binding var appState: AppState
     @EnvironmentObject var appModel: AppModel
-    @State private var isRechecking = false
     @State private var submittedIDs: Set<UUID> = []
     @State private var isSubmittingAll = false
     @State private var submitAllProgress = 0
@@ -23,27 +22,8 @@ struct ResultsView: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Back to Library") { appState = .library }
             }
-            ToolbarItem(placement: .primaryAction) {
-                if isRechecking {
-                    ProgressView().controlSize(.small)
-                } else {
-                    Button("Recheck") { recheck() }
-                        .help("Re-fetch the knowledge base and re-run the diff on the same snapshot pair")
-                }
-            }
         }
         .frame(minWidth: 600, minHeight: 400)
-    }
-
-    private func recheck() {
-        isRechecking = true
-        Task {
-            await appModel.refreshKB()
-            if let newDiff = try? await appModel.diff(before: before, after: after) {
-                appState = .results(newDiff, before: before, after: after)
-            }
-            isRechecking = false
-        }
     }
 
     private var recognisedSection: some View {

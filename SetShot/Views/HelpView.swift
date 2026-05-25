@@ -10,7 +10,6 @@ struct HelpView: View {
                 understandingResults
                 submittingChanges
                 automaticSnapshots
-                rechecking
             }
             .padding(40)
         }
@@ -76,12 +75,6 @@ struct HelpView: View {
         }
     }
 
-    private var rechecking: some View {
-        HelpSection("Rechecking Results") {
-            HelpParagraph("The knowledge base is updated regularly as new settings are identified and submitted. Click **Recheck** on any results screen to re-fetch the latest knowledge base and re-classify the same pair of snapshots.")
-            HelpParagraph("After a Recheck, some previously unrecognised changes may move into the Recognised section, and the suppressed noise list may grow as new noise filters are added.")
-        }
-    }
 }
 
 // MARK: - Layout helpers
