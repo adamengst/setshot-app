@@ -27,4 +27,7 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: SetShot
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml"
+        INFOPLIST_KEY_SUPublicEDKey: "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg="
         ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: SetShot/SetShot.entitlements
