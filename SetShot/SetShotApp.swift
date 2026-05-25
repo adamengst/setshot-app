@@ -27,6 +27,14 @@ struct SetShotApp: App {
             }
         }
         .windowResizability(.contentSize)
+        .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") {
+                    updaterController.updater.checkForUpdates()
+                }
+                .disabled(!updaterController.updater.canCheckForUpdates)
+            }
+        }
     }
 }
 
