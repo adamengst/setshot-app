@@ -140,19 +140,27 @@ struct DiffEngine {
         return "defaults"
     }
 
+    // Write stdout to a temp file rather than a Pipe to avoid the 64 KB pipe
+    // buffer deadlock: large diff output would block the process before it
+    // terminates, so the termination handler would never fire.
     private func captureProcess(executable: String, arguments: [String]) async throws -> String {
-        try await withCheckedThrowingContinuation { continuation in
-            let process = Process()
-            let pipe = Pipe()
-            process.executableURL = URL(fileURLWithPath: executable)
-            process.arguments = arguments
-            process.standardOutput = pipe
-            process.standardError = FileHandle.nullDevice
-            process.terminationHandler = { _ in
-                let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                continuation.resume(returning: String(data: data, encoding: .utf8) ?? "")
-            }
+        let outputURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString + ".txt")
+        FileManager.default.createFile(atPath: outputURL.path, contents: nil)
+        defer { try? FileManager.default.removeItem(at: outputURL) }
+        return try await withCheckedThrowingContinuation { continuation in
             do {
+                let outHandle = try FileHandle(forWritingTo: outputURL)
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: executable)
+                process.arguments = arguments
+                process.standardOutput = outHandle
+                process.standardError = FileHandle.nullDevice
+                process.terminationHandler = { _ in
+                    try? outHandle.close()
+                    let text = (try? String(contentsOf: outputURL, encoding: .utf8)) ?? ""
+                    continuation.resume(returning: text)
+                }
                 try process.run()
             } catch {
                 continuation.resume(throwing: error)
