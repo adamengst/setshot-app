@@ -5,8 +5,16 @@ import Sparkle
 struct SetShotApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appModel = AppModel()
+    // Don't start the updater in debug builds: the local signing identity
+    // doesn't re-sign Sparkle's XPC services, causing a spurious error dialog.
     private let updaterController = SPUStandardUpdaterController(
-        startingUpdater: true,
+        startingUpdater: {
+            #if DEBUG
+            return false
+            #else
+            return true
+            #endif
+        }(),
         updaterDelegate: nil,
         userDriverDelegate: nil
     )
@@ -37,7 +45,7 @@ struct SetShotApp: App {
             }
             CommandGroup(replacing: .help) {
                 Button("SetShot Help") {
-                    NSApp.sendAction(#selector(AppDelegate.showHelp(_:)), to: nil, from: nil)
+                    (NSApp.delegate as? AppDelegate)?.openHelpWindow()
                 }
                 .keyboardShortcut("?", modifiers: .command)
             }
@@ -65,7 +73,7 @@ private struct WindowFrameSaver: NSViewRepresentable {
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var helpWindow: NSWindow?
 
-    @objc func showHelp(_ sender: Any?) {
+    func openHelpWindow() {
         if helpWindow == nil {
             let controller = NSHostingController(rootView: HelpView())
             let window = NSWindow(contentViewController: controller)
