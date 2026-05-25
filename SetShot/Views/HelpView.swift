@@ -24,7 +24,7 @@ struct HelpView: View {
             Text("SetShot Help")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-            Text("SetShot captures a complete snapshot of your Mac's settings, then compares two snapshots to show you exactly what changed — and what each change means. It's designed for situations where you want to understand the effect of installing software, running a migration assistant, applying a macOS update, or just making changes in System Settings.")
+            Text("SetShot captures a complete snapshot of your Mac's settings, then lets you compare two snapshots to show you exactly what changed — and what each change means. It's designed for situations where you want to see what changes are made after applying a macOS update or tweaking options in System Settings.")
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -33,7 +33,8 @@ struct HelpView: View {
         HelpSection("Taking Snapshots") {
             HelpParagraph("Click **Take Snapshot** in the toolbar to capture the current state of your Mac's settings. SetShot reads preferences, system configuration, and other state sources, then saves the result to the snapshot library with the date and time.")
             HelpParagraph("The snapshot captures hundreds of settings across System Settings, accessibility options, network configuration, default app handlers, and more. Capturing typically takes a few seconds.")
-            HelpParagraph("You can rename any snapshot by double-clicking its name in the library, or by right-clicking and choosing **Rename**. This is useful for labelling snapshots with context — for example, **Before software install** or **After update**. The original date remains embedded in the file so the order is always chronological.")
+            HelpParagraph("You can rename any snapshot by double-clicking its name in the library, or by right-clicking and choosing **Rename**. This is useful for labelling snapshots with context — for example, **Before software install** or **After update**.")
+            HelpParagraph("To remove an unnecessary snapshot, Control-click it and choose **Delete**")
         }
     }
 
@@ -53,16 +54,16 @@ struct HelpView: View {
             }
 
             HelpCallout("Unrecognised Changes") {
-                Text("Settings that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone.")
+                Text("Changes that are either noise or legitimate settings changes that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone.")
             }
 
-            HelpParagraph("Values are displayed in a readable form where possible: toggles show On or Off, volume settings show a percentage, file paths show just the filename, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number.")
+            HelpParagraph("Values are displayed in a readable form where possible: toggles show On or Off, volume settings show a percentage, file paths show just the filename, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number. If you see a value that's not readable, send me a screenshot.")
         }
     }
 
     private var submittingChanges: some View {
         HelpSection("Submitting Unrecognised Changes") {
-            HelpParagraph("When you find an unrecognised change that you think should be described, click **Submit** on that row. A confirmation sheet shows exactly what data will be sent — the internal setting name, its old and new values, and your macOS version — and nothing else.")
+            HelpParagraph("When you find an unrecognised change that is either noise or that you think should be included in the knowledge base, click **Submit** on that row. A confirmation sheet shows exactly what data will be sent — the internal setting name, its old and new values, and your macOS version — and nothing else.")
             HelpParagraph("If you have several unrecognised changes, click **Submit All** to send them all at once. Submitted changes are reviewed and added to the knowledge base, making SetShot more useful for everyone.")
             HelpParagraph("Already-submitted rows are marked with a checkmark for the duration of the session.")
         }

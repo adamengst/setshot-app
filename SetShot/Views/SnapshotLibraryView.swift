@@ -240,13 +240,13 @@ private struct SnapshotRow: View {
         .contentShape(Rectangle())
         .onTapGesture(count: 2) {
             guard !isExcluded else { return }
-            editText = snapshot.customLabel ?? ""
+            editText = snapshot.displayName
             isEditing = true
         }
         .onTapGesture(count: 1) { if !isExcluded && !isEditing { onTap() } }
         .contextMenu {
             Button("Rename") {
-                editText = snapshot.customLabel ?? ""
+                editText = snapshot.displayName
                 isEditing = true
             }
             Divider()
