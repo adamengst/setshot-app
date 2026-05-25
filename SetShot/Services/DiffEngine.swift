@@ -85,12 +85,15 @@ struct DiffEngine {
         var noise: [(entry: KBEntry, diff: DiffLine)] = []
 
         for p in pairs {
+            let before = p.before ?? ""
+            let after = p.after ?? ""
+            guard semanticValue(before) != semanticValue(after) else { continue }
             let diffLine = DiffLine(
                 domain: p.domain,
                 key: p.key,
                 source: inferSource(rawDomain: p.rawDomain),
-                beforeValue: p.before ?? "",
-                afterValue: p.after ?? "",
+                beforeValue: before,
+                afterValue: after,
                 macOSVersion: macOSVersion,
                 rawLine: "\(p.rawDomain) :: \(p.key)"
             )
@@ -127,6 +130,14 @@ struct DiffEngine {
             domain = "NSGlobalDomain"
         }
         return domain
+    }
+
+    private func semanticValue(_ value: String) -> String {
+        switch value.lowercased() {
+        case "true", "yes", "1": return "1"
+        case "false", "no", "0": return "0"
+        default: return value
+        }
     }
 
     private func inferSource(rawDomain: String) -> String {

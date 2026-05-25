@@ -7,6 +7,9 @@ struct KnowledgeBase {
     static let empty = KnowledgeBase(entries: [], version: 0)
 
     func entry(forDomain domain: String, key: String) -> KBEntry? {
-        entries.first { $0.domain == domain && $0.key == key }
+        entries.first {
+            $0.domain == domain &&
+            ($0.key == key || $0.keyPrefix.map { key.hasPrefix($0) } ?? false)
+        }
     }
 }

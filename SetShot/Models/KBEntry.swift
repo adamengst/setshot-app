@@ -16,6 +16,7 @@ struct KBEntry: Codable, Identifiable {
     let aiGenerated: Bool
     let contributedByIssue: Int?
     let valueMap: [String: String]?
+    let keyPrefix: String?
 
     enum CodingKeys: String, CodingKey {
         case id, domain, key, source, noise, notes, description
@@ -27,5 +28,6 @@ struct KBEntry: Codable, Identifiable {
         case aiGenerated = "ai_generated"
         case contributedByIssue = "contributed_by_issue"
         case valueMap = "value_map"
+        case keyPrefix = "key_prefix"
     }
 }
