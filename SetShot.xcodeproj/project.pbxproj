@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		AA11BB22CC33DD44EE55FF66 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = AA11BB22CC33DD44EE55FF77 /* Sparkle */; };
+		AA11BB22CC33DD44EE55FF33 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA11BB22CC33DD44EE55FF22 /* Assets.xcassets */; };
 		0E16E6D8791F4D87DDFECD0D /* DiffResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83C43C69E85AC39B6A1FDC4 /* DiffResult.swift */; };
 		1143463B88FBF9957A156950 /* SubmissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1334AD759BA9369F202E6779 /* SubmissionService.swift */; };
 		177A74A9B34AA5B0A987A5D5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB0D699B589A9EFAC3D051F1 /* ContentView.swift */; };
@@ -43,6 +44,7 @@
 		6ABD7B7F567D2F3E47E28D4B /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
 		74E1D922E36C27838EAAA810 /* SnapshotRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotRunner.swift; sourceTree = "<group>"; };
 		A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = setshot.sh; sourceTree = "<group>"; };
+		AA11BB22CC33DD44EE55FF22 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		AA11BB22CC33DD44EE55FF11 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B1CCB5A46AF855D9998F53D5 /* ReadyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadyView.swift; sourceTree = "<group>"; };
 		B3A3C6E37BA3D10BA566468E /* SchedulerSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulerSettingsView.swift; sourceTree = "<group>"; };
@@ -117,6 +119,7 @@
 		74ACF2625F86C8B743110669 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				AA11BB22CC33DD44EE55FF22 /* Assets.xcassets */,
 				A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */,
 			);
 			path = Resources;
@@ -207,6 +210,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AA11BB22CC33DD44EE55FF33 /* Assets.xcassets in Resources */,
 				8AFEF96A156F43C87BDC4252 /* setshot.sh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
