@@ -6,7 +6,6 @@ struct ResultsView: View {
     let after: StoredSnapshot
     @Binding var appState: AppState
     @EnvironmentObject var appModel: AppModel
-    @State private var showNoise = false
     @State private var isRechecking = false
     @State private var submittedIDs: Set<UUID> = []
     @State private var isSubmittingAll = false
@@ -17,9 +16,6 @@ struct ResultsView: View {
             VStack(alignment: .leading, spacing: 32) {
                 recognisedSection
                 unrecognisedSection
-                if !diff.noise.isEmpty {
-                    noiseSection
-                }
             }
             .padding(32)
         }
@@ -119,28 +115,6 @@ struct ResultsView: View {
         }
     }
 
-    private var noiseSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Button {
-                showNoise.toggle()
-            } label: {
-                Label(
-                    "Suppressed Noise (\(diff.noise.count))",
-                    systemImage: showNoise ? "chevron.down" : "chevron.right"
-                )
-                .font(.headline)
-            }
-            .buttonStyle(.plain)
-
-            if showNoise {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(diff.noise, id: \.diff.id) { item in
-                        NoiseRow(entry: item.entry, diff: item.diff)
-                    }
-                }
-            }
-        }
-    }
 }
 
 private func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil) -> String {
@@ -272,24 +246,3 @@ private struct UnrecognisedRow: View {
     }
 }
 
-private struct NoiseRow: View {
-    let entry: KBEntry
-    let diff: DiffLine
-
-    var body: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(diff.rawLine)
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                if let reason = entry.noiseReason {
-                    Text(reason)
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            Spacer()
-        }
-        .padding(.vertical, 2)
-    }
-}
