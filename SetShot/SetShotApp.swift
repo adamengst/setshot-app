@@ -22,11 +22,12 @@ struct SetShotApp: App {
             } else {
                 ContentView()
                     .environmentObject(appModel)
+                    .background(WindowFrameSaver(name: "SetShotMainWindow"))
                     .task { await appModel.loadKB() }
                     .task { await appModel.loadSnapshots() }
             }
         }
-        .windowResizability(.contentSize)
+        .defaultSize(width: 800, height: 600)
         .commands {
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") {
@@ -34,6 +35,23 @@ struct SetShotApp: App {
                 }
                 .disabled(!updaterController.updater.canCheckForUpdates)
             }
+        }
+    }
+}
+
+private struct WindowFrameSaver: NSViewRepresentable {
+    let name: String
+
+    func makeNSView(context: Context) -> FrameSaverView { FrameSaverView(name: name) }
+    func updateNSView(_ nsView: FrameSaverView, context: Context) {}
+
+    class FrameSaverView: NSView {
+        let name: String
+        init(name: String) { self.name = name; super.init(frame: .zero) }
+        required init?(coder: NSCoder) { fatalError() }
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            window?.setFrameAutosaveName(name)
         }
     }
 }
