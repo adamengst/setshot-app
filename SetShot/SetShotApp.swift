@@ -43,12 +43,25 @@ struct SetShotApp: App {
                 }
                 .disabled(!updaterController.updater.canCheckForUpdates)
             }
-            CommandGroup(replacing: .help) {
-                Button("SetShot Help") {
-                    (NSApp.delegate as? AppDelegate)?.openHelpWindow()
-                }
-                .keyboardShortcut("?", modifiers: .command)
+            HelpCommands()
+        }
+
+        WindowGroup("SetShot Help", id: "help") {
+            HelpView()
+        }
+        .defaultSize(width: 620, height: 600)
+    }
+}
+
+private struct HelpCommands: Commands {
+    @Environment(\.openWindow) private var openWindow
+
+    var body: some Commands {
+        CommandGroup(replacing: .help) {
+            Button("SetShot Help") {
+                openWindow(id: "help")
             }
+            .keyboardShortcut("?", modifiers: .command)
         }
     }
 }
@@ -71,21 +84,6 @@ private struct WindowFrameSaver: NSViewRepresentable {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    private var helpWindow: NSWindow?
-
-    func openHelpWindow() {
-        if helpWindow == nil {
-            let controller = NSHostingController(rootView: HelpView())
-            let window = NSWindow(contentViewController: controller)
-            window.title = "SetShot Help"
-            window.styleMask = NSWindow.StyleMask([.titled, .closable, .resizable, .miniaturizable])
-            window.setFrameAutosaveName("SetShotHelpWindow")
-            window.center()
-            helpWindow = window
-        }
-        helpWindow?.makeKeyAndOrderFront(nil)
-    }
-
     func applicationWillFinishLaunching(_ notification: Notification) {
         if CommandLine.arguments.contains("--background-snapshot") {
             NSApp.setActivationPolicy(.prohibited)
