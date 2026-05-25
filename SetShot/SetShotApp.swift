@@ -35,6 +35,12 @@ struct SetShotApp: App {
                 }
                 .disabled(!updaterController.updater.canCheckForUpdates)
             }
+            CommandGroup(replacing: .help) {
+                Button("SetShot Help") {
+                    NSApp.sendAction(#selector(AppDelegate.showHelp(_:)), to: nil, from: nil)
+                }
+                .keyboardShortcut("?", modifiers: .command)
+            }
         }
     }
 }
@@ -57,6 +63,21 @@ private struct WindowFrameSaver: NSViewRepresentable {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    private var helpWindow: NSWindow?
+
+    @objc func showHelp(_ sender: Any?) {
+        if helpWindow == nil {
+            let controller = NSHostingController(rootView: HelpView())
+            let window = NSWindow(contentViewController: controller)
+            window.title = "SetShot Help"
+            window.styleMask = NSWindow.StyleMask([.titled, .closable, .resizable, .miniaturizable])
+            window.setFrameAutosaveName("SetShotHelpWindow")
+            window.center()
+            helpWindow = window
+        }
+        helpWindow?.makeKeyAndOrderFront(nil)
+    }
+
     func applicationWillFinishLaunching(_ notification: Notification) {
         if CommandLine.arguments.contains("--background-snapshot") {
             NSApp.setActivationPolicy(.prohibited)

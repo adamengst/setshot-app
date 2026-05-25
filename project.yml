@@ -4,6 +4,11 @@ options:
   deploymentTarget:
     macOS: "13.0"
 
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.9.0"
+
 targets:
   SetShot:
     type: application
@@ -11,6 +16,9 @@ targets:
     deploymentTarget: "13.0"
     sources:
       - SetShot
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tidbits.SetShot
