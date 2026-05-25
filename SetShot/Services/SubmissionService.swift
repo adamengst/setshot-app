@@ -6,11 +6,16 @@ actor SubmissionService {
     private let workerURL = URL(string: "https://setshot-submission.the-account-of-adam-engst.workers.dev")!
 
     func submit(_ diff: DiffLine) async throws {
-        var request = URLRequest(url: workerURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        try await post(payload(for: diff))
+    }
 
-        let body: [String: String] = [
+    func submitBatch(_ diffs: [DiffLine]) async throws {
+        let items = diffs.map { payload(for: $0) }
+        try await post(items)
+    }
+
+    private func payload(for diff: DiffLine) -> [String: String] {
+        [
             "domain": diff.domain,
             "key": diff.key,
             "source": diff.source,
@@ -18,10 +23,14 @@ actor SubmissionService {
             "after_value": diff.afterValue.isEmpty ? "(not set)" : diff.afterValue,
             "macos_version": diff.macOSVersion
         ]
+    }
+
+    private func post<T: Encodable>(_ body: T) async throws {
+        var request = URLRequest(url: workerURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
-
         let (_, response) = try await URLSession.shared.data(for: request)
-
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
             throw SubmissionError.serverError
         }

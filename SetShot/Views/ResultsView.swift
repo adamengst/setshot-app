@@ -8,7 +8,6 @@ struct ResultsView: View {
     @EnvironmentObject var appModel: AppModel
     @State private var submittedIDs: Set<UUID> = []
     @State private var isSubmittingAll = false
-    @State private var submitAllProgress = 0
 
     var body: some View {
         ScrollView {
@@ -69,7 +68,7 @@ struct ResultsView: View {
             if isSubmittingAll {
                 HStack(spacing: 6) {
                     ProgressView().controlSize(.mini)
-                    Text("Submitting \(submitAllProgress) / \(unsubmitted.count)")
+                    Text("Submitting…")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -84,13 +83,9 @@ struct ResultsView: View {
 
     private func submitAll(_ items: [DiffLine]) {
         isSubmittingAll = true
-        submitAllProgress = 0
         Task {
-            for item in items {
-                try? await SubmissionService.shared.submit(item)
-                submittedIDs.insert(item.id)
-                submitAllProgress += 1
-            }
+            try? await SubmissionService.shared.submitBatch(items)
+            for item in items { submittedIDs.insert(item.id) }
             isSubmittingAll = false
         }
     }
