@@ -2485,7 +2485,7 @@ NOISE_PATTERN='(
   backgroundassets.*:: .*LastWeekly|
   appleaccount.*:: .*[Bb]oot[Ss]ession|
   IMCoreSpotlight.*:: IMCSLast|
-  com\.apple\.LaunchServices :: LSHandlers\[|
+  LaunchServices.*:: LSHandlers\[|
   itunesstored.*:: AuthenticationStarted\s*=|
   Retrobatch.*:: SULast|
   keyboardmaestro.*:: MBPreferences|
