@@ -15,6 +15,7 @@ struct KBEntry: Codable, Identifiable {
     let notes: String?
     let aiGenerated: Bool
     let contributedByIssue: Int?
+    let valueMap: [String: String]?
 
     enum CodingKeys: String, CodingKey {
         case id, domain, key, source, noise, notes, description
@@ -25,5 +26,6 @@ struct KBEntry: Codable, Identifiable {
         case minMacOS = "min_macos"
         case aiGenerated = "ai_generated"
         case contributedByIssue = "contributed_by_issue"
+        case valueMap = "value_map"
     }
 }

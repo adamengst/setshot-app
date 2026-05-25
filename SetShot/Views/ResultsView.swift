@@ -143,7 +143,13 @@ struct ResultsView: View {
     }
 }
 
-private func formatValue(_ raw: String, key: String = "") -> String {
+private func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil) -> String {
+    if let map = valueMap {
+        // Normalize True/False → 1/0 for value_map lookup since FLATTEN_PY
+        // converts integer 0/1 to booleans, but value_map keys use integers.
+        let lookupKey = raw == "True" ? "1" : raw == "False" ? "0" : raw
+        if let label = map[lookupKey] { return label }
+    }
     switch raw.lowercased() {
     case "true", "yes", "1": return "On"
     case "false", "no", "0": return "Off"
@@ -202,11 +208,11 @@ private struct RecognisedRow: View {
                 }
             }
             HStack(spacing: 6) {
-                Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key))
+                Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap))
                     .foregroundStyle(.orange)
                 Text("→")
                     .foregroundStyle(.secondary)
-                Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key))
+                Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap))
                     .foregroundStyle(.blue)
             }
             .font(.system(.callout, design: .monospaced))
