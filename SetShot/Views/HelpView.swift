@@ -33,7 +33,7 @@ struct HelpView: View {
         HelpSection("Taking Snapshots") {
             HelpParagraph("Click **Take Snapshot** in the toolbar to capture the current state of your Mac's settings. SetShot reads preferences, system configuration, and other state sources, then saves the result to the snapshot library with the date and time.")
             HelpParagraph("The snapshot captures hundreds of settings across System Settings, accessibility options, network configuration, default app handlers, and more. Capturing typically takes a few seconds.")
-            HelpParagraph("You can rename any snapshot by double-clicking its name in the library. This is useful for labelling snapshots with context — for example, **Before software install** or **After update**.")
+            HelpParagraph("You can rename any snapshot by double-clicking its name in the library, or by right-clicking and choosing **Rename**. This is useful for labelling snapshots with context — for example, **Before software install** or **After update**. The original date remains embedded in the file so the order is always chronological.")
         }
     }
 
@@ -54,10 +54,6 @@ struct HelpView: View {
 
             HelpCallout("Unrecognised Changes") {
                 Text("Settings that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone.")
-            }
-
-            HelpCallout("Suppressed Noise") {
-                Text("Changes that happen automatically in the background and don't reflect deliberate user action — for example, recently opened document lists, caches, and window-restoration data. These are collapsed by default to keep results focused. Click the disclosure triangle to see them.")
             }
 
             HelpParagraph("Values are displayed in a readable form where possible: toggles show On or Off, volume settings show a percentage, file paths show just the filename, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number.")

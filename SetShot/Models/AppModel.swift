@@ -36,6 +36,13 @@ class AppModel: ObservableObject {
         snapshots = (try? await store.list()) ?? []
     }
 
+    func renameSnapshot(_ snapshot: StoredSnapshot, to label: String) async {
+        guard let renamed = try? await store.rename(snapshot, to: label) else { return }
+        if let i = snapshots.firstIndex(where: { $0.id == snapshot.id }) {
+            snapshots[i] = renamed
+        }
+    }
+
     func diff(before: StoredSnapshot, after: StoredSnapshot) async throws -> DiffResult {
         async let beforeText = store.load(before)
         async let afterText = store.load(after)

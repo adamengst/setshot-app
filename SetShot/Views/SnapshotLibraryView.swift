@@ -131,6 +131,8 @@ struct SnapshotLibraryView: View {
                             isExcluded: isExcluded
                         ) {
                             selected.wrappedValue = isSelected ? nil : snapshot
+                        } onRename: { newName in
+                            Task { await appModel.renameSnapshot(snapshot, to: newName) }
                         } onDelete: {
                             deleteSnapshot(snapshot, selected: selected)
                         }
@@ -208,14 +210,25 @@ private struct SnapshotRow: View {
     let isSelected: Bool
     let isExcluded: Bool
     let onTap: () -> Void
+    let onRename: (String) -> Void
     let onDelete: () -> Void
+
+    @State private var isEditing = false
+    @State private var editText = ""
 
     var body: some View {
         HStack {
-            Text(snapshot.displayName)
-                .foregroundStyle(isExcluded ? .tertiary : .primary)
+            if isEditing {
+                TextField("", text: $editText)
+                    .textFieldStyle(.plain)
+                    .onSubmit { commitRename() }
+                    .onExitCommand { isEditing = false }
+            } else {
+                Text(snapshot.displayName)
+                    .foregroundStyle(isExcluded ? .tertiary : .primary)
+            }
             Spacer()
-            if isSelected {
+            if isSelected && !isEditing {
                 Image(systemName: "checkmark")
                     .foregroundStyle(Color.accentColor)
                     .font(.caption.bold())
@@ -225,9 +238,25 @@ private struct SnapshotRow: View {
         .padding(.vertical, 10)
         .background(isSelected ? Color.accentColor.opacity(0.12) : Color.clear)
         .contentShape(Rectangle())
-        .onTapGesture { if !isExcluded { onTap() } }
+        .onTapGesture(count: 2) {
+            guard !isExcluded else { return }
+            editText = snapshot.customLabel ?? ""
+            isEditing = true
+        }
+        .onTapGesture(count: 1) { if !isExcluded && !isEditing { onTap() } }
         .contextMenu {
+            Button("Rename") {
+                editText = snapshot.customLabel ?? ""
+                isEditing = true
+            }
+            Divider()
             Button("Delete", role: .destructive) { onDelete() }
         }
+    }
+
+    private func commitRename() {
+        let trimmed = editText.trimmingCharacters(in: .whitespaces)
+        isEditing = false
+        onRename(trimmed)
     }
 }

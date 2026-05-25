@@ -18,7 +18,7 @@ actor SnapshotStore {
         defer { try? FileManager.default.removeItem(at: tmp) }
         try Data(rawOutput.utf8).write(to: tmp)
         try await gzipFile(input: tmp, output: dest)
-        return StoredSnapshot(url: dest, date: takenAt)
+        return StoredSnapshot(url: dest, date: takenAt, customLabel: nil)
     }
 
     func load(_ snapshot: StoredSnapshot) async throws -> String {
@@ -37,14 +37,36 @@ actor SnapshotStore {
                 return n.hasPrefix("setshot_") && (n.hasSuffix(".txt") || n.hasSuffix(".txt.gz"))
             }
             .compactMap { url -> StoredSnapshot? in
-                guard let date = parseDate(from: url.lastPathComponent) else { return nil }
-                return StoredSnapshot(url: url, date: date)
+                guard let (date, label) = parseDateAndLabel(from: url.lastPathComponent) else { return nil }
+                return StoredSnapshot(url: url, date: date, customLabel: label)
             }
             .sorted { $0.date > $1.date }
     }
 
     func delete(_ snapshot: StoredSnapshot) throws {
         try FileManager.default.removeItem(at: snapshot.url)
+    }
+
+    func rename(_ snapshot: StoredSnapshot, to label: String) throws -> StoredSnapshot {
+        let trimmed = label.trimmingCharacters(in: .whitespaces)
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd_HHmm"
+        let dateStr = f.string(from: snapshot.date)
+        let newName: String
+        let newLabel: String?
+        if trimmed.isEmpty {
+            newName = "setshot_\(dateStr).txt.gz"
+            newLabel = nil
+        } else {
+            let safe = trimmed.replacingOccurrences(of: "/", with: "-")
+            newName = "setshot_\(dateStr)_\(safe).txt.gz"
+            newLabel = trimmed
+        }
+        let newURL = directory.appendingPathComponent(newName)
+        if newURL.lastPathComponent != snapshot.url.lastPathComponent {
+            try FileManager.default.moveItem(at: snapshot.url, to: newURL)
+        }
+        return StoredSnapshot(url: newURL, date: snapshot.date, customLabel: newLabel)
     }
 
     // MARK: - Private
@@ -55,14 +77,20 @@ actor SnapshotStore {
         return "setshot_\(f.string(from: date)).txt.gz"
     }
 
-    private func parseDate(from name: String) -> Date? {
+    private func parseDateAndLabel(from name: String) -> (date: Date, label: String?)? {
         var s = name
         if s.hasSuffix(".gz") { s = String(s.dropLast(3)) }
         if s.hasSuffix(".txt") { s = String(s.dropLast(4)) }
         guard s.hasPrefix("setshot_") else { return nil }
+        let rest = String(s.dropFirst(8))
+        guard rest.count >= 15 else { return nil }
+        let dateStr = String(rest.prefix(15))
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd_HHmm"
-        return f.date(from: String(s.dropFirst(8)))
+        guard let date = f.date(from: dateStr) else { return nil }
+        let suffix = String(rest.dropFirst(15))
+        let label = suffix.hasPrefix("_") ? String(suffix.dropFirst()) : nil
+        return (date, label.flatMap { $0.isEmpty ? nil : $0 })
     }
 
     // Use file-based I/O for gzip to avoid Pipe buffer deadlock on large snapshots.
