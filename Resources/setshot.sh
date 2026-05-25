@@ -1363,6 +1363,57 @@ RULES = [
     # logic below can detect all-added / all-removed and emit a single
     # "Printer added/removed: NAME (URI)" line.  Mid-life attribute changes
     # (URI moves, driver swaps) surface as readable raw lines in that section.
+
+    # ── Default application handlers ──────────────────────────────────────
+    # Matched against the summary lines emitted by the APPLICATION HANDLERS
+    # snapshot section (e.g. "default-browser :: handler = com.apple.safari").
+    (r'^handler$', r'default-browser',
+     "Default browser",
+     lambda v: {
+         'com.apple.safari':         'Safari',
+         'org.mozilla.firefox':      'Firefox',
+         'com.google.Chrome':        'Chrome',
+         'com.google.chrome':        'Chrome',
+         'com.microsoft.edgemac':    'Edge',
+         'com.operasoftware.Opera':  'Opera',
+         'com.brave.Browser':        'Brave Browser',
+         'com.vivaldi.Vivaldi':      'Vivaldi',
+         'company.thebrowser.Browser': 'Arc',
+     }.get(v, v), 1, "default_browser"),
+
+    (r'^handler$', r'default-mail-client',
+     "Default mail client",
+     lambda v: {
+         'com.apple.mail':               'Mail',
+         'com.microsoft.Outlook':        'Outlook',
+         'com.readdle.smartmailmac':     'Spark',
+         'com.airmail.5':                'Airmail 5',
+         'com.freron.MailMate':          'MailMate',
+         'com.mimestream.Mimestream':    'Mimestream',
+         'com.google.Gmail':             'Gmail',
+         'com.tinyspeck.slackmacgap':    'Slack',
+         'com.flexibits.fantastical2.mac': 'Fantastical',
+     }.get(v, v), 1, "default_mail"),
+
+    (r'^handler$', r'default-calendar-app',
+     "Default calendar app",
+     lambda v: {
+         'com.apple.ical':               'Calendar',
+         'com.apple.iCal':               'Calendar',
+         'com.busymac.busycal3':         'BusyCal',
+         'com.flexibits.fantastical2.mac': 'Fantastical',
+         'com.readdle.smartmailmac':     'Spark',
+     }.get(v, v), 1, "default_calendar"),
+
+    (r'^handler$', r'default-rss-reader',
+     "Default RSS reader",
+     lambda v: {
+         'com.apple.Safari':             'Safari',
+         'com.apple.safari':             'Safari',
+         'com.netnewswire.netnewswire':  'NetNewsWire',
+         'com.reederapp.5.macOS':        'Reeder',
+         'com.reeder.Reeder5':           'Reeder',
+     }.get(v, v), 1, "default_rss"),
 ]
 
 LINE_RE   = re.compile(r'^([+-])\s*(.*?)\s*::\s*(.+)$')
@@ -2434,7 +2485,7 @@ NOISE_PATTERN='(
   backgroundassets.*:: .*LastWeekly|
   appleaccount.*:: .*[Bb]oot[Ss]ession|
   IMCoreSpotlight.*:: IMCSLast|
-  LaunchServices.*:: LSHandlers\[|
+  com\.apple\.LaunchServices :: LSHandlers\[|
   itunesstored.*:: AuthenticationStarted\s*=|
   Retrobatch.*:: SULast|
   keyboardmaestro.*:: MBPreferences|
@@ -2645,7 +2696,19 @@ NOISE_PATTERN='(
   sirisuggestions.*:: currentIndexVersion\s*=|
 
   # FileVault: transient analytics event
-  filevault.*:: lastAnalyticsEvent\.
+  filevault.*:: lastAnalyticsEvent\.|
+
+  # Affinity Designer/Photo/Publisher: window restore blob (NSKeyedArchiver, changes on every open)
+  affinity.*:: .*\.restore\.windows|
+
+  # Affinity: crash-watcher flag (True while app is running, reverts on clean exit)
+  affinity.*:: .*\.watchForCrash\s*=|
+
+  # Affinity: floating tool panel position (drifts with every open)
+  affinity.*:: .*\.tools\.[^:]*\.frame\s*=|
+
+  # macOS Diagnostics: PID-based log filter (PID changes every process restart)
+  diagnosticd\.filter.*:: logicalExp\.[^:]*\.pid\.
 )'
 
 # Collapse to single-line regex.
@@ -3014,6 +3077,34 @@ PYEOF
     LS_PLIST="$HOME/Library/Application Support/com.apple.LaunchServices/com.apple.launchservices.secure.plist"
     if [ -f "$LS_PLIST" ]; then
       flatten_plist "$LS_PLIST"
+      # Emit explicit summary lines for the most important URL-scheme handlers.
+      # These produce stable "default-browser :: handler = ..." lines that the
+      # explain engine can translate to friendly names even when the LSHandlers
+      # array index shifts (which raw flatten output cannot do reliably).
+      python3 - "$LS_PLIST" << 'PYEOF'
+import sys, plistlib
+try:
+    with open(sys.argv[1], 'rb') as _f:
+        _data = plistlib.load(_f)
+except Exception:
+    sys.exit(0)
+_by_scheme = {}
+for _h in _data.get('LSHandlers', []):
+    _s = _h.get('LSHandlerURLScheme')
+    _r = _h.get('LSHandlerRoleAll') or _h.get('LSHandlerRoleViewer') or ''
+    if _s and _r:
+        _by_scheme[_s] = _r
+_want = [
+    ('http',    'default-browser'),
+    ('https',   'default-browser-https'),
+    ('mailto',  'default-mail-client'),
+    ('webcal',  'default-calendar-app'),
+    ('feed',    'default-rss-reader'),
+]
+for _scheme, _label in _want:
+    if _scheme in _by_scheme:
+        print(f"{_label} :: handler = {_by_scheme[_scheme]}")
+PYEOF
     else
       echo "${LS_PLIST} :: (not found)"
     fi
