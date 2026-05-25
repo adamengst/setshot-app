@@ -87,6 +87,14 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label
     git push
     ```
 
+### Deploying the Cloudflare worker
+
+After changes to `worker.js`, deploy with:
+```
+wrangler deploy
+```
+(Run from the `setshot-app` repo directory. Requires `wrangler` installed via `npm install -g wrangler` and authenticated via `wrangler login`.)
+
 ### Signing details
 - Team ID: `6SCP2R96HY` (TidBITS Publishing Inc.)
 - Notarization keychain profile: `SetShot-notarize`
