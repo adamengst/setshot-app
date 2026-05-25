@@ -31,7 +31,10 @@ targets:
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml"
         INFOPLIST_KEY_SUPublicEDKey: "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg="
+        DEVELOPMENT_TEAM: 6SCP2R96HY
+        CODE_SIGN_STYLE: Manual
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_ENTITLEMENTS: SetShot/SetShot.entitlements
+        CODE_SIGN_IDENTITY: "Developer ID Application"
         DEAD_CODE_STRIPPING: YES
         ENABLE_USER_SCRIPT_SANDBOXING: YES

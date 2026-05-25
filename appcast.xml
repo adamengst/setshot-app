@@ -5,20 +5,18 @@
         <link>https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml</link>
         <description>SetShot release feed</description>
         <language>en</language>
-        <!-- Add an <item> here for each release. Example:
         <item>
             <title>SetShot 1.0</title>
-            <pubDate>Mon, 26 May 2026 00:00:00 +0000</pubDate>
+            <pubDate>Sun, 25 May 2026 00:00:00 +0000</pubDate>
             <sparkle:version>1</sparkle:version>
             <sparkle:shortVersionString>1.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <enclosure
-                url="https://github.com/adamengst/setshot-app/releases/download/v1.0/SetShot.zip"
-                sparkle:edSignature="SIGNATURE_FROM_sign_update_TOOL"
-                length="BYTES"
+                url="https://github.com/adamengst/setshot-app/releases/download/v1.0/SetShot-1.0.zip"
+                sparkle:edSignature="NeHxiVgGpT+Ri6mcwOmJ70CbAwGCbWDz558wdTFjUtkKJlTqthIx6Hjz9LOUgDOeGt5/juYKY4LmccWx3gTXAw=="
+                length="4394041"
                 type="application/octet-stream"
             />
         </item>
-        -->
     </channel>
 </rss>
