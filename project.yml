@@ -33,3 +33,5 @@ targets:
         INFOPLIST_KEY_SUPublicEDKey: "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg="
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_ENTITLEMENTS: SetShot/SetShot.entitlements
+        DEAD_CODE_STRIPPING: YES
+        ENABLE_USER_SCRIPT_SANDBOXING: YES
