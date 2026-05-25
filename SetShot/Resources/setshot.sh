@@ -40,6 +40,11 @@ from datetime import datetime
 def flatten(obj, prefix=""):
     if isinstance(obj, bool):
         print(f"{prefix} = {obj}")
+    elif isinstance(obj, int) and obj in (0, 1):
+        # Normalize integer 0/1 to False/True so that plists switching between
+        # <integer>1</integer> and <true/> on disk don't produce false diffs.
+        # (bool is a subclass of int, so the bool check above runs first.)
+        print(f"{prefix} = {bool(obj)}")
     elif isinstance(obj, plistlib.UID):
         print(f"{prefix} = <UID {obj.data}>")
     elif isinstance(obj, dict):
@@ -1965,6 +1970,8 @@ NOISE_PATTERN='(
   windowserver\.displays.*:: .*DefaultConfigVersion\s*=|
   dt\.Xcode\.plist :: IDEAnalytics|
   dt\.Xcode\.plist :: IDEAppStatistics|
+  dt\.Xcode\.plist :: IDERecentEditorDocuments\[|
+  dt\.Xcode\.plist :: IDESwiftPackage|
   :: closeViewZoomedIn\s*=|
   :: userAccessCode\s*=|
   :: RecentMoveAndCopyDestinations\[|
@@ -2707,7 +2714,9 @@ NOISE_PATTERN='(
   # Affinity: floating tool panel position (drifts with every open)
   affinity.*:: .*\.tools\.[^:]*\.frame\s*=|
 
-  # macOS Diagnostics: PID-based log filter (PID changes every process restart)
+  # macOS Diagnostics / Instruments: entire log filter plist (Xcode-managed, changes whenever
+  # Xcode or Instruments configures debug logging; the whole file is noise)
+  Logging/.*diagnosticd\.filter|
   diagnosticd\.filter.*:: logicalExp\.[^:]*\.pid\.
 )'
 

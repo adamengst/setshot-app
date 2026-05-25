@@ -186,14 +186,20 @@ private struct RecognisedRow: View {
                     .controlSize(.small)
                 }
             }
-            HStack {
+            HStack(alignment: .firstTextBaseline) {
                 Text(diff.rawLine)
                     .font(.system(.caption2, design: .monospaced))
                     .foregroundStyle(.tertiary)
                 Spacer()
-                Text("\(diff.beforeValue) → \(diff.afterValue)")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Text(diff.beforeValue.isEmpty ? "(none)" : diff.beforeValue)
+                        .foregroundStyle(.red.opacity(0.8))
+                    Text("→")
+                        .foregroundStyle(.secondary)
+                    Text(diff.afterValue.isEmpty ? "(none)" : diff.afterValue)
+                        .foregroundStyle(.green.opacity(0.9))
+                }
+                .font(.system(.caption, design: .monospaced))
             }
         }
         .padding(12)
@@ -221,9 +227,15 @@ private struct UnrecognisedRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(diff.rawLine)
                     .font(.system(.body, design: .monospaced))
-                Text("\(diff.beforeValue) → \(diff.afterValue)")
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Text(diff.beforeValue.isEmpty ? "(none)" : diff.beforeValue)
+                        .foregroundStyle(.red.opacity(0.8))
+                    Text("→")
+                        .foregroundStyle(.secondary)
+                    Text(diff.afterValue.isEmpty ? "(none)" : diff.afterValue)
+                        .foregroundStyle(.green.opacity(0.9))
+                }
+                .font(.system(.caption, design: .monospaced))
             }
             Spacer()
             if isSubmitted {
