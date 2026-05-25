@@ -50,7 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             do {
                 let snapshot = try await SnapshotRunner().run()
-                try await SnapshotStore.shared.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
+                _ = try await SnapshotStore.shared.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
             } catch {}
             await MainActor.run { NSApp.terminate(nil) }
         }
