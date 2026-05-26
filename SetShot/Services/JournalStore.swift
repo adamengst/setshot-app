@@ -34,11 +34,24 @@ actor JournalStore {
         var result: [JournalEntry] = []
         // Sort oldest After snapshot first so we always keep the earliest occurrence.
         for e in entries.sorted(by: { $0.afterSnapshotDate < $1.afterSnapshotDate }) {
-            if seen.insert("\(e.domain)|\(e.key)|\(e.oldValue)|\(e.newValue)").inserted {
+            if seen.insert(dedupKey(domain: e.domain, key: e.key, old: e.oldValue, new: e.newValue)).inserted {
                 result.append(e)
             }
         }
         return result
+    }
+
+    // Normalize boolean representations so "True"/"1" and "False"/"0" match each other.
+    private func normalizeBool(_ v: String) -> String {
+        switch v.lowercased() {
+        case "true", "yes", "1": return "1"
+        case "false", "no", "0": return "0"
+        default: return v
+        }
+    }
+
+    private func dedupKey(domain: String, key: String, old: String, new: String) -> String {
+        "\(domain)|\(key)|\(normalizeBool(old))|\(normalizeBool(new))"
     }
 
     private func save(_ entries: [JournalEntry]) {
@@ -52,11 +65,11 @@ actor JournalStore {
     @discardableResult
     func add(recognized: [(entry: KBEntry, diff: DiffLine)], afterSnapshot: StoredSnapshot) -> [JournalEntry] {
         var entries = load()
-        let existingKeys = Set(entries.map { "\($0.domain)|\($0.key)|\($0.oldValue)|\($0.newValue)" })
+        let existingKeys = Set(entries.map { dedupKey(domain: $0.domain, key: $0.key, old: $0.oldValue, new: $0.newValue) })
         let now = Date()
         for item in recognized {
-            let dedupKey = "\(item.diff.domain)|\(item.diff.key)|\(item.diff.beforeValue)|\(item.diff.afterValue)"
-            guard !existingKeys.contains(dedupKey) else { continue }
+            let key = dedupKey(domain: item.diff.domain, key: item.diff.key, old: item.diff.beforeValue, new: item.diff.afterValue)
+            guard !existingKeys.contains(key) else { continue }
             entries.append(JournalEntry(
                 id: UUID(),
                 afterSnapshotId: afterSnapshot.id,
