@@ -78,8 +78,7 @@ private struct WindowFrameSaver: NSViewRepresentable {
     class FrameSaverView: NSView {
         let name: String
         private var observers: [NSObjectProtocol] = []
-        private var setupDone = false
-        private var readyToSave = false
+        private static var initializedWindowIDs: Set<ObjectIdentifier> = []
 
         init(name: String) { self.name = name; super.init(frame: .zero) }
         required init?(coder: NSCoder) { fatalError() }
@@ -88,36 +87,51 @@ private struct WindowFrameSaver: NSViewRepresentable {
 
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
-            guard let window, !setupDone else { return }
-            setupDone = true
+            guard let window else { return }
+            let wid = ObjectIdentifier(window)
+            guard !Self.initializedWindowIDs.contains(wid) else { return }
+            Self.initializedWindowIDs.insert(wid)
 
-            // Save position when the user moves the window (guarded by readyToSave
-            // so SwiftUI's initial positioning is not recorded).
+            // Hide immediately so repositioning is invisible to the user.
+            window.alphaValue = 0
+
+            let savedKey = key
+            var readyToSave = false
+
             observers.append(NotificationCenter.default.addObserver(
                 forName: NSWindow.didMoveNotification, object: window, queue: .main
-            ) { [weak self, weak window] _ in
-                guard let self, self.readyToSave, let window else { return }
-                UserDefaults.standard.set(NSStringFromRect(window.frame), forKey: self.key)
+            ) { [weak window] _ in
+                guard readyToSave, let window else { return }
+                UserDefaults.standard.set(NSStringFromRect(window.frame), forKey: savedKey)
             })
 
-            // didEndLiveResizeNotification only fires for user-driven resizes, not
-            // SwiftUI auto-sizing, so no guard is needed.
+            // didEndLiveResizeNotification only fires for user-driven resizes.
             observers.append(NotificationCenter.default.addObserver(
                 forName: NSWindow.didEndLiveResizeNotification, object: window, queue: .main
-            ) { [weak self, weak window] _ in
-                guard let self, let window else { return }
-                UserDefaults.standard.set(NSStringFromRect(window.frame), forKey: self.key)
+            ) { [weak window] _ in
+                guard let window else { return }
+                UserDefaults.standard.set(NSStringFromRect(window.frame), forKey: savedKey)
             })
 
-            // Restore the saved frame after SwiftUI finishes its layout pass.
-            let savedKey = key
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self, weak window] in
-                defer { self?.readyToSave = true }
-                guard let window,
-                      let str = UserDefaults.standard.string(forKey: savedKey) else { return }
-                let frame = NSRectFromString(str)
-                guard frame.width > 0, frame.height > 0 else { return }
-                window.setFrame(frame, display: true)
+            observers.append(NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification, object: window, queue: .main
+            ) { _ in Self.initializedWindowIDs.remove(wid) })
+
+            // Let SwiftUI finish its layout pass, then apply the saved frame
+            // and fade in. The window is invisible throughout, so there is no jump.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak window] in
+                guard let window else { return }
+                if let str = UserDefaults.standard.string(forKey: savedKey) {
+                    let frame = NSRectFromString(str)
+                    if frame.width > 0, frame.height > 0 {
+                        window.setFrame(frame, display: false)
+                    }
+                }
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.15
+                    window.animator().alphaValue = 1
+                }
+                readyToSave = true
             }
         }
 
