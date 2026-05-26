@@ -47,7 +47,7 @@ struct SnapshotLibraryView: View {
         HStack(spacing: 12) {
             Text("SetShot").font(.headline)
             Picker("", selection: $showingJournal) {
-                Text("Library").tag(false)
+                Text("Snapshots").tag(false)
                 Text("Journal").tag(true)
             }
             .pickerStyle(.segmented)

@@ -20,7 +20,7 @@ struct ResultsView: View {
         }
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Back to Library") { appState = .library }
+                Button("Back to Snapshots") { appState = .library }
             }
         }
         .alert("Submission Failed", isPresented: Binding(
