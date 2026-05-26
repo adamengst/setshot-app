@@ -35,12 +35,13 @@ targets:
         SWIFT_VERSION: 5.9
         MACOSX_DEPLOYMENT_TARGET: "13.0"
         GENERATE_INFOPLIST_FILE: YES
-        MARKETING_VERSION: "1.0.3"
-        CURRENT_PROJECT_VERSION: "4"
+        MARKETING_VERSION: "1.0.4"
+        CURRENT_PROJECT_VERSION: "5"
         INFOPLIST_KEY_CFBundleDisplayName: SetShot
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml"
         INFOPLIST_KEY_SUPublicEDKey: "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg="
+        INFOPLIST_KEY_SUScheduledCheckInterval: "3600"
         DEVELOPMENT_TEAM: 6SCP2R96HY
         CODE_SIGN_STYLE: Manual
         ENABLE_HARDENED_RUNTIME: YES

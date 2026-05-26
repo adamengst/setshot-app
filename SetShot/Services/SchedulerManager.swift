@@ -30,12 +30,13 @@ struct SchedulerManager {
     }
 
     static func install(hour: Int, minute: Int) throws {
-        // Use `open -g -a SetShot --args --background-snapshot` so macOS attributes
-        // the background item to SetShot, not to bash.
-        let appPath = Bundle.main.bundlePath
+        // Run the executable directly so TCC attributes permission requests to
+        // SetShot's bundle ID. Using `open` makes `open` the responsible process,
+        // which causes TCC to prompt on every defaults read instead of remembering.
+        let executablePath = Bundle.main.executablePath!
         let plist: NSDictionary = [
             "Label": label,
-            "ProgramArguments": ["/usr/bin/open", "-g", "-a", appPath, "--args", "--background-snapshot"],
+            "ProgramArguments": [executablePath, "--background-snapshot"],
             "StartCalendarInterval": ["Hour": hour, "Minute": minute],
             "StandardOutPath": "/tmp/setshot-daily.log",
             "StandardErrorPath": "/tmp/setshot-daily.log",
