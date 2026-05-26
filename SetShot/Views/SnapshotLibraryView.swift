@@ -9,18 +9,23 @@ struct SnapshotLibraryView: View {
     @State private var isComparing = false
     @State private var errorMessage: String?
     @State private var showSettings = false
+    @State private var showingJournal = false
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
-            if appModel.snapshots.isEmpty {
+            if showingJournal {
+                JournalView()
+            } else if appModel.snapshots.isEmpty {
                 emptyState
             } else {
                 pickerColumns
             }
-            Divider()
-            footer
+            if !showingJournal {
+                Divider()
+                footer
+            }
         }
         .task { await appModel.loadSnapshots() }
         .sheet(isPresented: $showSettings) {
@@ -41,6 +46,12 @@ struct SnapshotLibraryView: View {
     private var header: some View {
         HStack(spacing: 12) {
             Text("SetShot").font(.headline)
+            Picker("", selection: $showingJournal) {
+                Text("Library").tag(false)
+                Text("Journal").tag(true)
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 160)
             Spacer()
             Button {
                 showSettings = true

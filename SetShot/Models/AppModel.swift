@@ -5,8 +5,10 @@ class AppModel: ObservableObject {
     @Published var kb: KnowledgeBase = .empty
     @Published var kbUnavailable = false
     @Published var snapshots: [StoredSnapshot] = []
+    @Published var journal: [JournalEntry] = []
 
     private let store = SnapshotStore.shared
+    private let journalStore = JournalStore.shared
 
     func loadKB() async {
         let (kb, unavailable) = await KBFetcher.shared.fetchIfNeeded()
@@ -22,6 +24,10 @@ class AppModel: ObservableObject {
 
     func loadSnapshots() async {
         snapshots = (try? await store.list()) ?? []
+    }
+
+    func loadJournal() async {
+        journal = await journalStore.load()
     }
 
     func takeSnapshot() async throws -> StoredSnapshot {
@@ -49,6 +55,16 @@ class AppModel: ObservableObject {
         let (b, a) = try await (beforeText, afterText)
         let bSnap = Snapshot(takenAt: before.date, rawOutput: b)
         let aSnap = Snapshot(takenAt: after.date, rawOutput: a)
-        return try await DiffEngine().diff(before: bSnap, after: aSnap, kb: kb)
+        let result = try await DiffEngine().diff(before: bSnap, after: aSnap, kb: kb)
+        journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after)
+        return result
+    }
+
+    func deleteJournalEntry(_ entry: JournalEntry) async {
+        journal = await journalStore.delete(entryID: entry.id)
+    }
+
+    func deleteJournalSection(afterSnapshotId: String) async {
+        journal = await journalStore.delete(afterSnapshotId: afterSnapshotId)
     }
 }

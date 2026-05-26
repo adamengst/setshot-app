@@ -33,6 +33,7 @@ struct SetShotApp: App {
                     .background(WindowFrameSaver(name: "SetShotMainWindow"))
                     .task { await appModel.loadKB() }
                     .task { await appModel.loadSnapshots() }
+                    .task { await appModel.loadJournal() }
             }
         }
         .defaultSize(width: 800, height: 600)

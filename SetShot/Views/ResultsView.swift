@@ -106,7 +106,7 @@ struct ResultsView: View {
 
 }
 
-private func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil) -> String {
+func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil) -> String {
     if let map = valueMap {
         // Normalize True/False → 1/0 for value_map lookup since FLATTEN_PY
         // converts integer 0/1 to booleans, but value_map keys use integers.
