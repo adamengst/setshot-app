@@ -138,34 +138,38 @@ private struct JournalRow: View {
         let oldFormatted = formatValue(entry.oldValue, key: entry.key, valueMap: valueMap)
         let newFormatted = formatValue(entry.newValue, key: entry.key, valueMap: valueMap)
 
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(description)
-                        .fontWeight(.medium)
-                    if let location {
-                        Text(location)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+        HStack(alignment: .top, spacing: 12) {
+            SettingsPaneIcon(settingsURL: kbEntry?.settingsURL ?? entry.settingsURL, domain: entry.domain)
+                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(description)
+                            .fontWeight(.medium)
+                        if let location {
+                            Text(location)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    if let url = settingsURL {
+                        Button("Open in Settings") {
+                            NSWorkspace.shared.open(url)
+                        }
+                        .controlSize(.small)
                     }
                 }
-                Spacer()
-                if let url = settingsURL {
-                    Button("Open in Settings") {
-                        NSWorkspace.shared.open(url)
-                    }
-                    .controlSize(.small)
+                HStack(spacing: 6) {
+                    Text(oldFormatted.isEmpty ? "(none)" : oldFormatted)
+                        .foregroundStyle(.orange)
+                    Text("→")
+                        .foregroundStyle(.secondary)
+                    Text(newFormatted.isEmpty ? "(none)" : newFormatted)
+                        .foregroundStyle(.blue)
                 }
+                .font(.system(.callout, design: .monospaced))
             }
-            HStack(spacing: 6) {
-                Text(oldFormatted.isEmpty ? "(none)" : oldFormatted)
-                    .foregroundStyle(.orange)
-                Text("→")
-                    .foregroundStyle(.secondary)
-                Text(newFormatted.isEmpty ? "(none)" : newFormatted)
-                    .foregroundStyle(.blue)
-            }
-            .font(.system(.callout, design: .monospaced))
         }
         .padding(12)
         .background(Color.secondary.opacity(0.08))

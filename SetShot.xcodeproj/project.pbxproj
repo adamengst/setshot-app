@@ -22,6 +22,7 @@
 		690680745C90E644E76C118A /* SchedulerSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3A3C6E37BA3D10BA566468E /* SchedulerSettingsView.swift */; };
 		6B70D4DA7BB86DBA2326CAE8 /* SnapshotLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B5F566BCF5465D0E537F1E /* SnapshotLibraryView.swift */; };
 		750961F0FB45F04AB158FB6A /* SetShotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E8B01CA91F970990260529 /* SetShotApp.swift */; };
+		7657036547D21AA8777CD4C2 /* SettingsPaneIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30017B093D6AC6D842717D78 /* SettingsPaneIcon.swift */; };
 		7ADDE1A25FF0088471FAFE20 /* SnapshotTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC851344C45F930AD15B70EA /* SnapshotTakenView.swift */; };
 		84003123710E517BD6FCD2F0 /* DiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57C901AB4841ACACEBB1709 /* DiffEngine.swift */; };
 		8AFEF96A156F43C87BDC4252 /* setshot.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */; };
@@ -38,6 +39,7 @@
 		E2E28FD6BDB9AB7D40EF464C /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A182A3E724717177EE351D /* ResultsView.swift */; };
 		E401DA3BE1DDFBA099217586 /* KBEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4812AB60001E9D6F2D98CAF /* KBEntry.swift */; };
 		E77D478F90D0A824480273CE /* KBEntryDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FB9705E796395269414C4D8 /* KBEntryDecodingTests.swift */; };
+		F0117CDA3B3F3EB9E30E2707 /* SettingsPaneIconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458C8E9D2E3CAD28CC042E3B /* SettingsPaneIconProvider.swift */; };
 		F932C362BDFA26623A14BFB3 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E256CCC724BA590CC12FEDB /* AppModel.swift */; };
 		FA45E69608F29852F581E969 /* JournalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DC2A921ED003213349A822 /* JournalStore.swift */; };
 /* End PBXBuildFile section */
@@ -61,7 +63,9 @@
 		16BC8706F8185F017B4E6163 /* JournalEntryDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalEntryDecodingTests.swift; sourceTree = "<group>"; };
 		185A25C6B1C00220CA8814D3 /* SchedulerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulerManager.swift; sourceTree = "<group>"; };
 		2F1789A22D8F676149B825D9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		30017B093D6AC6D842717D78 /* SettingsPaneIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPaneIcon.swift; sourceTree = "<group>"; };
 		347BED5814A5D9C1944FE30E /* JournalStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalStoreTests.swift; sourceTree = "<group>"; };
+		458C8E9D2E3CAD28CC042E3B /* SettingsPaneIconProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPaneIconProvider.swift; sourceTree = "<group>"; };
 		4C0C61EA6C2B010EEC849475 /* JournalEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalEntry.swift; sourceTree = "<group>"; };
 		4F82F5191799C0CF87026222 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		53E06A63C729BADDD2983529 /* KnowledgeBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeBase.swift; sourceTree = "<group>"; };
@@ -135,6 +139,7 @@
 				B1CCB5A46AF855D9998F53D5 /* ReadyView.swift */,
 				66A182A3E724717177EE351D /* ResultsView.swift */,
 				B3A3C6E37BA3D10BA566468E /* SchedulerSettingsView.swift */,
+				30017B093D6AC6D842717D78 /* SettingsPaneIcon.swift */,
 				59B5F566BCF5465D0E537F1E /* SnapshotLibraryView.swift */,
 				BC851344C45F930AD15B70EA /* SnapshotTakenView.swift */,
 				001649E989CE2587D04C5069 /* SubmitView.swift */,
@@ -194,6 +199,7 @@
 				F6DC2A921ED003213349A822 /* JournalStore.swift */,
 				61336BF2958C0E7F041BDB4B /* KBFetcher.swift */,
 				185A25C6B1C00220CA8814D3 /* SchedulerManager.swift */,
+				458C8E9D2E3CAD28CC042E3B /* SettingsPaneIconProvider.swift */,
 				74E1D922E36C27838EAAA810 /* SnapshotRunner.swift */,
 				BFC736C8AACADAB2F87C0D4E /* SnapshotStore.swift */,
 				1334AD759BA9369F202E6779 /* SubmissionService.swift */,
@@ -317,6 +323,8 @@
 				944E4312B5E0726F5FC7C28F /* SchedulerManager.swift in Sources */,
 				690680745C90E644E76C118A /* SchedulerSettingsView.swift in Sources */,
 				750961F0FB45F04AB158FB6A /* SetShotApp.swift in Sources */,
+				7657036547D21AA8777CD4C2 /* SettingsPaneIcon.swift in Sources */,
+				F0117CDA3B3F3EB9E30E2707 /* SettingsPaneIconProvider.swift in Sources */,
 				1DB3BE15D1F1B3F3FD577AA0 /* Snapshot.swift in Sources */,
 				6B70D4DA7BB86DBA2326CAE8 /* SnapshotLibraryView.swift in Sources */,
 				DA7FF8038AE6D2E1EB962360 /* SnapshotRunner.swift in Sources */,

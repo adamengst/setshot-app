@@ -151,34 +151,38 @@ private struct RecognizedRow: View {
     var body: some View {
         let settingsURL = validatedSettingsURL(entry.settingsURL)
 
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(entry.description)
-                        .fontWeight(.medium)
-                    if let location = entry.uiLocation {
-                        Text(location)
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+        HStack(alignment: .top, spacing: 12) {
+            SettingsPaneIcon(settingsURL: entry.settingsURL, domain: diff.domain)
+                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(entry.description)
+                            .fontWeight(.medium)
+                        if let location = entry.uiLocation {
+                            Text(location)
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    if let url = settingsURL {
+                        Button("Open in Settings") {
+                            NSWorkspace.shared.open(url)
+                        }
+                        .controlSize(.small)
                     }
                 }
-                Spacer()
-                if let url = settingsURL {
-                    Button("Open in Settings") {
-                        NSWorkspace.shared.open(url)
-                    }
-                    .controlSize(.small)
+                HStack(spacing: 6) {
+                    Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap))
+                        .foregroundStyle(.orange)
+                    Text("→")
+                        .foregroundStyle(.secondary)
+                    Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap))
+                        .foregroundStyle(.blue)
                 }
+                .font(.system(.callout, design: .monospaced))
             }
-            HStack(spacing: 6) {
-                Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap))
-                    .foregroundStyle(.orange)
-                Text("→")
-                    .foregroundStyle(.secondary)
-                Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap))
-                    .foregroundStyle(.blue)
-            }
-            .font(.system(.callout, design: .monospaced))
         }
         .padding(12)
         .background(Color.secondary.opacity(0.08))
