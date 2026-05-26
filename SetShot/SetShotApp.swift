@@ -52,6 +52,7 @@ struct SetShotApp: App {
                 .background(WindowFrameSaver(name: "SetShotHelpWindow"))
         }
         .defaultSize(width: 620, height: 600)
+        .commandsRemoved()
     }
 }
 
@@ -76,15 +77,52 @@ private struct WindowFrameSaver: NSViewRepresentable {
 
     class FrameSaverView: NSView {
         let name: String
+        private var observers: [NSObjectProtocol] = []
+        private var setupDone = false
+        private var readyToSave = false
+
         init(name: String) { self.name = name; super.init(frame: .zero) }
         required init?(coder: NSCoder) { fatalError() }
+
+        private var key: String { "WindowFrame.\(name)" }
+
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
-            guard let window else { return }
-            window.setFrameAutosaveName(name)
-            // SwiftUI may resize the window after this call; restore
-            // the saved frame on the next run loop pass so it wins.
-            DispatchQueue.main.async { window.setFrameUsingName(self.name) }
+            guard let window, !setupDone else { return }
+            setupDone = true
+
+            // Save position when the user moves the window (guarded by readyToSave
+            // so SwiftUI's initial positioning is not recorded).
+            observers.append(NotificationCenter.default.addObserver(
+                forName: NSWindow.didMoveNotification, object: window, queue: .main
+            ) { [weak self, weak window] _ in
+                guard let self, self.readyToSave, let window else { return }
+                UserDefaults.standard.set(NSStringFromRect(window.frame), forKey: self.key)
+            })
+
+            // didEndLiveResizeNotification only fires for user-driven resizes, not
+            // SwiftUI auto-sizing, so no guard is needed.
+            observers.append(NotificationCenter.default.addObserver(
+                forName: NSWindow.didEndLiveResizeNotification, object: window, queue: .main
+            ) { [weak self, weak window] _ in
+                guard let self, let window else { return }
+                UserDefaults.standard.set(NSStringFromRect(window.frame), forKey: self.key)
+            })
+
+            // Restore the saved frame after SwiftUI finishes its layout pass.
+            let savedKey = key
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self, weak window] in
+                defer { self?.readyToSave = true }
+                guard let window,
+                      let str = UserDefaults.standard.string(forKey: savedKey) else { return }
+                let frame = NSRectFromString(str)
+                guard frame.width > 0, frame.height > 0 else { return }
+                window.setFrame(frame, display: true)
+            }
+        }
+
+        deinit {
+            observers.forEach { NotificationCenter.default.removeObserver($0) }
         }
     }
 }
