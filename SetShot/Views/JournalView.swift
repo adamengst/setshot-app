@@ -94,7 +94,7 @@ struct JournalView: View {
         VStack(alignment: .leading, spacing: 8) {
             sectionHeader(section)
             ForEach(section.entries) { entry in
-                JournalRow(entry: entry)
+                JournalRow(entry: entry, kb: appModel.kb)
                     .contextMenu {
                         Button("Delete Entry", role: .destructive) {
                             Task { await appModel.deleteJournalEntry(entry) }
@@ -127,16 +127,23 @@ struct JournalView: View {
 
 private struct JournalRow: View {
     let entry: JournalEntry
+    let kb: KnowledgeBase
 
     var body: some View {
-        let settingsURL = validatedSettingsURL(entry.settingsURL)
+        let kbEntry = kb.entry(forDomain: entry.domain, key: entry.key)
+        let description = kbEntry?.description ?? entry.entryDescription
+        let location = kbEntry?.uiLocation ?? entry.uiLocation
+        let settingsURL = validatedSettingsURL(kbEntry?.settingsURL ?? entry.settingsURL)
+        let valueMap = kbEntry?.valueMap
+        let oldFormatted = formatValue(entry.oldValue, key: entry.key, valueMap: valueMap)
+        let newFormatted = formatValue(entry.newValue, key: entry.key, valueMap: valueMap)
 
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(entry.entryDescription)
+                    Text(description)
                         .fontWeight(.medium)
-                    if let location = entry.uiLocation {
+                    if let location {
                         Text(location)
                             .font(.callout)
                             .foregroundStyle(.secondary)
@@ -151,11 +158,11 @@ private struct JournalRow: View {
                 }
             }
             HStack(spacing: 6) {
-                Text(entry.oldValue.isEmpty ? "(none)" : entry.oldValue)
+                Text(oldFormatted.isEmpty ? "(none)" : oldFormatted)
                     .foregroundStyle(.orange)
                 Text("→")
                     .foregroundStyle(.secondary)
-                Text(entry.newValue.isEmpty ? "(none)" : entry.newValue)
+                Text(newFormatted.isEmpty ? "(none)" : newFormatted)
                     .foregroundStyle(.blue)
             }
             .font(.system(.callout, design: .monospaced))

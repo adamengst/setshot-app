@@ -52,8 +52,8 @@ actor JournalStore {
                 entryDescription: item.entry.description,
                 uiLocation: item.entry.uiLocation,
                 settingsURL: item.entry.settingsURL,
-                oldValue: formatValue(item.diff.beforeValue, key: item.diff.key, valueMap: item.entry.valueMap),
-                newValue: formatValue(item.diff.afterValue, key: item.diff.key, valueMap: item.entry.valueMap),
+                oldValue: item.diff.beforeValue,
+                newValue: item.diff.afterValue,
                 addedAt: now
             ))
         }

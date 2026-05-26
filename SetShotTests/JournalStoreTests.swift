@@ -61,8 +61,8 @@ final class JournalStoreTests: XCTestCase {
         let entries = await store.add(recognized: recognized, afterSnapshot: snapshot)
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries[0].key, "SomeKey")
-        XCTAssertEqual(entries[0].oldValue, "Off")
-        XCTAssertEqual(entries[0].newValue, "On")
+        XCTAssertEqual(entries[0].oldValue, "False")
+        XCTAssertEqual(entries[0].newValue, "True")
     }
 
     func testDeduplicationPreventsRepeats() async {
