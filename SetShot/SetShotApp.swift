@@ -49,6 +49,7 @@ struct SetShotApp: App {
 
         WindowGroup("SetShot Help", id: "help") {
             HelpView()
+                .background(WindowFrameSaver(name: "SetShotHelpWindow"))
         }
         .defaultSize(width: 620, height: 600)
     }
@@ -79,7 +80,11 @@ private struct WindowFrameSaver: NSViewRepresentable {
         required init?(coder: NSCoder) { fatalError() }
         override func viewDidMoveToWindow() {
             super.viewDidMoveToWindow()
-            window?.setFrameAutosaveName(name)
+            guard let window else { return }
+            window.setFrameAutosaveName(name)
+            // SwiftUI may resize the window after this call; restore
+            // the saved frame on the next run loop pass so it wins.
+            DispatchQueue.main.async { window.setFrameUsingName(self.name) }
         }
     }
 }
