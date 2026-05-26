@@ -23,7 +23,17 @@ actor JournalStore {
         guard let data = try? Data(contentsOf: fileURL) else { return [] }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
-        return (try? decoder.decode([JournalEntry].self, from: data)) ?? []
+        let entries = (try? decoder.decode([JournalEntry].self, from: data)) ?? []
+        let deduped = deduplicated(entries)
+        if deduped.count != entries.count { save(deduped) }
+        return deduped
+    }
+
+    private func deduplicated(_ entries: [JournalEntry]) -> [JournalEntry] {
+        var seen = Set<String>()
+        return entries.filter { e in
+            seen.insert("\(e.domain)|\(e.key)|\(e.oldValue)|\(e.newValue)").inserted
+        }
     }
 
     private func save(_ entries: [JournalEntry]) {
@@ -37,10 +47,10 @@ actor JournalStore {
     @discardableResult
     func add(recognized: [(entry: KBEntry, diff: DiffLine)], afterSnapshot: StoredSnapshot) -> [JournalEntry] {
         var entries = load()
-        let existingKeys = Set(entries.map { "\($0.afterSnapshotId)|\($0.domain)|\($0.key)" })
+        let existingKeys = Set(entries.map { "\($0.domain)|\($0.key)|\($0.oldValue)|\($0.newValue)" })
         let now = Date()
         for item in recognized {
-            let dedupKey = "\(afterSnapshot.id)|\(item.diff.domain)|\(item.diff.key)"
+            let dedupKey = "\(item.diff.domain)|\(item.diff.key)|\(item.diff.beforeValue)|\(item.diff.afterValue)"
             guard !existingKeys.contains(dedupKey) else { continue }
             entries.append(JournalEntry(
                 id: UUID(),

@@ -87,13 +87,22 @@ final class JournalStoreTests: XCTestCase {
         XCTAssertTrue(entries.contains { $0.key == "KeyB" })
     }
 
-    func testDifferentSnapshotsProduceSeparateEntries() async {
+    func testSameChangeDedupedAcrossSnapshots() async {
         let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))
         let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))
         let recognized = [(entry: makeKBEntry(), diff: makeDiffLine())]
         _ = await store.add(recognized: recognized, afterSnapshot: snap1)
         let entries = await store.add(recognized: recognized, afterSnapshot: snap2)
-        XCTAssertEqual(entries.count, 2, "Same key from different After snapshots should both be journaled")
+        XCTAssertEqual(entries.count, 1, "Same domain+key+values across different snapshots should not duplicate")
+        XCTAssertEqual(entries[0].afterSnapshotId, snap1.id, "Older entry should be kept")
+    }
+
+    func testDifferentValuesSameKeyProduceSeparateEntries() async {
+        let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))
+        let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))
+        _ = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "False", after: "True"))], afterSnapshot: snap1)
+        let entries = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "True", after: "False"))], afterSnapshot: snap2)
+        XCTAssertEqual(entries.count, 2, "Same key with different old/new values should produce separate entries")
     }
 
     func testDeleteEntry() async {
@@ -112,9 +121,8 @@ final class JournalStoreTests: XCTestCase {
     func testDeleteSection() async {
         let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))
         let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))
-        let recognized = [(entry: makeKBEntry(), diff: makeDiffLine())]
-        _ = await store.add(recognized: recognized, afterSnapshot: snap1)
-        _ = await store.add(recognized: recognized, afterSnapshot: snap2)
+        _ = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "False", after: "True"))], afterSnapshot: snap1)
+        _ = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "True", after: "False"))], afterSnapshot: snap2)
         let entries = await store.delete(afterSnapshotId: snap1.id)
         XCTAssertEqual(entries.count, 1)
         XCTAssertEqual(entries[0].afterSnapshotId, snap2.id)
