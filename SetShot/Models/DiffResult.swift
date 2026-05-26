@@ -12,9 +12,9 @@ struct DiffLine: Identifiable {
 }
 
 struct DiffResult {
-    let recognised: [(entry: KBEntry, diff: DiffLine)]
-    let unrecognised: [DiffLine]
+    let recognized: [(entry: KBEntry, diff: DiffLine)]
+    let unrecognized: [DiffLine]
     let noise: [(entry: KBEntry, diff: DiffLine)]
 
-    static let empty = DiffResult(recognised: [], unrecognised: [], noise: [])
+    static let empty = DiffResult(recognized: [], unrecognized: [], noise: [])
 }

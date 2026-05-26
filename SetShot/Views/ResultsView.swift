@@ -13,8 +13,8 @@ struct ResultsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
-                recognisedSection
-                unrecognisedSection
+                recognizedSection
+                unrecognizedSection
             }
             .padding(32)
         }
@@ -34,33 +34,33 @@ struct ResultsView: View {
         .frame(minWidth: 600, minHeight: 400)
     }
 
-    private var recognisedSection: some View {
+    private var recognizedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader("Recognised Changes", count: diff.recognised.count)
-            if diff.recognised.isEmpty {
-                Text("No recognised changes.")
+            SectionHeader("Recognized Changes", count: diff.recognized.count)
+            if diff.recognized.isEmpty {
+                Text("No recognized changes.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(diff.recognised, id: \.diff.id) { item in
-                    RecognisedRow(entry: item.entry, diff: item.diff)
+                ForEach(diff.recognized, id: \.diff.id) { item in
+                    RecognizedRow(entry: item.entry, diff: item.diff)
                 }
             }
         }
     }
 
-    private var unrecognisedSection: some View {
+    private var unrecognizedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
-                SectionHeader("Unrecognised Changes", count: diff.unrecognised.count)
+                SectionHeader("Unrecognized Changes", count: diff.unrecognized.count)
                 Spacer()
                 submitAllButton
             }
-            if diff.unrecognised.isEmpty {
+            if diff.unrecognized.isEmpty {
                 Text("All changes were identified.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(diff.unrecognised) { line in
-                    UnrecognisedRow(
+                ForEach(diff.unrecognized) { line in
+                    UnrecognizedRow(
                         diff: line,
                         isSubmitted: submittedIDs.contains(line.id),
                         onMarkSubmitted: { submittedIDs.insert(line.id) }
@@ -72,7 +72,7 @@ struct ResultsView: View {
 
     @ViewBuilder
     private var submitAllButton: some View {
-        let unsubmitted = diff.unrecognised.filter { !submittedIDs.contains($0.id) }
+        let unsubmitted = diff.unrecognized.filter { !submittedIDs.contains($0.id) }
         if !unsubmitted.isEmpty {
             if isSubmittingAll {
                 HStack(spacing: 6) {
@@ -144,7 +144,7 @@ private struct SectionHeader: View {
     }
 }
 
-private struct RecognisedRow: View {
+private struct RecognizedRow: View {
     let entry: KBEntry
     let diff: DiffLine
 
@@ -194,7 +194,7 @@ private struct RecognisedRow: View {
     }
 }
 
-private struct UnrecognisedRow: View {
+private struct UnrecognizedRow: View {
     let diff: DiffLine
     let isSubmitted: Bool
     let onMarkSubmitted: () -> Void

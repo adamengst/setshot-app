@@ -40,7 +40,7 @@ struct HelpView: View {
     private var comparingSnapshots: some View {
         HelpSection("Comparing Snapshots") {
             HelpParagraph("The library shows two columns. Click a snapshot in the left column to set it as the **Before** snapshot, and click a snapshot in the right column to set it as the **After** snapshot. The Before snapshot should be the earlier one.")
-            HelpParagraph("Once you have selected both snapshots, click **Compare** to run the comparison. SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognised change, an unrecognised change, or background noise.")
+            HelpParagraph("Once you have selected both snapshots, click **Compare** to run the comparison. SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change, an unrecognized change, or background noise.")
         }
     }
 
@@ -48,11 +48,11 @@ struct HelpView: View {
         HelpSection("Understanding Results") {
             HelpParagraph("Results are divided into three sections:")
 
-            HelpCallout("Recognised Changes") {
+            HelpCallout("Recognized Changes") {
                 Text("Settings that SetShot's knowledge base knows about. Each entry shows a plain-English description, the path to find it in System Settings, and — where possible — an **Open in Settings** button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue.")
             }
 
-            HelpCallout("Unrecognised Changes") {
+            HelpCallout("Unrecognized Changes") {
                 Text("Changes that are either noise or legitimate settings changes that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone.")
             }
 
@@ -61,9 +61,9 @@ struct HelpView: View {
     }
 
     private var submittingChanges: some View {
-        HelpSection("Submitting Unrecognised Changes") {
-            HelpParagraph("When you find an unrecognised change that is either noise or that you think should be included in the knowledge base, click **Submit** on that row. A confirmation sheet shows exactly what data will be sent — the internal setting name, its old and new values, and your macOS version — and nothing else.")
-            HelpParagraph("If you have several unrecognised changes, click **Submit All** to send them all at once. Submitted changes are reviewed and added to the knowledge base, making SetShot more useful for everyone.")
+        HelpSection("Submitting Unrecognized Changes") {
+            HelpParagraph("When you find an unrecognized change that is either noise or that you think should be included in the knowledge base, click **Submit** on that row. A confirmation sheet shows exactly what data will be sent — the internal setting name, its old and new values, and your macOS version — and nothing else.")
+            HelpParagraph("If you have several unrecognized changes, click **Submit All** to send them all at once. Submitted changes are reviewed and added to the knowledge base, making SetShot more useful for everyone.")
             HelpParagraph("Already-submitted rows are marked with a checkmark for the duration of the session.")
         }
     }

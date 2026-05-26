@@ -80,8 +80,8 @@ struct DiffEngine {
             }
         }
 
-        var recognised: [(entry: KBEntry, diff: DiffLine)] = []
-        var unrecognised: [DiffLine] = []
+        var recognized: [(entry: KBEntry, diff: DiffLine)] = []
+        var unrecognized: [DiffLine] = []
         var noise: [(entry: KBEntry, diff: DiffLine)] = []
 
         for p in pairs {
@@ -101,14 +101,14 @@ struct DiffEngine {
                 if entry.noise {
                     noise.append((entry, diffLine))
                 } else {
-                    recognised.append((entry, diffLine))
+                    recognized.append((entry, diffLine))
                 }
             } else {
-                unrecognised.append(diffLine)
+                unrecognized.append(diffLine)
             }
         }
 
-        return DiffResult(recognised: recognised, unrecognised: unrecognised, noise: noise)
+        return DiffResult(recognized: recognized, unrecognized: unrecognized, noise: noise)
     }
 
     private func normalizeDomain(_ raw: String) -> String {
