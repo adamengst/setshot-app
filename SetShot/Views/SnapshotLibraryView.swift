@@ -102,16 +102,20 @@ struct SnapshotLibraryView: View {
 
     private var pickerColumns: some View {
         HStack(spacing: 0) {
-            snapshotColumn(label: "Before", selected: $selectedBefore, exclude: selectedAfter)
+            snapshotColumn(label: "Before", selected: $selectedBefore) { snapshot in
+                selectedAfter.map { snapshot.date >= $0.date } ?? false
+            }
             Divider()
-            snapshotColumn(label: "After", selected: $selectedAfter, exclude: selectedBefore)
+            snapshotColumn(label: "After", selected: $selectedAfter) { snapshot in
+                selectedBefore.map { snapshot.date <= $0.date } ?? false
+            }
         }
     }
 
     private func snapshotColumn(
         label: String,
         selected: Binding<StoredSnapshot?>,
-        exclude: StoredSnapshot?
+        isDisabled: @escaping (StoredSnapshot) -> Bool
     ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(label)
@@ -124,7 +128,7 @@ struct SnapshotLibraryView: View {
                 VStack(spacing: 0) {
                     ForEach(appModel.snapshots) { snapshot in
                         let isSelected = selected.wrappedValue?.id == snapshot.id
-                        let isExcluded = exclude?.id == snapshot.id
+                        let isExcluded = isDisabled(snapshot)
                         SnapshotRow(
                             snapshot: snapshot,
                             isSelected: isSelected,
@@ -147,17 +151,9 @@ struct SnapshotLibraryView: View {
     private var footer: some View {
         HStack {
             if let before = selectedBefore, let after = selectedAfter {
-                let reversed = after.date <= before.date
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(before.displayName)  →  \(after.displayName)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    if reversed {
-                        Text("Note: the After snapshot predates the Before snapshot — the diff direction may be unexpected.")
-                            .font(.caption2)
-                            .foregroundStyle(.orange)
-                    }
-                }
+                Text("\(before.displayName)  →  \(after.displayName)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
             if isComparing {
@@ -165,7 +161,7 @@ struct SnapshotLibraryView: View {
             } else {
                 Button("Compare") { compare() }
                     .buttonStyle(.borderedProminent)
-                    .disabled(selectedBefore == nil || selectedAfter == nil || selectedBefore?.id == selectedAfter?.id)
+                    .disabled(selectedBefore == nil || selectedAfter == nil)
             }
         }
         .padding(.horizontal, 20)

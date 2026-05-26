@@ -23,7 +23,7 @@ struct HelpView: View {
             Text("SetShot Help")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-            Text("SetShot captures a complete snapshot of your Mac's settings, then lets you compare two snapshots to show you exactly what changed — and what each change means. It's designed for situations where you want to see what changes are made after applying a macOS update or tweaking options in System Settings.")
+            Text("SetShot captures a complete snapshot of your Mac's settings, then lets you compare two snapshots to show you exactly what changed — and what each change means. It's designed for situations where you want to see what changes were made after applying a macOS update or tweaking options in System Settings.")
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -40,13 +40,13 @@ struct HelpView: View {
     private var comparingSnapshots: some View {
         HelpSection("Comparing Snapshots") {
             HelpParagraph("The library shows two columns. Click a snapshot in the left column to set it as the **Before** snapshot, and click a snapshot in the right column to set it as the **After** snapshot. The Before snapshot should be the earlier one.")
-            HelpParagraph("Once you have selected both snapshots, click **Compare** to run the comparison. SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change, an unrecognized change, or background noise.")
+            HelpParagraph("Once you have selected both snapshots, click **Compare** to run the comparison. SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch.")
         }
     }
 
     private var understandingResults: some View {
         HelpSection("Understanding Results") {
-            HelpParagraph("Results are divided into three sections:")
+            HelpParagraph("Results are divided into two sections:")
 
             HelpCallout("Recognized Changes") {
                 Text("Settings that SetShot's knowledge base knows about. Each entry shows a plain-English description, the path to find it in System Settings, and — where possible — an **Open in Settings** button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue.")
@@ -63,7 +63,7 @@ struct HelpView: View {
     private var submittingChanges: some View {
         HelpSection("Submitting Unrecognized Changes") {
             HelpParagraph("When you find an unrecognized change that is either noise or that you think should be included in the knowledge base, click **Submit** on that row. A confirmation sheet shows exactly what data will be sent — the internal setting name, its old and new values, and your macOS version — and nothing else.")
-            HelpParagraph("If you have several unrecognized changes, click **Submit All** to send them all at once. Submitted changes are reviewed and added to the knowledge base, making SetShot more useful for everyone.")
+            HelpParagraph("If you have several unrecognized changes, click **Submit All** to send them all at once. Submitted changes are reviewed, added to the knowledge base, and loaded on the next launch, making SetShot more useful for everyone.")
             HelpParagraph("Already-submitted rows are marked with a checkmark for the duration of the session.")
         }
     }
@@ -71,7 +71,7 @@ struct HelpView: View {
     private var automaticSnapshots: some View {
         HelpSection("Automatic Snapshots") {
             HelpParagraph("SetShot can take snapshots automatically on a schedule. Click the gear icon in the library toolbar to open the scheduler settings.")
-            HelpParagraph("Automatic snapshots are taken silently in the background without SetShot's window appearing, and are labelled **Automatic** in the library. This lets you build up a history of your Mac's settings over time without having to remember to capture manually.")
+            HelpParagraph("Automatic snapshots are taken silently in the background without SetShot's window appearing. This lets you build up a history of your Mac's settings over time without having to remember to capture manually.")
         }
     }
 
