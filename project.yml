@@ -9,6 +9,16 @@ packages:
     url: https://github.com/sparkle-project/Sparkle
     from: "2.9.0"
 
+schemes:
+  SetShot:
+    build:
+      targets:
+        SetShot: all
+        SetShotTests: [test]
+    test:
+      targets:
+        - SetShotTests
+
 targets:
   SetShot:
     type: application
@@ -38,3 +48,20 @@ targets:
         CODE_SIGN_IDENTITY: "Developer ID Application"
         DEAD_CODE_STRIPPING: YES
         ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+  SetShotTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "13.0"
+    sources:
+      - SetShotTests
+    dependencies:
+      - target: SetShot
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.tidbits.SetShotTests
+        SWIFT_VERSION: 5.9
+        GENERATE_INFOPLIST_FILE: YES
+        DEVELOPMENT_TEAM: 6SCP2R96HY
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_IDENTITY: "Apple Development"

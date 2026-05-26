@@ -43,13 +43,15 @@ actor KBFetcher {
     }
 
     private func fetchRemoteVersion() async -> Int? {
-        guard let (data, _) = try? await URLSession.shared.data(from: kbVersionURL) else { return nil }
+        let request = URLRequest(url: kbVersionURL, cachePolicy: .reloadIgnoringLocalCacheData)
+        guard let (data, _) = try? await URLSession.shared.data(for: request) else { return nil }
         struct VersionResponse: Decodable { let version: Int }
         return try? JSONDecoder().decode(VersionResponse.self, from: data).version
     }
 
     private func fetchAndCacheKB(version: Int) async -> KnowledgeBase? {
-        guard let (data, _) = try? await URLSession.shared.data(from: kbEntriesURL),
+        let request = URLRequest(url: kbEntriesURL, cachePolicy: .reloadIgnoringLocalCacheData)
+        guard let (data, _) = try? await URLSession.shared.data(for: request),
               let entries = try? JSONDecoder().decode([KBEntry].self, from: data) else { return nil }
         UserDefaults.standard.set(data, forKey: entriesKey)
         UserDefaults.standard.set(version, forKey: versionKey)

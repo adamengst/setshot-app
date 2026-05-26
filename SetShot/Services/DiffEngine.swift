@@ -35,7 +35,7 @@ struct DiffEngine {
         return parse(diffOutput: diffOutput, kb: kb)
     }
 
-    private func parse(diffOutput: String, kb: KnowledgeBase) -> DiffResult {
+    func parse(diffOutput: String, kb: KnowledgeBase) -> DiffResult {
         let macOSVersion: String = {
             let v = ProcessInfo.processInfo.operatingSystemVersion
             return "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"

@@ -36,7 +36,11 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label
 
 1. Increment `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml` (e.g. `1.0` → `1.1`, build `1` → `2`).
 2. Run `xcodegen generate` to update the `.xcodeproj`.
-3. Commit `project.yml` (and any other pending changes) and push.
+3. Run the test suite and confirm all tests pass:
+   ```
+   xcodebuild test -project SetShot.xcodeproj -scheme SetShot -destination 'platform=macOS'
+   ```
+4. Commit `project.yml` (and any other pending changes) and push.
 
 ### Building
 
