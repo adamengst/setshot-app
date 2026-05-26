@@ -6,7 +6,9 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const BATCH_SIZE_MAX = 200;
 
 const REQUIRED_FIELDS = ['domain', 'key', 'source', 'before_value', 'after_value', 'macos_version'];
-const MAX_FIELD_LENGTH = 500;
+const IDENTIFIER_FIELDS = ['domain', 'key', 'source', 'macos_version'];
+const MAX_IDENTIFIER_LENGTH = 500;
+const MAX_VALUE_LENGTH = 2000;
 const URL_PATTERN = /https?:\/\/|ftp:\/\/|javascript:/i;
 const HTML_PATTERN = /<[a-z][\s\S]*>/i;
 
@@ -14,9 +16,14 @@ function validateItem(item) {
   for (const field of REQUIRED_FIELDS) {
     const value = item[field];
     if (typeof value !== 'string' || value.length === 0) return false;
-    if (value.length > MAX_FIELD_LENGTH) return false;
+  }
+  for (const field of IDENTIFIER_FIELDS) {
+    const value = item[field];
+    if (value.length > MAX_IDENTIFIER_LENGTH) return false;
     if (URL_PATTERN.test(value) || HTML_PATTERN.test(value)) return false;
   }
+  if (item.before_value.length > MAX_VALUE_LENGTH) return false;
+  if (item.after_value.length > MAX_VALUE_LENGTH) return false;
   return true;
 }
 

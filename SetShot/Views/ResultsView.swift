@@ -8,6 +8,7 @@ struct ResultsView: View {
     @EnvironmentObject var appModel: AppModel
     @State private var submittedIDs: Set<UUID> = []
     @State private var isSubmittingAll = false
+    @State private var submitError: String? = nil
 
     var body: some View {
         ScrollView {
@@ -21,6 +22,14 @@ struct ResultsView: View {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Back to Library") { appState = .library }
             }
+        }
+        .alert("Submission Failed", isPresented: Binding(
+            get: { submitError != nil },
+            set: { if !$0 { submitError = nil } }
+        )) {
+            Button("OK") { submitError = nil }
+        } message: {
+            Text(submitError ?? "")
         }
         .frame(minWidth: 600, minHeight: 400)
     }
@@ -83,9 +92,14 @@ struct ResultsView: View {
 
     private func submitAll(_ items: [DiffLine]) {
         isSubmittingAll = true
+        submitError = nil
         Task {
-            try? await SubmissionService.shared.submitBatch(items)
-            for item in items { submittedIDs.insert(item.id) }
+            do {
+                try await SubmissionService.shared.submitBatch(items)
+                for item in items { submittedIDs.insert(item.id) }
+            } catch {
+                submitError = error.localizedDescription
+            }
             isSubmittingAll = false
         }
     }
