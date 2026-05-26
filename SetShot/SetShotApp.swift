@@ -31,9 +31,7 @@ struct SetShotApp: App {
                 ContentView()
                     .environmentObject(appModel)
                     .background(WindowFrameSaver(name: "SetShotMainWindow"))
-                    .task { await appModel.loadKB() }
-                    .task { await appModel.loadSnapshots() }
-                    .task { await appModel.loadJournal() }
+                    .task { await appModel.start() }
             }
         }
         .defaultSize(width: 800, height: 600)
@@ -152,8 +150,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard CommandLine.arguments.contains("--background-snapshot") else { return }
         Task {
             do {
+                let existing = (try? await SnapshotStore.shared.list()) ?? []
+                let previous = existing.sorted { $0.date < $1.date }.last
                 let snapshot = try await SnapshotRunner().run()
-                _ = try await SnapshotStore.shared.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
+                let stored = try await SnapshotStore.shared.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
+                if let previous {
+                    let (kb, _) = await KBFetcher.shared.fetchIfNeeded()
+                    if let b = try? await SnapshotStore.shared.load(previous),
+                       let a = try? await SnapshotStore.shared.load(stored),
+                       let result = try? await DiffEngine().diff(
+                           before: Snapshot(takenAt: previous.date, rawOutput: b),
+                           after: Snapshot(takenAt: stored.date, rawOutput: a),
+                           kb: kb) {
+                        _ = await JournalStore.shared.add(recognized: result.recognized, afterSnapshot: stored)
+                    }
+                }
             } catch {}
             await MainActor.run { NSApp.terminate(nil) }
         }

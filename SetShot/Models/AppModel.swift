@@ -10,6 +10,15 @@ class AppModel: ObservableObject {
     private let store = SnapshotStore.shared
     private let journalStore = JournalStore.shared
 
+    // Called once at launch: load everything, then refresh journal if needed.
+    func start() async {
+        async let kbLoad: Void = loadKB()
+        async let snapshotsLoad: Void = loadSnapshots()
+        _ = await (kbLoad, snapshotsLoad)
+        await loadJournal()
+        await refreshJournalIfNeeded()
+    }
+
     func loadKB() async {
         let (kb, unavailable) = await KBFetcher.shared.fetchIfNeeded()
         self.kb = kb
@@ -31,9 +40,13 @@ class AppModel: ObservableObject {
     }
 
     func takeSnapshot() async throws -> StoredSnapshot {
+        let previous = snapshots.sorted { $0.date < $1.date }.last
         let snapshot = try await SnapshotRunner().run()
         let stored = try await store.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
         snapshots = (try? await store.list()) ?? []
+        if let previous {
+            Task { await updateJournal(before: previous, after: stored) }
+        }
         return stored
     }
 
@@ -66,5 +79,43 @@ class AppModel: ObservableObject {
 
     func deleteJournalSection(afterSnapshotId: String) async {
         journal = await journalStore.delete(afterSnapshotId: afterSnapshotId)
+    }
+
+    // MARK: - Journal auto-building
+
+    // Re-runs all adjacent snapshot diffs when the KB version advances.
+    // The initial lastKBVersion=0 in UserDefaults means this also fires once
+    // on first launch with any real KB, bootstrapping existing snapshots.
+    private func refreshJournalIfNeeded() async {
+        let currentVersion = kb.version
+        guard currentVersion > 0 else { return }
+        let lastVersion = UserDefaults.standard.integer(forKey: "JournalLastKBVersion")
+        guard currentVersion > lastVersion else { return }
+        await buildJournalFromAdjacentSnapshots()
+        UserDefaults.standard.set(currentVersion, forKey: "JournalLastKBVersion")
+    }
+
+    private func buildJournalFromAdjacentSnapshots() async {
+        let sorted = snapshots.sorted { $0.date < $1.date }
+        for i in 0..<(sorted.count - 1) {
+            await updateJournal(before: sorted[i], after: sorted[i + 1])
+        }
+    }
+
+    private func updateJournal(before: StoredSnapshot, after: StoredSnapshot) async {
+        guard let recognized = try? await diffRecognized(before: before, after: after) else { return }
+        journal = await journalStore.add(recognized: recognized, afterSnapshot: after)
+    }
+
+    private func diffRecognized(before: StoredSnapshot, after: StoredSnapshot) async throws -> [(entry: KBEntry, diff: DiffLine)] {
+        async let beforeText = store.load(before)
+        async let afterText = store.load(after)
+        let (b, a) = try await (beforeText, afterText)
+        let result = try await DiffEngine().diff(
+            before: Snapshot(takenAt: before.date, rawOutput: b),
+            after: Snapshot(takenAt: after.date, rawOutput: a),
+            kb: kb
+        )
+        return result.recognized
     }
 }
