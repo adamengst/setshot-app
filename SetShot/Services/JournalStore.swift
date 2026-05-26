@@ -31,9 +31,14 @@ actor JournalStore {
 
     private func deduplicated(_ entries: [JournalEntry]) -> [JournalEntry] {
         var seen = Set<String>()
-        return entries.filter { e in
-            seen.insert("\(e.domain)|\(e.key)|\(e.oldValue)|\(e.newValue)").inserted
+        var result: [JournalEntry] = []
+        // Sort oldest After snapshot first so we always keep the earliest occurrence.
+        for e in entries.sorted(by: { $0.afterSnapshotDate < $1.afterSnapshotDate }) {
+            if seen.insert("\(e.domain)|\(e.key)|\(e.oldValue)|\(e.newValue)").inserted {
+                result.append(e)
+            }
         }
+        return result
     }
 
     private func save(_ entries: [JournalEntry]) {
