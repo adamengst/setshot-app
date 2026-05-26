@@ -136,6 +136,7 @@ struct SnapshotLibraryView: View {
                         } onDelete: {
                             deleteSnapshot(snapshot, selected: selected)
                         }
+                        .id("\(label)-\(snapshot.id)")
                     }
                 }
             }
@@ -219,10 +220,11 @@ private struct SnapshotRow: View {
     var body: some View {
         HStack {
             if isEditing {
-                TextField("", text: $editText)
-                    .textFieldStyle(.plain)
-                    .onSubmit { commitRename() }
-                    .onExitCommand { isEditing = false }
+                RenameTextField(
+                    text: $editText,
+                    onCommit: commitRename,
+                    onCancel: { isEditing = false }
+                )
             } else {
                 Text(snapshot.displayName)
                     .foregroundStyle(isExcluded ? .tertiary : .primary)
@@ -238,11 +240,6 @@ private struct SnapshotRow: View {
         .padding(.vertical, 10)
         .background(isSelected ? Color.accentColor.opacity(0.12) : Color.clear)
         .contentShape(Rectangle())
-        .onTapGesture(count: 2) {
-            guard !isExcluded else { return }
-            editText = snapshot.displayName
-            isEditing = true
-        }
         .onTapGesture(count: 1) { if !isExcluded && !isEditing { onTap() } }
         .contextMenu {
             Button("Rename") {
@@ -258,5 +255,86 @@ private struct SnapshotRow: View {
         let trimmed = editText.trimmingCharacters(in: .whitespaces)
         isEditing = false
         onRename(trimmed)
+    }
+}
+
+private struct RenameTextField: NSViewRepresentable {
+    @Binding var text: String
+    var onCommit: () -> Void
+    var onCancel: () -> Void
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = NSTextField(string: text)
+        field.isBordered = false
+        field.drawsBackground = false
+        field.focusRingType = .none
+        field.font = .systemFont(ofSize: NSFont.systemFontSize)
+        field.delegate = context.coordinator
+        DispatchQueue.main.async {
+            field.window?.makeFirstResponder(field)
+            field.currentEditor()?.selectAll(nil)
+            context.coordinator.startMonitoring(field: field)
+        }
+        return field
+    }
+
+    func updateNSView(_ field: NSTextField, context: Context) {
+        context.coordinator.onCommit = onCommit
+        context.coordinator.onCancel = onCancel
+        if field.currentEditor() == nil {
+            field.stringValue = text
+        }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(text: $text) }
+
+    class Coordinator: NSObject, NSTextFieldDelegate {
+        @Binding var text: String
+        var onCommit: () -> Void = {}
+        var onCancel: () -> Void = {}
+        private var committed = false
+        private var monitor: Any?
+
+        init(text: Binding<String>) { _text = text }
+
+        func startMonitoring(field: NSTextField) {
+            monitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self, weak field] event in
+                guard let self, let field, let window = field.window else { return event }
+                let locationInWindow = event.locationInWindow
+                let fieldFrameInWindow = field.convert(field.bounds, to: nil)
+                if !fieldFrameInWindow.contains(locationInWindow) {
+                    window.makeFirstResponder(nil)
+                }
+                return event
+            }
+        }
+
+        func stopMonitoring() {
+            if let m = monitor { NSEvent.removeMonitor(m) }
+            monitor = nil
+        }
+
+        func controlTextDidChange(_ obj: Notification) {
+            text = (obj.object as? NSTextField)?.stringValue ?? text
+        }
+
+        func controlTextDidEndEditing(_ obj: Notification) {
+            stopMonitoring()
+            guard !committed else { return }
+            committed = true
+            text = (obj.object as? NSTextField)?.stringValue ?? text
+            onCommit()
+        }
+
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+                committed = true
+                stopMonitoring()
+                control.window?.makeFirstResponder(nil)
+                onCancel()
+                return true
+            }
+            return false
+        }
     }
 }

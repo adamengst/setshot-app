@@ -32,7 +32,7 @@ struct HelpView: View {
         HelpSection("Taking Snapshots") {
             HelpParagraph("Click **Take Snapshot** in the toolbar to capture the current state of your Mac's settings. SetShot reads preferences, system configuration, and other state sources, then saves the result to the snapshot library with the date and time.")
             HelpParagraph("The snapshot captures hundreds of settings across System Settings, accessibility options, network configuration, default app handlers, and more. Capturing typically takes a few seconds.")
-            HelpParagraph("You can rename any snapshot by double-clicking its name in the library, or by right-clicking and choosing **Rename**. This is useful for labelling snapshots with context — for example, **Before software install** or **After update**.")
+            HelpParagraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name or click to position the insertion point. This is useful for labelling snapshots with context — for example, **Before software install** or **After update**.")
             HelpParagraph("To remove an unnecessary snapshot, Control-click it and choose **Delete**")
         }
     }
