@@ -8,6 +8,7 @@ struct HelpView: View {
                 takingSnapshots
                 comparingSnapshots
                 understandingResults
+                theJournal
                 submittingChanges
                 automaticSnapshots
             }
@@ -30,16 +31,16 @@ struct HelpView: View {
 
     private var takingSnapshots: some View {
         HelpSection("Taking Snapshots") {
-            HelpParagraph("Click **Take Snapshot** in the toolbar to capture the current state of your Mac's settings. SetShot reads preferences, system configuration, and other state sources, then saves the result to the snapshot library with the date and time.")
-            HelpParagraph("The snapshot captures hundreds of settings across System Settings, accessibility options, network configuration, default app handlers, and more. Capturing typically takes a few seconds.")
-            HelpParagraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name or click to position the insertion point. This is useful for labelling snapshots with context — for example, **Before software install** or **After update**.")
+            HelpParagraph("Click **Take Snapshot** in the toolbar to capture the current state of your Mac's settings. SetShot reads preferences, system configuration, and other state sources, then saves the result to the snapshot library with the date and time. Snapshots are stored in `~/Library/Application Support/SetShot/snapshots` as gzipped files that occupy little space.")
+            HelpParagraph("The snapshot captures hundreds of settings across System Settings, accessibility options, network configuration, default app handlers, and more. Capturing typically takes less than a minute.")
+            HelpParagraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name or click to position the insertion point. This can be useful for labelling snapshots with context — for example, **Before software install** or **After update**.")
             HelpParagraph("To remove an unnecessary snapshot, Control-click it and choose **Delete**")
         }
     }
 
     private var comparingSnapshots: some View {
         HelpSection("Comparing Snapshots") {
-            HelpParagraph("The Snapshots tab shows two columns. Click a snapshot in the left column to set it as the **Before** snapshot, and click a snapshot in the right column to set it as the **After** snapshot. The Before snapshot should be the earlier one.")
+            HelpParagraph("The Snapshots view shows two columns. Click a snapshot in the left column to set it as the **Before** snapshot, and click a snapshot in the right column to set it as the **After** snapshot. The Before snapshot should be the earlier one.")
             HelpParagraph("Once you have selected both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side.")
             HelpParagraph("SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch.")
         }
@@ -57,7 +58,16 @@ struct HelpView: View {
                 Text("Changes that are either noise or legitimate settings changes that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone.")
             }
 
-            HelpParagraph("Values are displayed in a readable form where possible: toggles show On or Off, volume settings show a percentage, file paths show just the filename, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number. If you see a value that's not readable, send me a screenshot.")
+            HelpParagraph("Values are displayed in a readable form where possible: toggles show On or Off, volume settings show a percentage, file paths show just the filename, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number.")
+        }
+    }
+
+    private var theJournal: some View {
+        HelpSection("The Journal") {
+            HelpParagraph("The journal keeps a cumulative record of every recognized change found across all your comparisons. Switch to it by clicking **Journal** in the segmented control at the top of the SetShot window.")
+            HelpParagraph("Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before and after values. An **Open in Settings** button appears where applicable.")
+            HelpParagraph("Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once.")
+            HelpParagraph("The journal eliminates redundant entries: if the same change appears more than once — for instance, if you run the same comparison twice — only the earliest occurrence is kept.")
         }
     }
 
@@ -74,7 +84,7 @@ struct HelpView: View {
                 Text("The change appears to be an internal macOS value that fluctuates on its own, unrelated to any setting you'd want to track.")
             }
 
-            HelpParagraph("You can also add a short note with any context that might help with review — for example, what you were doing when the change appeared. Both fields are entirely optional, but the more context you provide, the more quickly the submission can be categorized.")
+            HelpParagraph("You can also add a short note with any context that might help with review. Both fields are entirely optional, but adding context may help categorize the change more accurately.")
             HelpParagraph("If you have several unrecognized changes, click **Submit All** to send them all at once without opening the sheet. Submitted changes are reviewed, added to the knowledge base, and loaded on the next launch, making SetShot more useful for everyone.")
             HelpParagraph("Already-submitted rows are marked with a checkmark for the duration of the session.")
         }
