@@ -106,12 +106,8 @@ struct JournalView: View {
 
     private func sectionHeader(_ section: JournalSection) -> some View {
         HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(section.snapshotName).font(.headline)
-                Text(section.snapshotDate, format: .dateTime.weekday(.wide).month(.wide).day().year().hour().minute())
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text(section.snapshotDate, format: .dateTime.weekday(.wide).month(.wide).day().year().hour().minute())
+                .font(.headline)
             Spacer()
             Text("\(section.entries.count) change\(section.entries.count == 1 ? "" : "s")")
                 .font(.caption)
@@ -139,7 +135,7 @@ private struct JournalRow: View {
         let newFormatted = formatValue(entry.newValue, key: entry.key, valueMap: valueMap)
 
         HStack(alignment: .top, spacing: 12) {
-            SettingsPaneIcon(settingsURL: kbEntry?.settingsURL ?? entry.settingsURL, domain: entry.domain)
+            SettingsPaneIcon(settingsURL: kbEntry?.settingsURL ?? entry.settingsURL, domain: entry.domain, iconBundleID: kbEntry?.iconBundleID)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top) {

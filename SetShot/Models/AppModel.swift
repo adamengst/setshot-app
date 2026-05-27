@@ -1,11 +1,18 @@
 import Foundation
 
+struct ComparisonRecord {
+    let before: StoredSnapshot
+    let after: StoredSnapshot
+    let diff: DiffResult
+}
+
 @MainActor
 class AppModel: ObservableObject {
     @Published var kb: KnowledgeBase = .empty
     @Published var kbUnavailable = false
     @Published var snapshots: [StoredSnapshot] = []
     @Published var journal: [JournalEntry] = []
+    @Published var comparisons: [UUID: ComparisonRecord] = [:]
 
     private let store = SnapshotStore.shared
     private let journalStore = JournalStore.shared
@@ -60,6 +67,13 @@ class AppModel: ObservableObject {
         if let i = snapshots.firstIndex(where: { $0.id == snapshot.id }) {
             snapshots[i] = renamed
         }
+    }
+
+    func compareForWindow(before: StoredSnapshot, after: StoredSnapshot) async throws -> UUID {
+        let result = try await diff(before: before, after: after)
+        let id = UUID()
+        comparisons[id] = ComparisonRecord(before: before, after: after, diff: result)
+        return id
     }
 
     func diff(before: StoredSnapshot, after: StoredSnapshot) async throws -> DiffResult {

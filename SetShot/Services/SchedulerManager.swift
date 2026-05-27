@@ -40,6 +40,7 @@ struct SchedulerManager {
             "StartCalendarInterval": ["Hour": hour, "Minute": minute],
             "StandardOutPath": "/tmp/setshot-daily.log",
             "StandardErrorPath": "/tmp/setshot-daily.log",
+            "AssociatedBundleIdentifiers": "com.tidbits.SetShot",
         ]
 
         try FileManager.default.createDirectory(at: launchAgentsDir, withIntermediateDirectories: true)

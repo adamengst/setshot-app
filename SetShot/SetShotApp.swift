@@ -45,6 +45,15 @@ struct SetShotApp: App {
             HelpCommands()
         }
 
+        WindowGroup(for: UUID.self) { $id in
+            if let id, let record = appModel.comparisons[id] {
+                ResultsView(diff: record.diff, before: record.before, after: record.after)
+            } else {
+                StaleComparisonDismisser()
+            }
+        }
+        .defaultSize(width: 720, height: 540)
+
         WindowGroup("SetShot Help", id: "help") {
             HelpView()
                 .background(WindowFrameSaver(name: "SetShotHelpWindow"))
@@ -137,6 +146,20 @@ private struct WindowFrameSaver: NSViewRepresentable {
             observers.forEach { NotificationCenter.default.removeObserver($0) }
         }
     }
+}
+
+// Closes a restored comparison window whose UUID is no longer in appModel.comparisons.
+private struct StaleComparisonDismisser: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            guard let window = view.window else { return }
+            window.alphaValue = 0
+            window.close()
+        }
+        return view
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {

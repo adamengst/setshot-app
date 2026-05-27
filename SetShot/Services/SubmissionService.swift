@@ -1,12 +1,22 @@
 import Foundation
 
+enum FeedbackCategory: String {
+    case expectedChange = "expected_change"
+    case likelyNoise = "likely_noise"
+}
+
+struct UserFeedback {
+    let category: FeedbackCategory?
+    let notes: String
+}
+
 actor SubmissionService {
     static let shared = SubmissionService()
 
     private let workerURL = URL(string: "https://setshot-submission.the-account-of-adam-engst.workers.dev")!
 
-    func submit(_ diff: DiffLine) async throws {
-        try await post(payload(for: diff))
+    func submit(_ diff: DiffLine, feedback: UserFeedback? = nil) async throws {
+        try await post(payload(for: diff, feedback: feedback))
     }
 
     func submitBatch(_ diffs: [DiffLine]) async throws {
@@ -22,8 +32,8 @@ actor SubmissionService {
         }
     }
 
-    private func payload(for diff: DiffLine) -> [String: String] {
-        [
+    private func payload(for diff: DiffLine, feedback: UserFeedback? = nil) -> [String: String] {
+        var p: [String: String] = [
             "domain": diff.domain,
             "key": diff.key,
             "source": diff.source,
@@ -31,6 +41,12 @@ actor SubmissionService {
             "after_value": diff.afterValue.isEmpty ? "(not set)" : diff.afterValue,
             "macos_version": diff.macOSVersion
         ]
+        if let fb = feedback {
+            if let cat = fb.category { p["feedback_category"] = cat.rawValue }
+            let notes = fb.notes.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !notes.isEmpty { p["feedback_notes"] = notes }
+        }
+        return p
     }
 
     private func post<T: Encodable>(_ body: T) async throws {

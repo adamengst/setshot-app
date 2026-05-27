@@ -4,11 +4,10 @@ struct ResultsView: View {
     let diff: DiffResult
     let before: StoredSnapshot
     let after: StoredSnapshot
-    @Binding var appState: AppState
-    @EnvironmentObject var appModel: AppModel
     @State private var submittedIDs: Set<UUID> = []
     @State private var isSubmittingAll = false
     @State private var submitError: String? = nil
+    @State private var contentHeight: CGFloat = 0
 
     var body: some View {
         ScrollView {
@@ -17,12 +16,13 @@ struct ResultsView: View {
                 unrecognizedSection
             }
             .padding(32)
+            .background(GeometryReader { geo in
+                Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
+            })
         }
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Back to Snapshots") { appState = .library }
-            }
-        }
+        .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
+        .navigationTitle("\(before.displayName) → \(after.displayName)")
+        .background(ComparisonWindowPositioner(contentHeight: contentHeight))
         .alert("Submission Failed", isPresented: Binding(
             get: { submitError != nil },
             set: { if !$0 { submitError = nil } }
@@ -31,7 +31,7 @@ struct ResultsView: View {
         } message: {
             Text(submitError ?? "")
         }
-        .frame(minWidth: 600, minHeight: 400)
+        .frame(minWidth: 600)
     }
 
     private var recognizedSection: some View {
@@ -152,12 +152,12 @@ private struct RecognizedRow: View {
         let settingsURL = validatedSettingsURL(entry.settingsURL)
 
         HStack(alignment: .top, spacing: 12) {
-            SettingsPaneIcon(settingsURL: entry.settingsURL, domain: diff.domain)
+            SettingsPaneIcon(settingsURL: entry.settingsURL, domain: diff.domain, iconBundleID: entry.iconBundleID)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(entry.description)
+                        Text(entry.description ?? "")
                             .fontWeight(.medium)
                         if let location = entry.uiLocation {
                             Text(location)
@@ -195,6 +195,95 @@ private struct RecognizedRow: View {
               !raw.contains("://"),
               !raw.contains(" ") else { return nil }
         return URL(string: raw)
+    }
+}
+
+private struct ContentHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
+private struct ComparisonWindowPositioner: NSViewRepresentable {
+    let contentHeight: CGFloat
+
+    func makeNSView(context: Context) -> PositionerView { PositionerView() }
+    func updateNSView(_ nsView: PositionerView, context: Context) {
+        nsView.contentHeight = contentHeight
+        nsView.applyWhenReady()
+    }
+
+    class PositionerView: NSView {
+        private static var nextCascadePoint: NSPoint? = nil
+        var contentHeight: CGFloat = 0
+        private var windowReady = false
+        private var done = false
+        private var closeObserver: NSObjectProtocol?
+
+        override func viewDidMoveToWindow() {
+            super.viewDidMoveToWindow()
+            guard let window, !windowReady else { return }
+            windowReady = true
+            window.alphaValue = 0
+
+            closeObserver = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification, object: window, queue: .main
+            ) { [weak self] _ in
+                let remaining = NSApp.windows.filter { $0.title.contains("→") && $0.isVisible }
+                if remaining.count <= 1 { Self.nextCascadePoint = nil }
+                if let obs = self?.closeObserver { NotificationCenter.default.removeObserver(obs) }
+                self?.closeObserver = nil
+            }
+
+            applyWhenReady()
+        }
+
+        func applyWhenReady() {
+            guard !done, windowReady, contentHeight > 0, let window else { return }
+            done = true
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self, weak window] in
+                guard let self, let window else { return }
+
+                guard let main = NSApp.windows.first(where: {
+                    $0 !== window && $0.isVisible && !$0.isMiniaturized && $0.title == "SetShot"
+                }) else { return }
+
+                // Position first — after this, window.screen reflects the destination display.
+                let startPoint = Self.nextCascadePoint ?? NSPoint(x: main.frame.maxX + 8, y: main.frame.maxY)
+                Self.nextCascadePoint = window.cascadeTopLeft(from: startPoint)
+
+                let titleBarHeight = window.frame.height - (window.contentView?.bounds.height ?? window.frame.height)
+
+                if let screen = window.screen ?? NSScreen.main {
+                    let sf = screen.visibleFrame
+                    var f = window.frame
+
+                    // Clamp right edge within screen.
+                    if f.maxX > sf.maxX { f.origin.x = sf.maxX - f.width }
+
+                    // Cap height to the space available from the window's top edge
+                    // down to the screen bottom — not the full screen height, so
+                    // cascaded windows that start lower don't extend off-screen.
+                    let availableH = f.maxY - sf.minY
+                    let targetContentH = min(self.contentHeight + 24, max(0, availableH - titleBarHeight))
+                    let newH = targetContentH + titleBarHeight
+                    f.origin.y = f.maxY - newH  // keep top edge fixed
+                    f.size.height = newH
+                    window.setFrame(f, display: false, animate: false)
+                }
+
+                NSAnimationContext.runAnimationGroup { ctx in
+                    ctx.duration = 0.15
+                    window.animator().alphaValue = 1
+                }
+            }
+        }
+
+        deinit {
+            if let obs = closeObserver { NotificationCenter.default.removeObserver(obs) }
+        }
     }
 }
 

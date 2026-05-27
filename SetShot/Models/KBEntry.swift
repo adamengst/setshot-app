@@ -6,7 +6,7 @@ struct KBEntry: Codable, Identifiable {
     let key: String
     let source: String
     let valueType: String
-    let description: String
+    let description: String?
     let uiLocation: String?
     let settingsURL: String?
     let noise: Bool
@@ -17,6 +17,7 @@ struct KBEntry: Codable, Identifiable {
     let contributedByIssue: Int?
     let valueMap: [String: String]?
     let keyPrefix: String?
+    let iconBundleID: String?
 
     enum CodingKeys: String, CodingKey {
         case id, domain, key, source, noise, notes, description
@@ -29,5 +30,6 @@ struct KBEntry: Codable, Identifiable {
         case contributedByIssue = "contributed_by_issue"
         case valueMap = "value_map"
         case keyPrefix = "key_prefix"
+        case iconBundleID = "icon_bundle_id"
     }
 }

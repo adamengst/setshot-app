@@ -21,9 +21,10 @@ final class KBEntryDecodingTests: XCTestCase {
         XCTAssertEqual(entries[0].description, "A setting")
     }
 
-    func testNullDescriptionFails() {
+    func testNullDescriptionDecodesAsNil() throws {
         let data = json("\(base),\"description\":null")
-        XCTAssertNil(try? JSONDecoder().decode([KBEntry].self, from: data))
+        let entries = try JSONDecoder().decode([KBEntry].self, from: data)
+        XCTAssertNil(entries[0].description)
     }
 
     func testKeyPrefixDecodes() throws {

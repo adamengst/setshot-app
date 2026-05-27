@@ -2,7 +2,7 @@ import SwiftUI
 
 struct SnapshotLibraryView: View {
     @EnvironmentObject var appModel: AppModel
-    @Binding var appState: AppState
+    @Environment(\.openWindow) private var openWindow
     @State private var selectedBefore: StoredSnapshot?
     @State private var selectedAfter: StoredSnapshot?
     @State private var isTakingSnapshot = false
@@ -203,8 +203,8 @@ struct SnapshotLibraryView: View {
         isComparing = true
         Task {
             do {
-                let diff = try await appModel.diff(before: before, after: after)
-                appState = .results(diff, before: before, after: after)
+                let id = try await appModel.compareForWindow(before: before, after: after)
+                openWindow(value: id)
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -305,8 +305,8 @@ private struct RenameTextField: NSViewRepresentable {
         init(text: Binding<String>) { _text = text }
 
         func startMonitoring(field: NSTextField) {
-            monitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self, weak field] event in
-                guard let self, let field, let window = field.window else { return event }
+            monitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak field] event in
+                guard let field, let window = field.window else { return event }
                 let locationInWindow = event.locationInWindow
                 let fieldFrameInWindow = field.convert(field.bounds, to: nil)
                 if !fieldFrameInWindow.contains(locationInWindow) {

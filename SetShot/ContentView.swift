@@ -1,24 +1,11 @@
 import SwiftUI
 
-enum AppState {
-    case library
-    case results(DiffResult, before: StoredSnapshot, after: StoredSnapshot)
-}
-
 struct ContentView: View {
     @EnvironmentObject var appModel: AppModel
-    @State private var appState: AppState = .library
 
     var body: some View {
         VStack(spacing: 0) {
-            Group {
-                switch appState {
-                case .library:
-                    SnapshotLibraryView(appState: $appState)
-                case .results(let diff, let before, let after):
-                    ResultsView(diff: diff, before: before, after: after, appState: $appState)
-                }
-            }
+            SnapshotLibraryView()
 
             if appModel.kbUnavailable {
                 HStack(spacing: 6) {

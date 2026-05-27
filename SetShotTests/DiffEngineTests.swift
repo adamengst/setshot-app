@@ -10,7 +10,7 @@ final class DiffEngineTests: XCTestCase {
             uiLocation: nil, settingsURL: nil,
             noise: noise, noiseReason: noise ? "test" : nil,
             minMacOS: "13.0", notes: nil, aiGenerated: false,
-            contributedByIssue: nil, valueMap: nil, keyPrefix: keyPrefix
+            contributedByIssue: nil, valueMap: nil, keyPrefix: keyPrefix, iconBundleID: nil
         )
     }
 

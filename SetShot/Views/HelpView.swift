@@ -40,7 +40,8 @@ struct HelpView: View {
     private var comparingSnapshots: some View {
         HelpSection("Comparing Snapshots") {
             HelpParagraph("The Snapshots tab shows two columns. Click a snapshot in the left column to set it as the **Before** snapshot, and click a snapshot in the right column to set it as the **After** snapshot. The Before snapshot should be the earlier one.")
-            HelpParagraph("Once you have selected both snapshots, click **Compare** to run the comparison. SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch.")
+            HelpParagraph("Once you have selected both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side.")
+            HelpParagraph("SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch.")
         }
     }
 
@@ -63,7 +64,18 @@ struct HelpView: View {
     private var submittingChanges: some View {
         HelpSection("Submitting Unrecognized Changes") {
             HelpParagraph("When you find an unrecognized change that is either noise or that you think should be included in the knowledge base, click **Submit** on that row. A confirmation sheet shows exactly what data will be sent — the internal setting name, its old and new values, and your macOS version — and nothing else.")
-            HelpParagraph("If you have several unrecognized changes, click **Submit All** to send them all at once. Submitted changes are reviewed, added to the knowledge base, and loaded on the next launch, making SetShot more useful for everyone.")
+            HelpParagraph("The sheet also offers an optional feedback section. If you have a sense of what the change represents, select one of the two categories:")
+
+            HelpCallout("Expected settings change") {
+                Text("The change reflects something real — a preference you set, a feature you turned on, or a setting macOS adjusted as a result of something you did.")
+            }
+
+            HelpCallout("Likely macOS noise") {
+                Text("The change appears to be an internal macOS value that fluctuates on its own, unrelated to any setting you'd want to track.")
+            }
+
+            HelpParagraph("You can also add a short note with any context that might help with review — for example, what you were doing when the change appeared. Both fields are entirely optional, but the more context you provide, the more quickly the submission can be categorized.")
+            HelpParagraph("If you have several unrecognized changes, click **Submit All** to send them all at once without opening the sheet. Submitted changes are reviewed, added to the knowledge base, and loaded on the next launch, making SetShot more useful for everyone.")
             HelpParagraph("Already-submitted rows are marked with a checkmark for the duration of the session.")
         }
     }

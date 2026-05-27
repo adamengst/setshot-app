@@ -9,6 +9,8 @@ const REQUIRED_FIELDS = ['domain', 'key', 'source', 'before_value', 'after_value
 const IDENTIFIER_FIELDS = ['domain', 'key', 'source', 'macos_version'];
 const MAX_IDENTIFIER_LENGTH = 500;
 const MAX_VALUE_LENGTH = 2000;
+const MAX_FEEDBACK_NOTES_LENGTH = 1000;
+const VALID_FEEDBACK_CATEGORIES = new Set(['expected_change', 'likely_noise']);
 const URL_PATTERN = /https?:\/\/|ftp:\/\/|javascript:/i;
 const HTML_PATTERN = /<[a-z][\s\S]*>/i;
 
@@ -24,6 +26,15 @@ function validateItem(item) {
   }
   if (item.before_value.length > MAX_VALUE_LENGTH) return false;
   if (item.after_value.length > MAX_VALUE_LENGTH) return false;
+  if (item.feedback_category !== undefined) {
+    if (typeof item.feedback_category !== 'string') return false;
+    if (!VALID_FEEDBACK_CATEGORIES.has(item.feedback_category)) return false;
+  }
+  if (item.feedback_notes !== undefined) {
+    if (typeof item.feedback_notes !== 'string') return false;
+    if (item.feedback_notes.length > MAX_FEEDBACK_NOTES_LENGTH) return false;
+    if (URL_PATTERN.test(item.feedback_notes) || HTML_PATTERN.test(item.feedback_notes)) return false;
+  }
   return true;
 }
 
@@ -105,7 +116,17 @@ export default {
       };
 
       const issueTitle = `[Submission] ${body.domain} :: ${body.key}`;
-      const issueBody = '```json\n' + JSON.stringify(submission, null, 2) + '\n```';
+      let issueBody = '```json\n' + JSON.stringify(submission, null, 2) + '\n```';
+      if (body.feedback_category || body.feedback_notes) {
+        const categoryLabel = body.feedback_category === 'expected_change'
+          ? 'Expected settings change'
+          : body.feedback_category === 'likely_noise'
+          ? 'Likely macOS noise'
+          : null;
+        issueBody += '\n\n## User Feedback';
+        if (categoryLabel) issueBody += `\n**Category:** ${categoryLabel}`;
+        if (body.feedback_notes) issueBody += `\n**Notes:** ${body.feedback_notes}`;
+      }
 
       const githubResponse = await postIssue(env, issueTitle, issueBody);
       return githubResponse.ok ? new Response(null, { status: 200 }) : new Response(null, { status: 502 });
