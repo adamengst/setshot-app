@@ -111,8 +111,8 @@ class AppModel: ObservableObject {
 
     private func buildJournalFromAdjacentSnapshots() async {
         let sorted = snapshots.sorted { $0.date < $1.date }
-        for i in 0..<(sorted.count - 1) {
-            await updateJournal(before: sorted[i], after: sorted[i + 1])
+        for (before, after) in zip(sorted, sorted.dropFirst()) {
+            await updateJournal(before: before, after: after)
         }
     }
 
