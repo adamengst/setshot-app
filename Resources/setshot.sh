@@ -820,6 +820,8 @@ RULES = [
      1, "mouse_secondary_click"),
 
     # ── Voice Control ──────────────────────────────────────────────────────
+    (r'^CommandAndControlEnabled$',          r'Accessibility',
+     "Voice Control: enabled",              fmt_bool, 1, "vc_enabled"),
     (r'^CACOverlayFadeOpacity$',             r'speech\.recognition',
      "Voice Control: overlay opacity",       lambda v: f"{round(float(v)*100)}%", 1, "vc_overlay_opacity"),
     (r'^CACOverlayFadingEnabled$',           r'speech\.recognition',
@@ -2266,7 +2268,6 @@ NOISE_PATTERN='(
   universalaccess.*:: hudNotified|
   :: BrailleInputDeviceConnected\s*=|
   :: PrefersHorizontalText\s*=|
-  :: CommandAndControlEnabled\s*=|
   :: GenericAccessibilityClientEnabled\s*=|
   :: AutomationEnabled\s*=|
   :: ApplicationAccessibilityEnabled\s*=|
