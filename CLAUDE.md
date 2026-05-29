@@ -44,7 +44,7 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label
 
 ### Building, notarizing, and stapling
 
-4. Archive, export (notarizes automatically), and zip — all from the command line:
+4. Archive and export — all output goes to `/tmp/`:
    ```
    xcodebuild archive \
      -project SetShot.xcodeproj \
@@ -54,41 +54,52 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label
 
    xcodebuild -exportArchive \
      -archivePath /tmp/SetShot.xcarchive \
-     -exportPath ~/Desktop \
+     -exportPath /tmp/SetShot-export \
      -exportOptionsPlist ExportOptions.plist
-
-   xcrun stapler staple ~/Desktop/SetShot.app
-
-   ditto -c -k --sequesterRsrc --keepParent ~/Desktop/SetShot.app ~/Desktop/SetShot-X.Y.zip
    ```
-   The export step submits to Apple Notary and waits. Staple embeds the ticket.
+
+5. Staple the notarization ticket. If the export notarized automatically, stapler succeeds immediately. If it fails with error 65 ("Record not found"), notarize manually first:
+   ```
+   # Try stapling directly:
+   xcrun stapler staple /tmp/SetShot-export/SetShot.app
+
+   # If that fails (error 65), submit manually then re-staple:
+   ditto -c -k --sequesterRsrc --keepParent /tmp/SetShot-export/SetShot.app /tmp/SetShot-notarize.zip
+   xcrun notarytool submit /tmp/SetShot-notarize.zip --keychain-profile SetShot-notarize --wait
+   xcrun stapler staple /tmp/SetShot-export/SetShot.app
+   ```
+
+6. Zip the stapled app:
+   ```
+   ditto -c -k --sequesterRsrc --keepParent /tmp/SetShot-export/SetShot.app /tmp/SetShot-X.Y.zip
+   ```
 
 ### Signing for Sparkle
 
-8. Generate the EdDSA signature:
+7. Generate the EdDSA signature:
    ```
-   ~/Library/Developer/Xcode/DerivedData/SetShot-dudffzkhimmftwbvygszwmzrzgpd/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update ~/Desktop/SetShot-X.Y.zip
+   ~/Library/Developer/Xcode/DerivedData/SetShot-dudffzkhimmftwbvygszwmzrzgpd/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update /tmp/SetShot-X.Y.zip
    ```
    Note the `sparkle:edSignature` and `length` values.
 
 ### Publishing
 
-9. Create the GitHub Release and upload the zip:
+8. Create the GitHub Release and upload the zip:
    ```
-   gh release create vX.Y ~/Desktop/SetShot-X.Y.zip \
+   gh release create vX.Y /tmp/SetShot-X.Y.zip \
      --title "SetShot X.Y" \
      --notes "..." \
      --repo adamengst/setshot-app
    ```
 
-10. Add a new `<item>` to `appcast.xml` in `setshot-app`:
+9. Add a new `<item>` to `appcast.xml` in `setshot-app`:
     - `<sparkle:version>` = build number (integer)
     - `<sparkle:shortVersionString>` = marketing version (e.g. `1.1`)
     - `url` = `https://github.com/adamengst/setshot-app/releases/download/vX.Y/SetShot-X.Y.zip`
-    - `sparkle:edSignature` and `length` from step 8
+    - `sparkle:edSignature` and `length` from step 7
     - `pubDate` in RFC-2822 format
 
-11. Commit and push `appcast.xml` (and `project.yml` if not already pushed):
+10. Commit and push `appcast.xml` (and `project.yml` if not already pushed):
     ```
     git add appcast.xml project.yml
     git commit -m "Release X.Y"
