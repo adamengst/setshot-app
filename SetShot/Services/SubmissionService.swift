@@ -21,7 +21,7 @@ actor SubmissionService {
 
     func submitBatch(_ diffs: [DiffLine]) async throws {
         let items = diffs.map { payload(for: $0) }
-        for chunk in Self.chunked(items, size: 150) {
+        for chunk in Self.chunked(items, size: 40) {
             try await post(chunk)
         }
     }

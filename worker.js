@@ -1,9 +1,9 @@
 // In-memory rate limit store — best-effort, not shared across worker instances
 const rateLimitStore = new Map();
 const RATE_LIMIT_SINGLE_MAX = 10;
-const RATE_LIMIT_BATCH_MAX = 10;
+const RATE_LIMIT_BATCH_MAX = 50;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
-const BATCH_SIZE_MAX = 200;
+const BATCH_SIZE_MAX = 50;
 
 const REQUIRED_FIELDS = ['domain', 'key', 'source', 'before_value', 'after_value', 'macos_version'];
 const IDENTIFIER_FIELDS = ['domain', 'key', 'source', 'macos_version'];
