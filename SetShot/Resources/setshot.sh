@@ -2885,14 +2885,22 @@ do_snapshot() {
     flatten_domain "NSGlobalDomain"
 
     section "PLIST FILES: ~/Library/Preferences"
+    # Only Apple-owned domains: com.apple.* plus a small whitelist of
+    # Apple system plists that don't carry the com.apple prefix.
     while IFS= read -r f; do
       flatten_plist "$f"
-    done < <(find "$HOME/Library/Preferences" -name "*.plist" -maxdepth 2 2>/dev/null | sort)
+    done < <(find "$HOME/Library/Preferences" \( \
+        -name "com.apple.*.plist" \
+        -o -name "CoreGraphics.plist" \
+        -o -name "LockdownMode.plist" \
+        -o -name "screentimedx.plist" \
+        -o -name "sharing.plist" \
+      \) -maxdepth 2 2>/dev/null | sort)
 
     section "PLIST FILES: /Library/Preferences"
     while IFS= read -r f; do
       flatten_plist "$f"
-    done < <(find "/Library/Preferences" -name "*.plist" -maxdepth 2 2>/dev/null | sort)
+    done < <(find "/Library/Preferences" -name "com.apple.*.plist" -maxdepth 2 2>/dev/null | sort)
 
     # Analytics opt-in lives outside /Library/Preferences — capture it explicitly
     DIAG_HIST="/Library/Application Support/CrashReporter/DiagnosticMessagesHistory.plist"
