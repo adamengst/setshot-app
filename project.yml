@@ -35,8 +35,8 @@ targets:
         SWIFT_VERSION: 5.9
         MACOSX_DEPLOYMENT_TARGET: "13.0"
         GENERATE_INFOPLIST_FILE: YES
-        MARKETING_VERSION: "1.0b9"
-        CURRENT_PROJECT_VERSION: "10"
+        MARKETING_VERSION: "1.0b10"
+        CURRENT_PROJECT_VERSION: "11"
         INFOPLIST_KEY_CFBundleDisplayName: SetShot
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml"
