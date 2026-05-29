@@ -34,13 +34,18 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label
 
 ### Before archiving
 
-1. Increment `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml` (e.g. `1.0` → `1.1`, build `1` → `2`).
-2. Run `xcodegen generate` to update the `.xcodeproj`.
-3. Run the test suite and confirm all tests pass:
+1. Check for pending KB submissions and process them first:
+   ```
+   gh issue list --repo adamengst/setshot-kb --label pending
+   ```
+
+2. Increment `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml` (e.g. `1.0` → `1.1`, build `1` → `2`).
+3. Run `xcodegen generate` to update the `.xcodeproj`.
+4. Run the test suite and confirm all tests pass:
    ```
    xcodebuild test -project SetShot.xcodeproj -scheme SetShot -destination 'platform=macOS'
    ```
-4. Commit `project.yml` (and any other pending changes) and push.
+5. Commit `project.yml` (and any other pending changes) and push.
 
 ### Building, notarizing, and stapling
 
