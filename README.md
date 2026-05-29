@@ -52,4 +52,4 @@ Snapshots are stored locally in `~/Library/Application Support/SetShot/snapshots
 
 ---
 
-SetShot is published by [TidBITS](https://tidbits.com).
+SetShot is designed by Adam Engst, coded by Claude Code, and published by [TidBITS](https://tidbits.com).
