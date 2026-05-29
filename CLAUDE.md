@@ -58,16 +58,13 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label
      -exportOptionsPlist ExportOptions.plist
    ```
 
-5. Staple the notarization ticket. If the export notarized automatically, stapler succeeds immediately. If it fails with error 65 ("Record not found"), notarize manually first:
+5. Notarize and staple:
    ```
-   # Try stapling directly:
-   xcrun stapler staple /tmp/SetShot-export/SetShot.app
-
-   # If that fails (error 65), submit manually then re-staple:
    ditto -c -k --sequesterRsrc --keepParent /tmp/SetShot-export/SetShot.app /tmp/SetShot-notarize.zip
    xcrun notarytool submit /tmp/SetShot-notarize.zip --keychain-profile SetShot-notarize --wait
    xcrun stapler staple /tmp/SetShot-export/SetShot.app
    ```
+   (`xcodebuild -exportArchive` does not reliably auto-notarize, so submit manually every time.)
 
 6. Zip the stapled app:
    ```

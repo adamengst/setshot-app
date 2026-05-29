@@ -822,6 +822,8 @@ RULES = [
     # ── Voice Control ──────────────────────────────────────────────────────
     (r'^CommandAndControlEnabled$',          r'Accessibility',
      "Voice Control: enabled",              fmt_bool, 1, "vc_enabled"),
+    (r'^CACOverlayFadeDelay$',               r'speech\.recognition',
+     "Voice Control: overlay fade delay",    lambda v: f"{float(v):g}s", 1, "vc_overlay_delay"),
     (r'^CACOverlayFadeOpacity$',             r'speech\.recognition',
      "Voice Control: overlay opacity",       lambda v: f"{round(float(v)*100)}%", 1, "vc_overlay_opacity"),
     (r'^CACOverlayFadingEnabled$',           r'speech\.recognition',
@@ -829,6 +831,8 @@ RULES = [
     (r'^DictationIMAlwaysShowOverlayKey$',   r'speech\.recognition',
      "Voice Control: always show overlay",
      lambda v: "NamedElements" if v == "NamedElements" else "None", 1, "vc_overlay_show"),
+    (r'^DictationIMPlaySoundUponRecognition$',r'speech\.recognition',
+     "Voice Control: play sound on recognition", fmt_bool, 1, "vc_sound"),
 
     # ── Accessibility: Switch Control & specialized ────────────────────────
     (r'^switchOnOffKey$',                    r'universalaccess|Accessibility',
@@ -2317,6 +2321,7 @@ NOISE_PATTERN='(
   [Aa]pp[Ss]tore.*:: lastBootstrapDate\s*=|
   [Aa]pp[Ss]tore.*:: mostRecentTabIdentifier\s*=|
   app\.eyesoff.*:: SULast|
+  speech\.recognition.*:: DictationIMCommandCounts\.|
   speech\.recognition.*:: DictationIMLast|
   speech\.recognition.*:: DictationIMMessage|
   speech\.recognition.*:: DictationIMUseOnlyOfflineDictation\s*=|
