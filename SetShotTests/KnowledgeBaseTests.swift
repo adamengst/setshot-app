@@ -13,7 +13,7 @@ final class KnowledgeBaseTests: XCTestCase {
         KBEntry(
             id: id, domain: domain, key: key, source: "defaults",
             valueType: "string", description: "Test entry",
-            uiLocation: nil, settingsURL: nil,
+            uiLocation: nil, uiLocationOverrides: nil, settingsURL: nil,
             noise: noise, noiseReason: noise ? "test" : nil,
             minMacOS: "13.0", notes: nil, aiGenerated: false,
             contributedByIssue: nil, valueMap: nil, keyPrefix: keyPrefix, iconBundleID: nil

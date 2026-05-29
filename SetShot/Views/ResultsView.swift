@@ -153,8 +153,11 @@ private struct RecognizedRow: View {
     let entry: KBEntry
     let diff: DiffLine
 
+    private static let macOSMajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+
     var body: some View {
         let settingsURL = validatedSettingsURL(entry.settingsURL)
+        let uiLocation = entry.effectiveUILocation(macOSMajor: Self.macOSMajor)
 
         HStack(alignment: .top, spacing: 12) {
             SettingsPaneIcon(settingsURL: entry.settingsURL, domain: diff.domain, iconBundleID: entry.iconBundleID)
@@ -164,7 +167,7 @@ private struct RecognizedRow: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(entry.description ?? "")
                             .fontWeight(.medium)
-                        if let location = entry.uiLocation {
+                        if let location = uiLocation {
                             Text(location)
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
