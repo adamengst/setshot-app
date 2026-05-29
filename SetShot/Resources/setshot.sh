@@ -2884,13 +2884,6 @@ do_snapshot() {
     section "NSGlobalDomain"
     flatten_domain "NSGlobalDomain"
 
-    section "USER DEFAULTS DOMAINS"
-    while IFS= read -r domain; do
-      domain="$(echo "$domain" | tr -d ' ')"
-      [ -z "$domain" ] && continue
-      flatten_domain "$domain"
-    done < <(defaults domains 2>/dev/null | tr ',' '\n' | sort)
-
     section "PLIST FILES: ~/Library/Preferences"
     while IFS= read -r f; do
       flatten_plist "$f"
@@ -2904,54 +2897,6 @@ do_snapshot() {
     # Analytics opt-in lives outside /Library/Preferences — capture it explicitly
     DIAG_HIST="/Library/Application Support/CrashReporter/DiagnosticMessagesHistory.plist"
     [ -f "$DIAG_HIST" ] && flatten_plist "$DIAG_HIST"
-
-    section "PLIST FILES: ~/Library/Group Containers"
-    while IFS= read -r f; do
-      flatten_plist "$f"
-    done < <(find "$HOME/Library/Group Containers" -name "*.plist" -maxdepth 2 2>/dev/null | sort)
-
-    section "NOTIFICATIONS (~/Library/Group Containers/group.com.apple.usernoted)"
-    # Per-app notification settings — stored 3 levels deep, outside maxdepth 2 scan
-    USERNOTED_PLIST="$HOME/Library/Group Containers/group.com.apple.usernoted/Library/Preferences/group.com.apple.usernoted.plist"
-    if [ -f "$USERNOTED_PLIST" ]; then
-      python3 - "$USERNOTED_PLIST" << 'PYEOF'
-import plistlib, sys
-PATH = sys.argv[1]
-with open(PATH, 'rb') as f:
-    d = plistlib.load(f)
-
-def emit(key, val):
-    print(f"{PATH} :: {key} = {val}")
-
-# Global settings
-emit("content_visibility", d.get("content_visibility", ""))
-emit("sort_order", d.get("sort_order", ""))
-emit("summarize_previews", d.get("summarize_previews", ""))
-emit("play_forwarded_notifications_sounds", d.get("play_forwarded_notifications_sounds", ""))
-
-# dnd_prefs (nested binary plist)
-if "dnd_prefs" in d:
-    try:
-        dnd = plistlib.loads(d["dnd_prefs"])
-        for k in sorted(dnd.keys()):
-            emit(f"dnd_prefs.{k}", dnd[k])
-    except Exception:
-        emit("dnd_prefs", "<unreadable>")
-
-# Per-app settings — use bundle-id as the key prefix
-for app in d.get("apps", []):
-    bid = app.get("bundle-id", app.get("universal-app-id", ""))
-    if not bid:
-        continue
-    emit(f"app[{bid}].flags", app.get("flags", ""))
-    if "content_visibility" in app:
-        emit(f"app[{bid}].content_visibility", app["content_visibility"])
-    if "grouping" in app:
-        emit(f"app[{bid}].grouping", app["grouping"])
-PYEOF
-    else
-      echo "${USERNOTED_PLIST} :: (not found)"
-    fi
 
     section "FOCUS (~/Library/DoNotDisturb/DB)"
     # Focus config is stored in JSON files, not plists
