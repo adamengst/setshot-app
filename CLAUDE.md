@@ -42,22 +42,26 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label
    ```
 4. Commit `project.yml` (and any other pending changes) and push.
 
-### Building
+### Building, notarizing, and stapling
 
-4. In Xcode: set destination to **Any Mac (arm64, x86_64)**, then **Product → Archive**.
-5. In Organizer: **Distribute App → Direct Distribution → Export** to Desktop.
-
-### Notarizing and stapling
-
-6. Staple the notarization ticket (Xcode's export step submits to notary automatically; wait for it to finish, then staple):
+4. Archive, export (notarizes automatically), and zip — all from the command line:
    ```
+   xcodebuild archive \
+     -project SetShot.xcodeproj \
+     -scheme SetShot \
+     -destination 'generic/platform=macOS' \
+     -archivePath /tmp/SetShot.xcarchive
+
+   xcodebuild -exportArchive \
+     -archivePath /tmp/SetShot.xcarchive \
+     -exportPath ~/Desktop \
+     -exportOptionsPlist ExportOptions.plist
+
    xcrun stapler staple ~/Desktop/SetShot.app
-   ```
 
-7. Zip the stapled app:
-   ```
    ditto -c -k --sequesterRsrc --keepParent ~/Desktop/SetShot.app ~/Desktop/SetShot-X.Y.zip
    ```
+   The export step submits to Apple Notary and waits. Staple embeds the ticket.
 
 ### Signing for Sparkle
 

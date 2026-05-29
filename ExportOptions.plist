@@ -6,9 +6,9 @@
     <string>developer-id</string>
     <key>teamID</key>
     <string>6SCP2R96HY</string>
+    <key>signingCertificate</key>
+    <string>Developer ID Application</string>
     <key>signingStyle</key>
-    <string>automatic</string>
-    <key>notarization</key>
-    <false/>
+    <string>manual</string>
 </dict>
 </plist>
