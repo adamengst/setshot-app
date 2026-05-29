@@ -829,8 +829,6 @@ RULES = [
     (r'^DictationIMAlwaysShowOverlayKey$',   r'speech\.recognition',
      "Voice Control: always show overlay",
      lambda v: "NamedElements" if v == "NamedElements" else "None", 1, "vc_overlay_show"),
-    (r'^DictationIMUseOnlyOfflineDictation$',r'speech\.recognition',
-     "Voice Control: offline mode only",     fmt_bool, 1, "vc_offline"),
 
     # ── Accessibility: Switch Control & specialized ────────────────────────
     (r'^switchOnOffKey$',                    r'universalaccess|Accessibility',
@@ -2321,6 +2319,7 @@ NOISE_PATTERN='(
   app\.eyesoff.*:: SULast|
   speech\.recognition.*:: DictationIMLast|
   speech\.recognition.*:: DictationIMMessage|
+  speech\.recognition.*:: DictationIMUseOnlyOfflineDictation\s*=|
   stickersd.*::|
   studentd.*:: LastDateProviderSessionToken\s*=|
   talagent.*:: LastKeyChange\s*=|
