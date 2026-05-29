@@ -35,6 +35,11 @@ struct DiffEngine {
         return parse(diffOutput: diffOutput, kb: kb)
     }
 
+    // Caps to prevent UI hangs when comparing snapshots across major version
+    // boundaries (e.g. a snapshot taken before a domain filter change vs. after).
+    private static let maxValueLength = 500
+    private static let maxUnrecognized = 500
+
     func parse(diffOutput: String, kb: KnowledgeBase) -> DiffResult {
         let macOSVersion: String = {
             let v = ProcessInfo.processInfo.operatingSystemVersion
@@ -62,7 +67,10 @@ struct DiffEngine {
             let sign = capture(1)
             let rawDomain = capture(2)
             let key = capture(3)
-            let value = capture(4)
+            let rawValue = capture(4)
+            let value = rawValue.count > Self.maxValueLength
+                ? String(rawValue.prefix(Self.maxValueLength)) + "…"
+                : rawValue
             let normDomain = normalizeDomain(rawDomain)
             let pairKey = "\(normDomain)::\(key)"
 
@@ -108,7 +116,10 @@ struct DiffEngine {
             }
         }
 
-        return DiffResult(recognized: recognized, unrecognized: unrecognized, noise: noise)
+        let overflow = max(0, unrecognized.count - Self.maxUnrecognized)
+        if overflow > 0 { unrecognized = Array(unrecognized.prefix(Self.maxUnrecognized)) }
+
+        return DiffResult(recognized: recognized, unrecognized: unrecognized, noise: noise, unrecognizedOverflow: overflow)
     }
 
     private func normalizeDomain(_ raw: String) -> String {

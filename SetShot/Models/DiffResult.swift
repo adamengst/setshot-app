@@ -15,6 +15,7 @@ struct DiffResult {
     let recognized: [(entry: KBEntry, diff: DiffLine)]
     let unrecognized: [DiffLine]
     let noise: [(entry: KBEntry, diff: DiffLine)]
+    let unrecognizedOverflow: Int  // items dropped past the cap; 0 = none
 
-    static let empty = DiffResult(recognized: [], unrecognized: [], noise: [])
+    static let empty = DiffResult(recognized: [], unrecognized: [], noise: [], unrecognizedOverflow: 0)
 }

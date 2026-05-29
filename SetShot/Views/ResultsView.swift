@@ -51,7 +51,7 @@ struct ResultsView: View {
     private var unrecognizedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
-                SectionHeader("Unrecognized Changes", count: diff.unrecognized.count)
+                SectionHeader("Unrecognized Changes", count: diff.unrecognized.count + diff.unrecognizedOverflow)
                 Spacer()
                 submitAllButton
             }
@@ -59,6 +59,11 @@ struct ResultsView: View {
                 Text("All changes were identified.")
                     .foregroundStyle(.secondary)
             } else {
+                if diff.unrecognizedOverflow > 0 {
+                    Text("\(diff.unrecognized.count) of \(diff.unrecognized.count + diff.unrecognizedOverflow) unrecognized changes shown. The remaining \(diff.unrecognizedOverflow) are likely from a snapshot taken before a SetShot update changed what is captured — retake your baseline snapshot to clear them.")
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 ForEach(diff.unrecognized) { line in
                     UnrecognizedRow(
                         diff: line,
