@@ -42,7 +42,7 @@ struct SetShotApp: App {
                 }
                 .disabled(!updaterController.updater.canCheckForUpdates)
             }
-            HelpCommands()
+            CommandGroup(replacing: .help) {}
         }
 
         WindowGroup(for: UUID.self) { $id in
@@ -54,25 +54,6 @@ struct SetShotApp: App {
         }
         .defaultSize(width: 720, height: 540)
 
-        WindowGroup("SetShot Help", id: "help") {
-            HelpView()
-                .background(WindowFrameSaver(name: "SetShotHelpWindow"))
-        }
-        .defaultSize(width: 620, height: 600)
-        .commandsRemoved()
-    }
-}
-
-private struct HelpCommands: Commands {
-    @Environment(\.openWindow) private var openWindow
-
-    var body: some Commands {
-        CommandGroup(replacing: .help) {
-            Button("SetShot Help") {
-                openWindow(id: "help")
-            }
-            .keyboardShortcut("?", modifiers: .command)
-        }
     }
 }
 

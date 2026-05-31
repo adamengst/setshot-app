@@ -8,28 +8,38 @@ struct SnapshotLibraryView: View {
     @State private var isTakingSnapshot = false
     @State private var isComparing = false
     @State private var errorMessage: String?
-    @State private var showSettings = false
-    @State private var showingJournal = false
+    @AppStorage("OldestFirst") private var oldestFirst = false
+    private enum Tab { case snapshots, journal, settings, about }
+    @State private var activeTab: Tab = UserDefaults.standard.bool(forKey: "HasSeenAbout") ? .snapshots : .about
+
+    private var displaySnapshots: [StoredSnapshot] {
+        oldestFirst ? appModel.snapshots.reversed() : appModel.snapshots
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
-            if showingJournal {
+            switch activeTab {
+            case .snapshots:
+                if appModel.snapshots.isEmpty { emptyState } else { pickerColumns }
+            case .journal:
                 JournalView()
-            } else if appModel.snapshots.isEmpty {
-                emptyState
-            } else {
-                pickerColumns
+            case .settings:
+                SettingsView()
+            case .about:
+                AboutView()
             }
-            if !showingJournal {
+            if activeTab == .snapshots {
                 Divider()
                 footer
             }
         }
         .task { await appModel.loadSnapshots() }
-        .sheet(isPresented: $showSettings) {
-            SchedulerSettingsView()
+        .onChange(of: activeTab) { newTab in
+            if newTab != .about {
+                UserDefaults.standard.set(true, forKey: "HasSeenAbout")
+            }
         }
         .alert("Error", isPresented: Binding(
             get: { errorMessage != nil },
@@ -44,68 +54,30 @@ struct SnapshotLibraryView: View {
     // MARK: - Subviews
 
     private var header: some View {
-        HStack(spacing: 12) {
-            Text("SetShot").font(.headline)
-            Picker("", selection: $showingJournal) {
-                Text("Snapshots").tag(false)
-                Text("Journal").tag(true)
+        HStack {
+            Spacer()
+            Picker("", selection: $activeTab) {
+                Text("Snapshots").tag(Tab.snapshots)
+                Text("Journal").tag(Tab.journal)
+                Text("Settings").tag(Tab.settings)
+                Text("About").tag(Tab.about)
             }
             .pickerStyle(.segmented)
-            .frame(width: 160)
+            .frame(width: 320)
             Spacer()
-            Button {
-                showSettings = true
-            } label: {
-                Image(systemName: "gear")
-            }
-            .buttonStyle(.plain)
-            .focusable(false)
-            .help("Snapshot settings")
-
-            if isTakingSnapshot {
-                HStack(spacing: 6) {
-                    ProgressView().controlSize(.small)
-                    Text("Capturing…").foregroundStyle(.secondary).font(.callout)
-                }
-            } else {
-                Button("Take Snapshot") { takeSnapshot() }
-                    .buttonStyle(.borderedProminent)
-            }
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 8) {
             Text("No snapshots yet.")
                 .font(.headline)
-            Text("Take a snapshot before and after making changes to compare what shifted.")
+            Text("Use Take Snapshot below before and after making changes to compare what shifted.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 340)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("On your first snapshot, macOS will ask for permission twice — click Allow each time:")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                HStack(alignment: .top, spacing: 4) {
-                    Text("•").font(.caption).foregroundStyle(.secondary)
-                    Text("\"SetShot.app\" would like to access data from other apps.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                HStack(alignment: .top, spacing: 4) {
-                    Text("•").font(.caption).foregroundStyle(.secondary)
-                    Text("\"SetShot.app\" would like to access Apple Music, your music and video activity, and your media library.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: 420)
-            .padding(12)
-            .background(Color.secondary.opacity(0.07))
-            .cornerRadius(8)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
@@ -137,7 +109,7 @@ struct SnapshotLibraryView: View {
             Divider()
             ScrollView {
                 VStack(spacing: 0) {
-                    ForEach(appModel.snapshots) { snapshot in
+                    ForEach(displaySnapshots) { snapshot in
                         let isSelected = selected.wrappedValue?.id == snapshot.id
                         let isExcluded = isDisabled(snapshot)
                         SnapshotRow(
@@ -161,6 +133,16 @@ struct SnapshotLibraryView: View {
 
     private var footer: some View {
         HStack {
+            if isTakingSnapshot {
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.small)
+                    Text("Capturing…").foregroundStyle(.secondary).font(.callout)
+                }
+            } else {
+                Button("Take Snapshot") { takeSnapshot() }
+                    .buttonStyle(.borderedProminent)
+            }
+            Spacer()
             if let before = selectedBefore, let after = selectedAfter {
                 Text("\(before.displayName)  →  \(after.displayName)")
                     .font(.caption)

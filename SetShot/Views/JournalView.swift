@@ -2,6 +2,7 @@ import SwiftUI
 
 struct JournalView: View {
     @EnvironmentObject var appModel: AppModel
+    @AppStorage("OldestFirst") private var oldestFirst = false
     @State private var searchQuery = ""
 
     private var filteredEntries: [JournalEntry] {
@@ -31,7 +32,7 @@ struct JournalView: View {
                 entries: entries
             )
         }
-        .sorted { $0.snapshotDate > $1.snapshotDate }
+        .sorted { oldestFirst ? $0.snapshotDate < $1.snapshotDate : $0.snapshotDate > $1.snapshotDate }
     }
 
     var body: some View {
