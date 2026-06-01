@@ -12,8 +12,14 @@ struct SnapshotLibraryView: View {
     private enum Tab { case snapshots, journal, settings, about }
     @State private var activeTab: Tab = UserDefaults.standard.bool(forKey: "HasSeenAbout") ? .snapshots : .about
 
+    private let currentMacOSMajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+
     private var displaySnapshots: [StoredSnapshot] {
         oldestFirst ? appModel.snapshots.reversed() : appModel.snapshots
+    }
+
+    private var matchingBaseSnapshots: [StoredSnapshot] {
+        appModel.baseSnapshots.filter { $0.baseMacOSMajor == currentMacOSMajor }
     }
 
     var body: some View {
@@ -22,7 +28,7 @@ struct SnapshotLibraryView: View {
             Divider()
             switch activeTab {
             case .snapshots:
-                if appModel.snapshots.isEmpty { emptyState } else { pickerColumns }
+                if appModel.snapshots.isEmpty && matchingBaseSnapshots.isEmpty { emptyState } else { pickerColumns }
             case .journal:
                 JournalView()
             case .settings:
@@ -86,11 +92,13 @@ struct SnapshotLibraryView: View {
     private var pickerColumns: some View {
         HStack(spacing: 0) {
             snapshotColumn(label: "Before", selected: $selectedBefore) { snapshot in
-                selectedAfter.map { snapshot.date >= $0.date } ?? false
+                guard !snapshot.isBaseSnapshot else { return false }
+                return selectedAfter.map { snapshot.date >= $0.date } ?? false
             }
             Divider()
             snapshotColumn(label: "After", selected: $selectedAfter) { snapshot in
-                selectedBefore.map { snapshot.date <= $0.date } ?? false
+                guard !snapshot.isBaseSnapshot else { return false }
+                return selectedBefore.map { snapshot.date <= $0.date } ?? false
             }
         }
     }
@@ -124,6 +132,23 @@ struct SnapshotLibraryView: View {
                             deleteSnapshot(snapshot, selected: selected)
                         }
                         .id("\(label)-\(snapshot.id)")
+                    }
+                    if !matchingBaseSnapshots.isEmpty {
+                        Divider()
+                            .padding(.top, 4)
+                        Text("Baselines")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                        Divider()
+                        ForEach(matchingBaseSnapshots) { snapshot in
+                            let isSelected = selected.wrappedValue?.id == snapshot.id
+                            BaseSnapshotRow(snapshot: snapshot, isSelected: isSelected) {
+                                selected.wrappedValue = isSelected ? nil : snapshot
+                            }
+                            .id("\(label)-\(snapshot.id)")
+                        }
                     }
                 }
             }
@@ -247,6 +272,31 @@ private struct SnapshotRow: View {
         let trimmed = editText.trimmingCharacters(in: .whitespaces)
         isEditing = false
         onRename(trimmed)
+    }
+}
+
+private struct BaseSnapshotRow: View {
+    let snapshot: StoredSnapshot
+    let isSelected: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        HStack {
+            Text(snapshot.displayName)
+                .foregroundStyle(.secondary)
+                .font(.subheadline)
+            Spacer()
+            if isSelected {
+                Image(systemName: "checkmark")
+                    .foregroundStyle(Color.accentColor)
+                    .font(.caption.bold())
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(isSelected ? Color.accentColor.opacity(0.12) : Color.clear)
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
     }
 }
 

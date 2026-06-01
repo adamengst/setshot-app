@@ -8,6 +8,11 @@ struct DiffEngine {
         pattern: #"\.[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$"#,
         options: .caseInsensitive
     )
+    // Matches CFKeyedArchiverUID values emitted by old snapshots (before PlistFlattener
+    // suppressed $-prefixed keys). These are process-local memory addresses, not settings.
+    private static let uidValueRegex = try! NSRegularExpression(
+        pattern: #"^<CFKeyedArchiverUID "#
+    )
 
     func diff(before: Snapshot, after: Snapshot, kb: KnowledgeBase) async throws -> DiffResult {
         guard let bundledScript = Bundle.main.url(forResource: "setshot", withExtension: "sh") else {
@@ -96,6 +101,13 @@ struct DiffEngine {
             let before = p.before ?? ""
             let after = p.after ?? ""
             guard semanticValue(before) != semanticValue(after) else { continue }
+            // Suppress any diff where either value is a CFKeyedArchiverUID reference —
+            // these are object-graph pointers that change every process launch.
+            let isUID = { (v: String) in
+                let ns = v as NSString
+                return Self.uidValueRegex.firstMatch(in: v, range: NSRange(location: 0, length: ns.length)) != nil
+            }
+            guard !isUID(before) && !isUID(after) else { continue }
             let diffLine = DiffLine(
                 domain: p.domain,
                 key: p.key,

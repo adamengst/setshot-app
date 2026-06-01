@@ -5,8 +5,12 @@ struct StoredSnapshot: Identifiable, Sendable {
     let url: URL
     let date: Date
     let customLabel: String?
+    var isBaseSnapshot: Bool = false
+    var baseDisplayName: String? = nil
+    var baseMacOSMajor: Int? = nil
 
     var displayName: String {
+        if let label = baseDisplayName { return label }
         if let label = customLabel { return label }
         let cal = Calendar.current
         if cal.isDateInToday(date) {

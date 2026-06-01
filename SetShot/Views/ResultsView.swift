@@ -40,7 +40,29 @@ struct ResultsView: View {
         } message: {
             Text(submitError ?? "")
         }
+        .toolbar {
+            if !diff.recognized.isEmpty {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Export HTML…") { exportHTML() }
+                }
+            }
+        }
         .frame(minWidth: 600)
+    }
+
+    private func exportHTML() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.html]
+        panel.nameFieldStringValue = "SetShot — \(before.displayName) vs \(after.displayName).html"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let macOSMajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        let html = HTMLExporter.export(
+            result: diff,
+            beforeName: before.displayName,
+            afterName: after.displayName,
+            macOSMajor: macOSMajor
+        )
+        try? html.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private var recognizedSection: some View {
@@ -137,7 +159,14 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
     }
     if raw.hasPrefix("AppleUSBAudioEngine:") {
         let parts = raw.split(separator: ":", omittingEmptySubsequences: false)
-        if parts.count >= 3 { return String(parts[2]) }
+        if parts.count >= 3 {
+            let productName = String(parts[2])
+            if parts.count >= 2 && parts[1] == "Apple Inc." {
+                if key.contains(".output") { return "\(productName) Speakers" }
+                if key.contains(".input") { return "\(productName) Microphone" }
+            }
+            return productName
+        }
     }
     if key.localizedCaseInsensitiveContains("volume"), let f = Double(raw) {
         return "\(Int((f * 100).rounded()))%"
@@ -288,7 +317,7 @@ private struct ComparisonWindowPositioner: NSViewRepresentable {
                     // down to the screen bottom — not the full screen height, so
                     // cascaded windows that start lower don't extend off-screen.
                     let availableH = f.maxY - sf.minY
-                    let targetContentH = min(self.contentHeight + 24, max(0, availableH - titleBarHeight))
+                    let targetContentH = min(self.contentHeight + 44, max(0, availableH - titleBarHeight))
                     let newH = targetContentH + titleBarHeight
                     f.origin.y = f.maxY - newH  // keep top edge fixed
                     f.size.height = newH

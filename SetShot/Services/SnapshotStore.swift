@@ -43,6 +43,24 @@ actor SnapshotStore {
             .sorted { $0.date > $1.date }
     }
 
+    nonisolated func listBaseSnapshots() -> [StoredSnapshot] {
+        let baseDir = Bundle.main.resourceURL?.appendingPathComponent("BaseSnapshots")
+        guard let baseDir,
+              let items = try? FileManager.default.contentsOfDirectory(
+                at: baseDir, includingPropertiesForKeys: nil)
+        else { return [] }
+        return items
+            .filter { $0.lastPathComponent.hasPrefix("base_") && $0.lastPathComponent.hasSuffix(".txt.gz") }
+            .compactMap { url -> StoredSnapshot? in
+                guard let label = baseLabel(for: url.lastPathComponent) else { return nil }
+                let major = baseMajorVersion(for: url.lastPathComponent)
+                return StoredSnapshot(url: url, date: .distantPast, customLabel: nil,
+                                     isBaseSnapshot: true, baseDisplayName: label,
+                                     baseMacOSMajor: major)
+            }
+            .sorted { ($0.baseDisplayName ?? "") < ($1.baseDisplayName ?? "") }
+    }
+
     func delete(_ snapshot: StoredSnapshot) throws {
         try FileManager.default.removeItem(at: snapshot.url)
     }
@@ -70,6 +88,29 @@ actor SnapshotStore {
     }
 
     // MARK: - Private
+
+    // Derives "macOS Sequoia 15.7.7 defaults" from "base_Sequoia_15.7.7.txt.gz"
+    private nonisolated func baseLabel(for filename: String) -> String? {
+        var name = filename
+        guard name.hasPrefix("base_") else { return nil }
+        name = String(name.dropFirst(5))
+        if name.hasSuffix(".txt.gz") { name = String(name.dropLast(7)) }
+        else if name.hasSuffix(".txt") { name = String(name.dropLast(4)) }
+        let parts = name.split(separator: "_", maxSplits: 1)
+        guard parts.count == 2 else { return nil }
+        return "macOS \(parts[0]) \(parts[1]) defaults"
+    }
+
+    private nonisolated func baseMajorVersion(for filename: String) -> Int? {
+        var name = filename
+        guard name.hasPrefix("base_") else { return nil }
+        name = String(name.dropFirst(5))
+        if name.hasSuffix(".txt.gz") { name = String(name.dropLast(7)) }
+        else if name.hasSuffix(".txt") { name = String(name.dropLast(4)) }
+        let parts = name.split(separator: "_", maxSplits: 1)
+        guard parts.count == 2 else { return nil }
+        return Int(String(parts[1]).split(separator: ".").first ?? "")
+    }
 
     private func filename(for date: Date) -> String {
         let f = DateFormatter()

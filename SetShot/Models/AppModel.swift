@@ -11,6 +11,7 @@ class AppModel: ObservableObject {
     @Published var kb: KnowledgeBase = .empty
     @Published var kbUnavailable = false
     @Published var snapshots: [StoredSnapshot] = []
+    @Published var baseSnapshots: [StoredSnapshot] = []
     @Published var journal: [JournalEntry] = []
     @Published var comparisons: [UUID: ComparisonRecord] = [:]
 
@@ -40,6 +41,7 @@ class AppModel: ObservableObject {
 
     func loadSnapshots() async {
         snapshots = (try? await store.list()) ?? []
+        baseSnapshots = store.listBaseSnapshots()
     }
 
     func loadJournal() async {

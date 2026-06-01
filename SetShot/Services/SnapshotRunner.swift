@@ -30,9 +30,17 @@ struct SnapshotRunner {
 
         try FileManager.default.copyItem(at: bundledScript, to: scriptCopy)
 
+        // Pass our own executable path so setshot.sh can call back into SetShot
+        // for plist flattening (--flatten-plist) without requiring python3/CLT.
+        var env = ProcessInfo.processInfo.environment
+        if let bin = Bundle.main.executableURL?.path {
+            env["SETSHOT_BIN"] = bin
+        }
+
         let exitCode = try await spawnProcess(
             executable: "/bin/bash",
-            arguments: [scriptCopy.path, "snapshot", outputFile.path]
+            arguments: [scriptCopy.path, "snapshot", outputFile.path],
+            environment: env
         )
 
         guard exitCode == 0 else { throw SnapshotError.scriptFailed(exitCode) }
@@ -44,11 +52,16 @@ struct SnapshotRunner {
         return Snapshot(takenAt: .now, rawOutput: rawOutput)
     }
 
-    private func spawnProcess(executable: String, arguments: [String]) async throws -> Int32 {
+    private func spawnProcess(
+        executable: String,
+        arguments: [String],
+        environment: [String: String]? = nil
+    ) async throws -> Int32 {
         try await withCheckedThrowingContinuation { continuation in
             let process = Process()
             process.executableURL = URL(fileURLWithPath: executable)
             process.arguments = arguments
+            if let environment { process.environment = environment }
             process.standardOutput = FileHandle.nullDevice
             process.standardError = FileHandle.nullDevice
             process.terminationHandler = { p in

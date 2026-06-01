@@ -26,6 +26,8 @@ targets:
     deploymentTarget: "13.0"
     sources:
       - SetShot
+      - path: SetShot/Resources/BaseSnapshots
+        type: folder
     dependencies:
       - package: Sparkle
         product: Sparkle

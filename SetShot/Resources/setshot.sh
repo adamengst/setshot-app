@@ -29,52 +29,25 @@
 
 SCRIPT_NAME="$(basename "$0")"
 
-# ── Python flattener ──────────────────────────────────────────────────────────
+# ── Plist flattener ───────────────────────────────────────────────────────────
 # Reads a plist from stdin (binary or XML), emits one "key = value" line per
-# leaf node. bytes values are attempted as nested plists before falling back.
+# leaf node. Implemented in the SetShot binary (--flatten-plist) to avoid any
+# dependency on python3, which is a CLT stub on clean macOS installs.
+#
+# SETSHOT_BIN is injected by SnapshotRunner.swift when run from the app.
+# It is validated here; if absent or not executable, _flatten_plist_stdin is a no-op.
+if [ -z "${SETSHOT_BIN:-}" ] || [ ! -x "$SETSHOT_BIN" ]; then
+  SETSHOT_BIN=""
+fi
 
-read -r -d '' FLATTEN_PY << 'PYEOF'
-import sys, plistlib
-from datetime import datetime
-
-def flatten(obj, prefix=""):
-    if isinstance(obj, bool):
-        print(f"{prefix} = {obj}")
-    elif isinstance(obj, int) and obj in (0, 1):
-        # Normalize integer 0/1 to False/True so that plists switching between
-        # <integer>1</integer> and <true/> on disk don't produce false diffs.
-        # (bool is a subclass of int, so the bool check above runs first.)
-        print(f"{prefix} = {bool(obj)}")
-    elif isinstance(obj, plistlib.UID):
-        print(f"{prefix} = <UID {obj.data}>")
-    elif isinstance(obj, dict):
-        for k in sorted(obj.keys(), key=str):
-            flatten(obj[k], f"{prefix}.{k}" if prefix else str(k))
-    elif isinstance(obj, list):
-        for i, v in enumerate(obj):
-            flatten(v, f"{prefix}[{i}]")
-    elif isinstance(obj, bytes):
-        try:
-            nested = plistlib.loads(obj)
-            flatten(nested, prefix)
-            return
-        except Exception:
-            pass
-        print(f"{prefix} = <binary {len(obj)} bytes>")
-    elif isinstance(obj, datetime):
-        print(f"{prefix} = {obj.isoformat()}")
-    else:
-        val = str(obj)
-        if len(val) > 300:
-            val = val[:300] + "..."
-        print(f"{prefix} = {val}")
-
-try:
-    data = plistlib.load(sys.stdin.buffer)
-    flatten(data)
-except Exception:
-    sys.exit(1)
-PYEOF
+_flatten_plist_stdin() {
+  if [ -n "$SETSHOT_BIN" ]; then
+    "$SETSHOT_BIN" --flatten-plist 2>/dev/null
+  fi
+  # If SETSHOT_BIN is unavailable, silently produce no output.
+  # This is intentional: running setshot.sh standalone outside the app
+  # bundle is unsupported on clean macOS without CLT.
+}
 
 # ── Human-readable explainer ─────────────────────────────────────────────────
 # Reads filtered diff lines from stdin, translates known keys to plain English,
@@ -2831,13 +2804,13 @@ section() {
 flatten_domain() {
   local domain="$1"
   defaults export "$domain" - 2>/dev/null \
-    | { python3 -c "$FLATTEN_PY" 2>/dev/null; } 2>/dev/null \
+    | _flatten_plist_stdin \
     | sed "s|^|${domain} :: |"
 }
 
 flatten_plist() {
   local f="$1"
-  { python3 -c "$FLATTEN_PY" < "$f" 2>/dev/null; } 2>/dev/null \
+  _flatten_plist_stdin < "$f" \
     | sed "s|^|${f} :: |"
 }
 
@@ -2845,7 +2818,7 @@ flatten_plist() {
 flatten_plist_sudo() {
   local f="$1"
   sudo cat "$f" 2>/dev/null \
-    | { python3 -c "$FLATTEN_PY" 2>/dev/null; } 2>/dev/null \
+    | _flatten_plist_stdin \
     | sed "s|^|${f} :: |"
 }
 
@@ -2915,27 +2888,53 @@ do_snapshot() {
     # Focus config is stored in JSON files, not plists
     DND_DB="$HOME/Library/DoNotDisturb/DB"
     if [ -f "$DND_DB/GlobalConfiguration.json" ]; then
-      python3 - "$DND_DB" << 'PYEOF'
-import json, sys, os
-db = sys.argv[1]
+      # Extract Focus/DND config from JSON files using JXA (no python3/CLT required).
+      # DND_DB_JXA is passed via environment to avoid shell quoting issues in the heredoc.
+      export DND_DB_JXA="$DND_DB"
+      osascript -l JavaScript << 'JSEOF' 2>/dev/null
+ObjC.import('Foundation')
+var db = $.NSProcessInfo.processInfo.environment.objectForKey('DND_DB_JXA').js
 
-def emit(key, val):
-    print(f"{db} :: {key} = {val}")
+function readJSON(path) {
+  var data = $.NSData.dataWithContentsOfFile(path)
+  if (!data || data.length === 0) return null
+  var str = $.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding)
+  if (!str || str.isNil()) return null
+  return JSON.parse(str.js)
+}
 
-# GlobalConfiguration: modesCanImpactAvailability controls "Share Focus status" globally
-gc = json.load(open(f"{db}/GlobalConfiguration.json"))
-data = gc["data"][0]
-emit("GlobalConfiguration.modesCanImpactAvailability", data.get("modesCanImpactAvailability", ""))
-emit("GlobalConfiguration.preventAutoReply", data.get("preventAutoReply", ""))
+function emit(key, val) {
+  var line = db + ' :: ' + key + ' = ' + val + '\n'
+  $.NSFileHandle.fileHandleWithStandardOutput.writeData(
+    $.NSString.alloc.initWithString(line).dataUsingEncoding($.NSUTF8StringEncoding)
+  )
+}
 
-# ModeConfigurations: per-mode settings
-mc = json.load(open(f"{db}/ModeConfigurations.json"))
-modes = mc["data"][0]["modeConfigurations"]
-for mode_id, cfg in sorted(modes.items()):
-    name = cfg.get("mode", {}).get("name", mode_id)
-    emit(f"mode[{mode_id}].name", name)
-    emit(f"mode[{mode_id}].impactsAvailability", cfg.get("impactsAvailability", ""))
-PYEOF
+try {
+  var gc = readJSON(db + '/GlobalConfiguration.json')
+  if (gc) {
+    var d = gc.data[0]
+    emit('GlobalConfiguration.modesCanImpactAvailability', d.modesCanImpactAvailability)
+    emit('GlobalConfiguration.preventAutoReply', d.preventAutoReply)
+  }
+} catch(e) {}
+
+try {
+  var mc = readJSON(db + '/ModeConfigurations.json')
+  if (mc) {
+    var modes = mc.data[0].modeConfigurations
+    var ids = Object.keys(modes).sort()
+    for (var i = 0; i < ids.length; i++) {
+      var mode_id = ids[i]
+      var cfg = modes[mode_id]
+      var name = (cfg.mode && cfg.mode.name) ? cfg.mode.name : mode_id
+      emit('mode[' + mode_id + '].name', name)
+      emit('mode[' + mode_id + '].impactsAvailability', cfg.impactsAvailability)
+    }
+  }
+} catch(e) {}
+JSEOF
+      unset DND_DB_JXA
     else
       echo "$DND_DB :: (not found)"
     fi
@@ -2943,89 +2942,96 @@ PYEOF
     section "SCREEN TIME (screentimediagnose)"
     # Screen Time stores settings in a sandboxed SQLite database; readable only
     # via the screentimediagnose tool in ScreenTimeCore.framework.
-    python3 << 'PYEOF'
-import subprocess, sys, re
+    STDIAG="/System/Library/PrivateFrameworks/ScreenTimeCore.framework/screentimediagnose"
+    if [ -x "$STDIAG" ]; then
+      "$STDIAG" inspect 2>/dev/null | awk '
+      # Parse the ObjC-style description output from screentimediagnose inspect.
+      # Tracks brace depth to distinguish top-level keys from nested content.
+      # Uses only POSIX awk (no 3-argument match, no gawk extensions).
+      BEGIN {
+        depth = 0; pre = 0; section = ""; sdepth = 0; comm = 0; cdepth = 0
+        bp_id = ""; bp_en = ""; alt = 0; aen = 0
+        BPMAP["bedtime_activation_personal"]      = "downtime_schedule_enabled"
+        BPMAP["digital_health_restrictions"]       = "content_privacy_enabled"
+        BPMAP["always_allow_activation_personal"]  = "always_allowed_apps_enabled"
+      }
+      {
+        pre = depth
+        for (i = 1; i <= length($0); i++) {
+          c = substr($0, i, 1)
+          if (c == "{") depth++
+          else if (c == "}") depth--
+        }
+        post = depth
+      }
 
-STDIAG = "/System/Library/PrivateFrameworks/ScreenTimeCore.framework/screentimediagnose"
-r = subprocess.run([STDIAG, "inspect"], capture_output=True, text=True)
-if r.returncode != 0:
-    print("screentimedx :: (screentimediagnose failed)")
-    sys.exit(0)
+      # Detect top-level section opens
+      pre == 0 && /^settings = \{/   { section = "settings";   sdepth = post; next }
+      pre == 0 && /^blueprints = \{/ { section = "blueprints"; sdepth = post; next }
+      # Leave section when depth falls back below the section level
+      section != "" && post < sdepth { section = ""; comm = 0; next }
 
-text = r.stdout
+      # Settings: top-level key=value (no brace change, not a dict opener)
+      section == "settings" && pre == sdepth && post == sdepth && !/\{/ {
+        s = $0; gsub(/^[[:space:]]+/, "", s)
+        if (s ~ /^[a-zA-Z][a-zA-Z0-9_]*[[:space:]]*=/) {
+          key = s; sub(/[[:space:]]*=.*/, "", key)
+          val = s; sub(/^[^=]*=[[:space:]]*/, "", val); sub(/;[[:space:]]*$/, "", val)
+          print "screentimedx :: " key " = " val
+        }
+      }
+      # Settings: entering communicationPolicies nested dict
+      section == "settings" && /communicationPolicies/ && pre == sdepth && post > sdepth {
+        comm = 1; cdepth = post; next
+      }
+      # communicationPolicies content
+      section == "settings" && comm && pre == cdepth && post == cdepth && !/\{/ {
+        s = $0; gsub(/^[[:space:]]+/, "", s)
+        if (s ~ /^[a-zA-Z][a-zA-Z0-9_]*[[:space:]]*=/) {
+          key = s; sub(/[[:space:]]*=.*/, "", key)
+          val = s; sub(/^[^=]*=[[:space:]]*/, "", val); sub(/;[[:space:]]*$/, "", val)
+          print "screentimedx :: communicationPolicies." key " = " val
+        }
+      }
+      # Closing communicationPolicies
+      section == "settings" && comm && post < cdepth { comm = 0 }
 
-def extract_block(text, label):
-    """Return the content between the outermost braces after 'label ='."""
-    idx = text.find(label + ' =')
-    if idx == -1: return None
-    try:
-        brace_start = text.index('{', idx)
-    except ValueError:
-        return None
-    depth = 0
-    for i in range(brace_start, len(text)):
-        if text[i] == '{': depth += 1
-        elif text[i] == '}':
-            depth -= 1
-            if depth == 0:
-                return text[brace_start+1:i]
-    return None
+      # Blueprints: detect new blueprint entry
+      section == "blueprints" && pre == sdepth && /"[^"]+" = \{/ {
+        if (bp_id != "") {
+          if (bp_id in BPMAP) print "screentimedx :: " BPMAP[bp_id] " = " bp_en
+          if (bp_id ~ /^budget_activation_/) { alt++; if (bp_en == "1") aen++ }
+        }
+        s = $0; sub(/^[[:space:]]*"/, "", s); sub(/".*/, "", s); bp_id = s; bp_en = ""
+        next
+      }
+      # Blueprint content: look for enabled key
+      section == "blueprints" && bp_id != "" && pre > sdepth && post > sdepth {
+        if (/enabled[[:space:]]*=/) {
+          s = $0
+          sub(/.*enabled[[:space:]]*=[[:space:]]*/, "", s); sub(/;.*/, "", s)
+          gsub(/[[:space:]]/, "", s); bp_en = s
+        }
+      }
+      # Closing a blueprint dict
+      section == "blueprints" && bp_id != "" && pre > sdepth && post == sdepth {
+        if (bp_id in BPMAP) print "screentimedx :: " BPMAP[bp_id] " = " bp_en
+        if (bp_id ~ /^budget_activation_/) { alt++; if (bp_en == "1") aen++ }
+        bp_id = ""
+      }
 
-def flat_keys(block):
-    """Extract top-level key=value pairs from a brace block (skip nested dicts)."""
-    out = {}
-    inner_depth = 0
-    for line in block.splitlines():
-        s = line.strip()
-        inner_depth += s.count('{') - s.count('}')
-        if inner_depth > 0 or '=' not in s:
-            continue
-        k, v = s.split('=', 1)
-        out[k.strip()] = v.strip().rstrip(';')
-    return out
-
-# ── Top-level settings ────────────────────────────────────────────────────────
-settings_block = extract_block(text, 'settings')
-if settings_block:
-    for k, v in sorted(flat_keys(settings_block).items()):
-        print(f"screentimedx :: {k} = {v}")
-
-    # communicationPolicies nested dict
-    comm_block = extract_block(settings_block, 'communicationPolicies')
-    if comm_block:
-        for k, v in sorted(flat_keys(comm_block).items()):
-            print(f"screentimedx :: communicationPolicies.{k} = {v}")
-
-# ── Blueprint enabled states ──────────────────────────────────────────────────
-# stable blueprint IDs and their UI meaning
-BLUEPRINTS = {
-    "bedtime_activation_personal":       "downtime_schedule_enabled",
-    "digital_health_restrictions":       "content_privacy_enabled",
-    "always_allow_activation_personal":  "always_allowed_apps_enabled",
-}
-blueprints_block = extract_block(text, 'blueprints')
-if blueprints_block:
-    for bp_id, key in BLUEPRINTS.items():
-        m = re.search(rf'"{re.escape(bp_id)}" =\s*\{{', blueprints_block)
-        if not m:
-            continue
-        sub = extract_block(blueprints_block[m.start():], f'"{bp_id}"')
-        if sub is None:
-            continue
-        kv = flat_keys(sub)
-        if 'enabled' in kv:
-            print(f"screentimedx :: {key} = {kv['enabled']}")
-
-    # ── App Limits: count usage-limit blueprints (UUID-keyed, not stable) ─────
-    app_limit_total   = len(re.findall(r'"budget_activation_[^"]+" =\s*\{', blueprints_block))
-    app_limit_enabled = 0
-    for m in re.finditer(r'"(budget_activation_[^"]+)" =\s*\{', blueprints_block):
-        sub = extract_block(blueprints_block[m.start():], f'"{m.group(1)}"')
-        if sub and flat_keys(sub).get('enabled') == '1':
-            app_limit_enabled += 1
-    print(f"screentimedx :: app_limits_count = {app_limit_total}")
-    print(f"screentimedx :: app_limits_enabled_count = {app_limit_enabled}")
-PYEOF
+      END {
+        if (bp_id != "") {
+          if (bp_id in BPMAP) print "screentimedx :: " BPMAP[bp_id] " = " bp_en
+          if (bp_id ~ /^budget_activation_/) { alt++; if (bp_en == "1") aen++ }
+        }
+        print "screentimedx :: app_limits_count = " alt
+        print "screentimedx :: app_limits_enabled_count = " aen
+      }
+      '
+    else
+      echo "screentimedx :: (screentimediagnose not found)"
+    fi
 
     section "SOUND (NVRAM)"
     # Play sound on startup is stored in NVRAM, not a plist
@@ -3048,30 +3054,35 @@ PYEOF
       # These produce stable "default-browser :: handler = ..." lines that the
       # explain engine can translate to friendly names even when the LSHandlers
       # array index shifts (which raw flatten output cannot do reliably).
-      python3 - "$LS_PLIST" << 'PYEOF'
-import sys, plistlib
-try:
-    with open(sys.argv[1], 'rb') as _f:
-        _data = plistlib.load(_f)
-except Exception:
-    sys.exit(0)
-_by_scheme = {}
-for _h in _data.get('LSHandlers', []):
-    _s = _h.get('LSHandlerURLScheme')
-    _r = _h.get('LSHandlerRoleAll') or _h.get('LSHandlerRoleViewer') or ''
-    if _s and _r:
-        _by_scheme[_s] = _r
-_want = [
-    ('http',    'default-browser'),
-    ('https',   'default-browser-https'),
-    ('mailto',  'default-mail-client'),
-    ('webcal',  'default-calendar-app'),
-    ('feed',    'default-rss-reader'),
-]
-for _scheme, _label in _want:
-    if _scheme in _by_scheme:
-        print(f"{_label} :: handler = {_by_scheme[_scheme]}")
-PYEOF
+      # Uses plutil to convert the binary plist to XML, then awk to parse it.
+      plutil -convert xml1 -o - "$LS_PLIST" 2>/dev/null | awk '
+      BEGIN {
+        SCHEMES["http"]    = "default-browser"
+        SCHEMES["https"]   = "default-browser-https"
+        SCHEMES["mailto"]  = "default-mail-client"
+        SCHEMES["webcal"]  = "default-calendar-app"
+        SCHEMES["feed"]    = "default-rss-reader"
+        in_h = 0; scheme = ""; role = ""; next_is = ""
+      }
+      /^[[:space:]]*<dict>[[:space:]]*$/ { in_h = 1; scheme = ""; role = ""; next_is = ""; next }
+      /^[[:space:]]*<\/dict>[[:space:]]*$/ {
+        if (in_h && scheme != "" && role != "") handlers[scheme] = role
+        in_h = 0; next
+      }
+      in_h && /LSHandlerURLScheme/ { next_is = "scheme"; next }
+      in_h && /LSHandlerRoleAll/   { next_is = "role";   next }
+      in_h && /LSHandlerRoleViewer/ && role == "" { next_is = "role"; next }
+      next_is != "" && /<string>/ {
+        s = $0; sub(/.*<string>/, "", s); sub(/<\/string>.*/, "", s)
+        if (next_is == "scheme") scheme = s
+        else if (next_is == "role")   role   = s
+        next_is = ""
+      }
+      END {
+        for (s in SCHEMES)
+          if (s in handlers) print SCHEMES[s] " :: handler = " handlers[s]
+      }
+      '
     else
       echo "${LS_PLIST} :: (not found)"
     fi
@@ -3137,7 +3148,9 @@ PYEOF
     echo "Gatekeeper  :: $(spctl --status        2>/dev/null || echo '(unavailable)')"
     echo "FileVault   :: $(fdesetup status       2>/dev/null || echo '(unavailable)')"
     echo "Firewall    :: $(/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate 2>/dev/null || echo '(unavailable)')"
-    echo "AdminPassword :: $(security authorizationdb read system.preferences 2>/dev/null | python3 -c 'import sys,plistlib; d=plistlib.loads(sys.stdin.buffer.read()); print("timeout="+str(d.get("timeout","?")))' 2>/dev/null || echo '(unavailable)')"
+    _adm_timeout=$(security authorizationdb read system.preferences 2>/dev/null \
+      | plutil -extract timeout raw -o - - 2>/dev/null)
+    echo "AdminPassword :: timeout=${_adm_timeout:-(unavailable)}"
     LDM_VAL=$(launchctl bootenv 2>/dev/null | awk '/LockdownMode/{print $2}')
     echo "LockdownMode :: LockdownMode = ${LDM_VAL:-0}"
     echo ""
@@ -3176,53 +3189,35 @@ PYEOF
     section "PRINTERS & FAXES"
     # CUPS printer/fax queues — stable attributes only (state-change timestamps excluded).
     # lpstat requires no root; lpoptions gives per-printer details.
-    python3 << 'PYEOF'
-import subprocess, re, sys
-
-def run(*cmd):
-    try:
-        r = subprocess.run(list(cmd), capture_output=True, text=True, timeout=10)
-        return r.stdout
-    except Exception:
-        return ""
-
-# Gather state: "printer NAME is idle/stopped/processing"
-state_re = re.compile(r'^printer\s+(\S+)\s+is\s+(\S+)', re.MULTILINE)
-states = {m.group(1): m.group(2).rstrip('.') for m in state_re.finditer(run("lpstat", "-p"))}
-
-if not states:
-    print("CUPS :: (no printers configured)")
-else:
-    # Stable keys to extract from lpoptions (exclude timestamps, internal bitmasks)
-    WANT = {
-        "printer-info":            "info",
-        "printer-make-and-model":  "driver",
-        "printer-uri-supported":   "uri",
-        "printer-location":        "location",
-        "printer-is-accepting-jobs": "accepting",
-        "printer-is-shared":       "shared",
-        "print-color-mode":        "default-color",
-        "sides":                   "default-sides",
-    }
-    kv_re = re.compile(r"(\S+)='([^']*)'|(\S+)=(\S+)")
-
-    for name in sorted(states):
-        prefix = f"CUPS :: printer[{name}]"
-        print(f"{prefix}.state = {states[name]}")
-
-        raw = run("lpoptions", "-p", name)
-        opts = {}
-        for m in kv_re.finditer(raw):
-            k = m.group(1) or m.group(3)
-            v = m.group(2) if m.group(2) is not None else m.group(4)
-            opts[k] = v
-
-        for src_key, label in WANT.items():
-            if src_key in opts:
-                v = opts[src_key].strip()
-                if v not in ('', "''"):
-                    print(f"{prefix}.{label} = {v}")
-PYEOF
+    _printer_names=$(lpstat -p 2>/dev/null | awk '/^printer / { print $2 }' | sort)
+    if [ -z "$_printer_names" ]; then
+      echo "CUPS :: (no printers configured)"
+    else
+      while IFS= read -r _pname; do
+        _state=$(lpstat -p "$_pname" 2>/dev/null \
+          | awk '/^printer / { s=$4; gsub(/\.$/, "", s); print s; exit }')
+        echo "CUPS :: printer[${_pname}].state = ${_state:-unknown}"
+        _raw=$(lpoptions -p "$_pname" 2>/dev/null)
+        for _kl in \
+            "printer-info:info" \
+            "printer-make-and-model:driver" \
+            "printer-uri-supported:uri" \
+            "printer-location:location" \
+            "printer-is-accepting-jobs:accepting" \
+            "printer-is-shared:shared" \
+            "print-color-mode:default-color" \
+            "sides:default-sides"; do
+          _src="${_kl%%:*}"; _lbl="${_kl##*:}"
+          # Extract value: handles key='quoted value' and key=unquoted
+          _val=$(printf '%s\n' "$_raw" \
+            | grep -oE "${_src}='[^']*'|${_src}=[^ ]+" \
+            | head -1 \
+            | sed "s/^${_src}=//; s/^'//; s/'$//")
+          [ -n "$_val" ] && [ "$_val" != "''" ] \
+            && echo "CUPS :: printer[${_pname}].${_lbl} = ${_val}"
+        done
+      done <<< "$_printer_names"
+    fi
 
     section "SYSTEM EXTENSIONS"
     systemextensionsctl list 2>/dev/null || echo "(unavailable)"
@@ -3233,29 +3228,30 @@ PYEOF
     # Output is normalized to "BTM :: <identifier> :: <key> = <value>" lines.
     if command -v sfltool >/dev/null 2>&1; then
       sfltool dumpbackgroundtaskmanagement 2>/dev/null \
-      | python3 -c "
-import sys, re
-identifier = None
-app_label = None
-for raw in sys.stdin:
-    line = raw.rstrip()
-    # New top-level item (App or Helper)
-    m = re.search(r'(?:App|Helper[^:]*): (.+?)\s+Bundle ID: (.+)', line)
-    if m:
-        app_label  = m.group(1).strip()
-        identifier = m.group(2).strip()
-        continue
-    # Identifier line (overrides bundle-id extraction above for sub-items)
-    m = re.search(r'^\s+Identifier: (.+)', line)
-    if m:
-        identifier = m.group(1).strip()
-        continue
-    # Disposition — the field that changes when user toggles allow/deny
-    m = re.search(r'^\s+Disposition: (.+)', line)
-    if m and identifier:
-        print(f'BTM :: {identifier} :: disposition = {m.group(1).strip()}')
-        identifier = None   # reset; next Identifier line starts a new item
-" 2>/dev/null \
+      | awk '
+        # App or Helper line with inline Bundle ID
+        /App:|Helper/ && /Bundle ID:/ {
+          idx = index($0, "Bundle ID:")
+          if (idx > 0) {
+            rest = substr($0, idx + 10)
+            gsub(/^[[:space:]]+|[[:space:]]+$/, "", rest)
+            identifier = rest
+          }
+          next
+        }
+        # Explicit Identifier line (overrides bundle-id from above for sub-items)
+        /^[[:space:]]+Identifier:/ {
+          sub(/^[[:space:]]+Identifier:[[:space:]]+/, "")
+          identifier = $0
+          next
+        }
+        # Disposition — the field that changes when user toggles allow/deny
+        identifier != "" && /^[[:space:]]+Disposition:/ {
+          sub(/^[[:space:]]+Disposition:[[:space:]]+/, "")
+          print "BTM :: " identifier " :: disposition = " $0
+          identifier = ""
+        }
+      ' \
       | sort \
       || echo "BTM :: (sfltool query failed)"
     else
