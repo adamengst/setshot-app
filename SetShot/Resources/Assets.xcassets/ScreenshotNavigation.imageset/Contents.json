@@ -1,0 +1,24 @@
+{
+  "images" : [
+    {
+      "appearances" : [
+        { "appearance" : "luminosity", "value" : "light" }
+      ],
+      "filename" : "ScreenshotNavigation-light.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "appearances" : [
+        { "appearance" : "luminosity", "value" : "dark" }
+      ],
+      "filename" : "ScreenshotNavigation-dark.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

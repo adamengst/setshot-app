@@ -150,7 +150,10 @@ struct SnapshotLibraryView: View {
             }
             Spacer()
             if isComparing {
-                ProgressView().controlSize(.small)
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.small)
+                    Text("Comparing…").foregroundStyle(.secondary).font(.callout)
+                }
             } else {
                 Button("Compare") { compare() }
                     .buttonStyle(.borderedProminent)

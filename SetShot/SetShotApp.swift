@@ -34,7 +34,7 @@ struct SetShotApp: App {
                     .task { await appModel.start(); PingService.pingIfNeeded() }
             }
         }
-        .defaultSize(width: 800, height: 600)
+        .defaultSize(width: 750, height: 600)
         .commands {
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") {
