@@ -31,7 +31,7 @@ struct SetShotApp: App {
                 ContentView()
                     .environmentObject(appModel)
                     .background(WindowFrameSaver(name: "SetShotMainWindow"))
-                    .task { await appModel.start() }
+                    .task { await appModel.start(); PingService.pingIfNeeded() }
             }
         }
         .defaultSize(width: 800, height: 600)

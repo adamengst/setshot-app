@@ -58,6 +58,11 @@ export default {
       return new Response(null, { status: 405 });
     }
 
+    const path = new URL(request.url).pathname;
+    if (path === '/ping') {
+      return new Response(null, { status: 200 });
+    }
+
     let body;
     try {
       body = await request.json();

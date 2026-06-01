@@ -6,6 +6,7 @@ struct ResultsView: View {
     let after: StoredSnapshot
     @State private var submittedIDs: Set<UUID> = []
     @State private var isSubmittingAll = false
+    @State private var showSubmitAllPreview = false
     @State private var submitError: String? = nil
     @State private var contentHeight: CGFloat = 0
 
@@ -23,6 +24,14 @@ struct ResultsView: View {
         .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
         .navigationTitle("\(before.displayName) → \(after.displayName)")
         .background(ComparisonWindowPositioner(contentHeight: contentHeight))
+        .sheet(isPresented: $showSubmitAllPreview) {
+            let unsubmitted = diff.unrecognized.filter { !submittedIDs.contains($0.id) }
+            SubmitAllPreviewView(
+                items: unsubmitted,
+                isPresented: $showSubmitAllPreview,
+                onSubmit: { submitAll(unsubmitted) }
+            )
+        }
         .alert("Submission Failed", isPresented: Binding(
             get: { submitError != nil },
             set: { if !$0 { submitError = nil } }
@@ -88,7 +97,7 @@ struct ResultsView: View {
                 }
             } else {
                 Button("Submit All (\(unsubmitted.count))") {
-                    submitAll(unsubmitted)
+                    showSubmitAllPreview = true
                 }
                 .controlSize(.small)
             }
