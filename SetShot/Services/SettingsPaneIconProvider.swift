@@ -11,6 +11,7 @@ actor SettingsPaneIconProvider {
     private let aliases: [String: String] = [
         "com.apple.preference.security":        "com.apple.settings.PrivacySecurity.extension",
         "com.apple.preferences.password":       "com.apple.Touch-ID-Settings.extension",
+        "com.apple.preference.sound":           "com.apple.Sound-Settings.extension",
         // KB entries use this ID but the actual bundle uses a hyphen between Screen and Time
         "com.apple.ScreenTime-Settings.extension": "com.apple.Screen-Time-Settings.extension",
     ]
@@ -59,6 +60,7 @@ actor SettingsPaneIconProvider {
         "com.apple.Touch-ID-Settings.extension":          ("touchid",                               0.85, 0.30, 0.55),
         "com.apple.Desktop-Settings.extension":           ("menubar.dock.rectangle",                0.20, 0.45, 0.85),
         "com.apple.Notifications-Settings.extension":     ("bell.badge.fill",                       0.85, 0.20, 0.22),
+        // Screen Saver deliberately omitted — its icon.icns is the real pane icon, not a placeholder.
     ]
 
     func icon(forSettingsURL urlString: String?, domain: String, iconBundleID: String? = nil) async -> NSImage? {
@@ -75,7 +77,22 @@ actor SettingsPaneIconProvider {
             if let cached = iconCache[resolvedID] { return cached }
             ensureBundleMap()
             if let path = bundleIDToPath?[resolvedID] {
-                let img = iconFromBundle(path: path, bundleID: resolvedID)
+                // Try file-based icon (namedAssets, CFBundleIconFile, icon.icns).
+                if let img = iconFromBundle(path: path, bundleID: resolvedID) {
+                    iconCache[resolvedID] = img
+                    return img
+                }
+                // No usable file icon — render SF symbol on the main thread.
+                // (NSImage.lockFocus must run on the main thread; the actor doesn't guarantee that.)
+                if let fb = sfSymbolFallbacks[resolvedID] {
+                    let img = await MainActor.run { self.renderedSFSymbol(fb.symbol, r: fb.r, g: fb.g, b: fb.b) }
+                    iconCache[resolvedID] = img
+                    return img
+                }
+            }
+            // Not an ExtensionKit bundle — try as a regular app (e.g. com.apple.screenshot.launcher)
+            if let url = await MainActor.run(body: { NSWorkspace.shared.urlForApplication(withBundleIdentifier: resolvedID) }) {
+                let img = await MainActor.run { NSWorkspace.shared.icon(forFile: url.path) }
                 iconCache[resolvedID] = img
                 return img
             }
@@ -106,13 +123,7 @@ actor SettingsPaneIconProvider {
                let img = bundle.image(forResource: NSImage.Name(name)) { return img }
         }
 
-        // 2. SF Symbol rendering for bundles whose icon.icns is the generic
-        //    lego-brick extension placeholder (e.g. Battery, Sound).
-        if let fb = sfSymbolFallbacks[bundleID] {
-            return renderedSFSymbol(fb.symbol, r: fb.r, g: fb.g, b: fb.b)
-        }
-
-        // 3. Explicit CFBundleIconFile — load the .icns directly by path.
+        // 2. Explicit CFBundleIconFile — load the .icns directly by path.
         if let dict = NSDictionary(contentsOfFile: (path as NSString).appendingPathComponent("Contents/Info.plist")),
            let iconFile = dict["CFBundleIconFile"] as? String {
             let stem = iconFile.hasSuffix(".icns") ? iconFile : "\(iconFile).icns"
@@ -120,7 +131,7 @@ actor SettingsPaneIconProvider {
             if let img = NSImage(contentsOfFile: filePath) { return img }
         }
 
-        // 4. Fallback: icon.icns in Resources.
+        // 3. Fallback: icon.icns in Resources.
         let fallback = (resources as NSString).appendingPathComponent("icon.icns")
         if let img = NSImage(contentsOfFile: fallback) { return img }
 
@@ -129,7 +140,9 @@ actor SettingsPaneIconProvider {
 
     // Renders an SF Symbol centred on a rounded-rectangle background, matching
     // the System Settings sidebar icon style for panes that have no file icon.
-    private func renderedSFSymbol(_ symbol: String, r: CGFloat, g: CGFloat, b: CGFloat) -> NSImage? {
+    // nonisolated so it can be dispatched to the main thread via MainActor.run
+    // (NSImage.lockFocus must be called on the main thread).
+    nonisolated private func renderedSFSymbol(_ symbol: String, r: CGFloat, g: CGFloat, b: CGFloat) -> NSImage? {
         let px: CGFloat = 256
         let color = NSColor(srgbRed: r, green: g, blue: b, alpha: 1)
 
