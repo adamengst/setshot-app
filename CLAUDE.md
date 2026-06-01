@@ -2,11 +2,11 @@
 
 ## Reviewing KB Submissions
 
-New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label `pending`. Run through these steps in order:
+New submissions arrive as GitHub Issues in `adamengst/setshot-submissions` (private) with the label `pending`. Run through these steps in order:
 
 1. List open submissions:
    ```
-   gh issue list --repo adamengst/setshot-kb --label pending
+   gh issue list --repo adamengst/setshot-submissions --label pending
    ```
 
 2. View each issue and decide: **noise** (suppress silently), **KB entry** (add with description/location), or **needs more info**.
@@ -26,7 +26,7 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label
    git push
    ```
 
-6. Close each issue with a comment explaining what was done and which KB version it landed in.
+6. Close each issue in `adamengst/setshot-submissions` with a comment explaining what was done and which KB version it landed in.
 
 ---
 
@@ -36,7 +36,7 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-kb` with the label
 
 1. Check for pending KB submissions and process them first:
    ```
-   gh issue list --repo adamengst/setshot-kb --label pending
+   gh issue list --repo adamengst/setshot-submissions --label pending
    ```
 
 2. Increment `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml` (e.g. `1.0` → `1.1`, build `1` → `2`).
