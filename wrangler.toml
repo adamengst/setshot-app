@@ -4,4 +4,4 @@ compatibility_date = "2024-01-01"
 account_id = "0abf18578a8bf089f0816e1eb116f9c0"
 
 [vars]
-GITHUB_REPO = "adamengst/setshot-kb"
+GITHUB_REPO = "adamengst/setshot-submissions"
