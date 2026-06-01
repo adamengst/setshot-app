@@ -143,7 +143,7 @@ struct AboutView: View {
 
             HelpParagraph("You can also add a short note with any context that might help with review. Both fields are entirely optional, but adding context may help categorize the change more accurately.")
             screenshot("ScreenshotSubmit")
-            HelpParagraph("If you have several unrecognized changes, click **Submit All** to send them all at once without opening the sheet. Submitted changes are reviewed, added to the knowledge base, and loaded on the next launch, making SetShot more useful for everyone.")
+            HelpParagraph("If you have several unrecognized changes, click **Submit All** to review and send them all at once. Submitted changes are reviewed, added to the knowledge base, and loaded on the next launch, making SetShot more useful for everyone.")
             HelpParagraph("Already-submitted rows are marked with a checkmark for the duration of the session.")
         }
     }
@@ -152,16 +152,15 @@ struct AboutView: View {
         HelpSection("Privacy") {
             HelpParagraph("The data SetShot works with is inherently non-sensitive—it's system settings like toggles, sliders, and preferences, not passwords, documents, photos, or personal content. That said, SetShot is designed to keep your data private.")
             HelpBullet("**Snapshots, comparisons, and journal entries** are stored only on this Mac and are never transmitted anywhere.")
-            HelpBullet("**Submissions** are the one exception. When you submit an unrecognized change, the technical setting name and its before and after values are sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any internet connection, your IP address is seen by Cloudflare (the service that handles submissions) but is not stored in your submission record.")
-            HelpBullet("**Permissions:** SetShot requests access to your Media Library and Home data so it can read settings from those apps. These permissions are used only for reading settings—no content from your music library or home is ever read or transmitted.")
-            HelpBullet("**Full Disk Access:** SetShot appears in the Full Disk Access list in System Settings because it probes the system privacy database to detect changes to app permission settings (for example, if you grant an app microphone access). Enabling Full Disk Access is optional—without it, the app simply skips that one data source and everything else works normally.")
-            HelpBullet("**No analytics or crash reporting** of any kind is included in SetShot.")
+            HelpBullet("**Submissions** are the one exception. When you submit an unrecognized change, the technical setting name and its before and after values are sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record.")
+            HelpBullet("**Permissions:** SetShot requests access to Apple Music, your music and video activity, and your media library so it can read settings from those apps. These permissions are used only for reading settings—no content from your media library is ever read or transmitted.")
+            HelpBullet("**Full Disk Access:** SetShot appears in the Full Disk Access list in System Settings because it queries the system privacy database to detect changes to app permission settings (for example, if you grant an app microphone access). Enabling Full Disk Access is optional—without it, the app simply skips that one data source and everything else works normally.")
         }
     }
 
     private var automaticSnapshots: some View {
         HelpSection("Automatic Snapshots") {
-            HelpParagraph("SetShot can take snapshots automatically on a schedule. Click Settings in the segemented control at the top to open the scheduler settings.")
+            HelpParagraph("SetShot can take snapshots automatically on a schedule. Click Settings in the segmented control at the top to open the scheduler settings.")
             HelpParagraph("Automatic snapshots are taken silently in the background without SetShot's window appearing. This lets you build up a history of your Mac's settings over time without having to remember to capture manually.")
             screenshot("ScreenshotSettings")
         }
