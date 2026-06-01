@@ -135,6 +135,10 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
     if raw.hasPrefix("/"), let url = URL(string: "file://\(raw)") {
         return url.deletingPathExtension().lastPathComponent
     }
+    if raw.hasPrefix("AppleUSBAudioEngine:") {
+        let parts = raw.split(separator: ":", omittingEmptySubsequences: false)
+        if parts.count >= 3 { return String(parts[2]) }
+    }
     if key.localizedCaseInsensitiveContains("volume"), let f = Double(raw) {
         return "\(Int((f * 100).rounded()))%"
     }
