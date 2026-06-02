@@ -181,6 +181,8 @@ private struct StaleComparisonDismisser: NSViewRepresentable {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool { true }
+
     func applicationWillFinishLaunching(_ notification: Notification) {
         if CommandLine.arguments.contains("--background-snapshot") {
             NSApp.setActivationPolicy(.prohibited)

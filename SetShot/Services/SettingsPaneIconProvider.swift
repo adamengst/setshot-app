@@ -60,7 +60,6 @@ actor SettingsPaneIconProvider {
         "com.apple.Touch-ID-Settings.extension":          ("touchid",                               0.85, 0.30, 0.55),
         "com.apple.Desktop-Settings.extension":           ("menubar.dock.rectangle",                0.20, 0.45, 0.85),
         "com.apple.Notifications-Settings.extension":     ("bell.badge.fill",                       0.85, 0.20, 0.22),
-        // Screen Saver deliberately omitted — its icon.icns is the real pane icon, not a placeholder.
     ]
 
     func icon(forSettingsURL urlString: String?, domain: String, iconBundleID: String? = nil) async -> NSImage? {
@@ -77,15 +76,16 @@ actor SettingsPaneIconProvider {
             if let cached = iconCache[resolvedID] { return cached }
             ensureBundleMap()
             if let path = bundleIDToPath?[resolvedID] {
-                // Try file-based icon (namedAssets, CFBundleIconFile, icon.icns).
-                if let img = iconFromBundle(path: path, bundleID: resolvedID) {
+                // Curated SF-symbol fallbacks take priority over any icon.icns in the bundle —
+                // macOS 15.7.7 replaced real extension icons with a generic 495 KB placeholder
+                // across Battery, AirDrop, Network, Screen Saver, and others.
+                if let fb = sfSymbolFallbacks[resolvedID] {
+                    let img = await MainActor.run { self.renderedSFSymbol(fb.symbol, r: fb.r, g: fb.g, b: fb.b) }
                     iconCache[resolvedID] = img
                     return img
                 }
-                // No usable file icon — render SF symbol on the main thread.
-                // (NSImage.lockFocus must run on the main thread; the actor doesn't guarantee that.)
-                if let fb = sfSymbolFallbacks[resolvedID] {
-                    let img = await MainActor.run { self.renderedSFSymbol(fb.symbol, r: fb.r, g: fb.g, b: fb.b) }
+                // Try file-based icon (namedAssets, CFBundleIconFile, icon.icns).
+                if let img = iconFromBundle(path: path, bundleID: resolvedID) {
                     iconCache[resolvedID] = img
                     return img
                 }
