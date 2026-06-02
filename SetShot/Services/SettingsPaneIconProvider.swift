@@ -60,6 +60,11 @@ actor SettingsPaneIconProvider {
         "com.apple.Touch-ID-Settings.extension":          ("touchid",                               0.85, 0.30, 0.55),
         "com.apple.Desktop-Settings.extension":           ("menubar.dock.rectangle",                0.20, 0.45, 0.85),
         "com.apple.Notifications-Settings.extension":     ("bell.badge.fill",                       0.85, 0.20, 0.22),
+        // macOS 15.7.7 replaced the real icons for these panes with generic placeholders
+        "com.apple.Siri-Settings.extension":              ("waveform",                               0.40, 0.20, 0.80),
+        "com.apple.Spotlight-Settings.extension":         ("magnifyingglass",                        0.33, 0.10, 0.75),
+        // Apple Account pane — covers Find My, iCloud, etc.
+        "com.apple.settings.AppleIDSettings":             ("person.crop.circle.fill",               0.20, 0.54, 0.90),
     ]
 
     func icon(forSettingsURL urlString: String?, domain: String, iconBundleID: String? = nil) async -> NSImage? {

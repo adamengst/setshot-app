@@ -19,6 +19,7 @@
 		42842CE4FCC716DC32A84C1F /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185D8A7E9F70FCBF6906DC64 /* main.swift */; };
 		4571E5BE087DBDE51A79C720 /* base_Tahoe_26.5.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = 7EB1256D7B7FD936884DF0DA /* base_Tahoe_26.5.txt.gz */; };
 		47AC526F099DF9CF37278AEC /* AboutPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78E54FFE685F4C0170A297ED /* AboutPanelView.swift */; };
+		497863C83A468D0F371C2292 /* SettingsPaneOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E52B71DAE20C739CE609A8 /* SettingsPaneOrder.swift */; };
 		515B9128CCCA9A4AC9E4FD7D /* KnowledgeBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E06A63C729BADDD2983529 /* KnowledgeBase.swift */; };
 		52F8DA0C6EAFD1D445DD474C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F1789A22D8F676149B825D9 /* Assets.xcassets */; };
 		590AA0768AEA08BB83C79A16 /* PlistFlattener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8889A9EA64910626B609D9 /* PlistFlattener.swift */; };
@@ -82,6 +83,7 @@
 		4C0C61EA6C2B010EEC849475 /* JournalEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalEntry.swift; sourceTree = "<group>"; };
 		4F82F5191799C0CF87026222 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		53E06A63C729BADDD2983529 /* KnowledgeBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeBase.swift; sourceTree = "<group>"; };
+		53E52B71DAE20C739CE609A8 /* SettingsPaneOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPaneOrder.swift; sourceTree = "<group>"; };
 		590C3CF672ED6999CE28820A /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		59B5F566BCF5465D0E537F1E /* SnapshotLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotLibraryView.swift; sourceTree = "<group>"; };
 		61336BF2958C0E7F041BDB4B /* KBFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBFetcher.swift; sourceTree = "<group>"; };
@@ -187,6 +189,7 @@
 				4C0C61EA6C2B010EEC849475 /* JournalEntry.swift */,
 				C4812AB60001E9D6F2D98CAF /* KBEntry.swift */,
 				53E06A63C729BADDD2983529 /* KnowledgeBase.swift */,
+				53E52B71DAE20C739CE609A8 /* SettingsPaneOrder.swift */,
 				6ABD7B7F567D2F3E47E28D4B /* Snapshot.swift */,
 				EF4F0C992FB292A44537A04D /* StoredSnapshot.swift */,
 			);
@@ -368,6 +371,7 @@
 				750961F0FB45F04AB158FB6A /* SetShotApp.swift in Sources */,
 				7657036547D21AA8777CD4C2 /* SettingsPaneIcon.swift in Sources */,
 				F0117CDA3B3F3EB9E30E2707 /* SettingsPaneIconProvider.swift in Sources */,
+				497863C83A468D0F371C2292 /* SettingsPaneOrder.swift in Sources */,
 				F47D72C2AF599F298153C92B /* SettingsView.swift in Sources */,
 				1DB3BE15D1F1B3F3FD577AA0 /* Snapshot.swift in Sources */,
 				6B70D4DA7BB86DBA2326CAE8 /* SnapshotLibraryView.swift in Sources */,

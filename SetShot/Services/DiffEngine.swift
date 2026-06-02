@@ -131,6 +131,13 @@ struct DiffEngine {
         let overflow = max(0, unrecognized.count - Self.maxUnrecognized)
         if overflow > 0 { unrecognized = Array(unrecognized.prefix(Self.maxUnrecognized)) }
 
+        recognized.sort { lhs, rhs in
+            let lr = SettingsPaneOrder.rank(forSettingsURL: lhs.entry.settingsURL)
+            let rr = SettingsPaneOrder.rank(forSettingsURL: rhs.entry.settingsURL)
+            if lr != rr { return lr < rr }
+            return (lhs.entry.description ?? "") < (rhs.entry.description ?? "")
+        }
+
         return DiffResult(recognized: recognized, unrecognized: unrecognized, noise: noise, unrecognizedOverflow: overflow)
     }
 

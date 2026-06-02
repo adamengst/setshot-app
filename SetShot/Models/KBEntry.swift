@@ -22,7 +22,7 @@ struct KBEntry: Codable, Identifiable {
     let settingsURL: String?
     let noise: Bool
     let noiseReason: String?
-    let minMacOS: String
+    let minMacOS: String?
     let notes: String?
     let aiGenerated: Bool
     let contributedByIssue: Int?
