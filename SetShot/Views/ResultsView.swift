@@ -9,6 +9,14 @@ struct ResultsView: View {
     @State private var showSubmitAllPreview = false
     @State private var submitError: String? = nil
     @State private var contentHeight: CGFloat = 0
+    @State private var showFirstTime = false
+
+    private var valueChanges: [(entry: KBEntry, diff: DiffLine)] {
+        diff.recognized.filter { !$0.diff.beforeValue.isEmpty }
+    }
+    private var firstTimeChanges: [(entry: KBEntry, diff: DiffLine)] {
+        diff.recognized.filter { $0.diff.beforeValue.isEmpty }
+    }
 
     var body: some View {
         ScrollView {
@@ -67,12 +75,46 @@ struct ResultsView: View {
 
     private var recognizedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader("Recognized Changes", count: diff.recognized.count)
-            if diff.recognized.isEmpty {
+            SectionHeader("Recognized Changes", count: valueChanges.count)
+            if valueChanges.isEmpty && firstTimeChanges.isEmpty {
                 Text("No recognized changes.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(diff.recognized, id: \.diff.id) { item in
+                ForEach(valueChanges, id: \.diff.id) { item in
+                    RecognizedRow(entry: item.entry, diff: item.diff)
+                }
+            }
+            if !firstTimeChanges.isEmpty {
+                firstTimeDisclosure
+            }
+        }
+    }
+
+    private var firstTimeDisclosure: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.15)) { showFirstTime.toggle() }
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: showFirstTime ? "chevron.down" : "chevron.right")
+                        .font(.caption2)
+                        .frame(width: 10)
+                    let n = firstTimeChanges.count
+                    Text(showFirstTime
+                         ? "Hide \(n) first-time setting\(n == 1 ? "" : "s")"
+                         : "Show \(n) first-time setting\(n == 1 ? "" : "s")")
+                        .font(.callout)
+                }
+                .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+
+            if showFirstTime {
+                Text("These settings were written for the first time between the two snapshots. They may reflect macOS initializing defaults rather than a deliberate change.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                ForEach(firstTimeChanges, id: \.diff.id) { item in
                     RecognizedRow(entry: item.entry, diff: item.diff)
                 }
             }
