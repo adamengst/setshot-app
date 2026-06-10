@@ -36,14 +36,9 @@ struct AboutView: View {
     }
 
     private var permissions: some View {
-        HelpSection("First-Launch Permissions") {
-            HelpParagraph("When you take your first snapshot, macOS will display two permission dialogs. Click **Allow** in both—SetShot cannot read settings without them.")
-            HelpParagraph("These permissions are remembered permanently. You will not be asked again on subsequent snapshots.")
-
-            HStack(alignment: .top, spacing: 16) {
-                permissionCard(imageName: "PermissionDataAccess")
-                permissionCard(imageName: "PermissionMusicAccess")
-            }
+        HelpSection("Permissions") {
+            HelpParagraph("SetShot takes snapshots without requiring any permission prompts. It reads settings directly from preference files on disk, which macOS allows without additional authorization.")
+            HelpParagraph("For complete coverage of privacy permission changes—for example, detecting that an app gained microphone or camera access—you can optionally grant **Full Disk Access** to SetShot in System Settings → Privacy & Security → Full Disk Access. Without it, SetShot simply skips that one data source and everything else works normally.")
         }
     }
 
@@ -58,36 +53,16 @@ struct AboutView: View {
         }
     }
 
-    @ViewBuilder
-    private func permissionCard(imageName: String) -> some View {
-        if let nsImage = NSImage(named: imageName) {
-            Image(nsImage: nsImage)
-                .resizable()
-                .frame(width: nsImage.size.width / 2, height: nsImage.size.height / 2)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
-        } else {
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.secondary.opacity(0.08))
-                .frame(width: 261, height: 120)
-                .overlay(
-                    Text("[\(imageName) screenshot]")
-                        .foregroundStyle(.secondary)
-                        .font(.caption)
-                )
-        }
-    }
-
     private var setShotViews: some View {
         HelpSection("SetShot Views") {
             HelpParagraph("SetShot has four views, accessed by clicking the buttons at the top of the window:")
+            screenshot("ScreenshotNavigation")
             VStack(alignment: .leading, spacing: 6) {
                 HelpBullet("**Snapshots:** Shows all the snapshots you've taken in Before and After columns.")
                 HelpBullet("**Journal:** A chronological log of all recognized changes across your comparisons.")
                 HelpBullet("**Settings:** Reverse sort order and set up automatic daily snapshots.")
                 HelpBullet("**About:** You're reading it now.")
             }
-            screenshot("ScreenshotNavigation")
         }
     }
 
@@ -95,9 +70,9 @@ struct AboutView: View {
         HelpSection("Taking Snapshots") {
             HelpParagraph("SetShot's core function is to take and compare snapshots. To that end, it scans nearly 500 settings files across more than a dozen system data sources. It currently recognizes over 400 settings and knows to ignore over 50 additional changes that are just macOS noise.")
             HelpParagraph("To take a snapshot of the current state of your Mac's settings, click **Take Snapshot** at the bottom of the Snapshots view. SetShot saves the result to the snapshot library with the date and time. Snapshots are stored in `~/Library/Application Support/SetShot/snapshots` as gzipped files that occupy little space. Capturing typically takes less than a minute.")
+            screenshot("ScreenshotSnapshotsContext")
             HelpParagraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labelling snapshots with context—for example, **Before macOS 26.6** or **After update**.")
             HelpParagraph("To remove an unnecessary snapshot, Control-click it and choose **Delete**.")
-            screenshot("ScreenshotSnapshotsContext")
         }
     }
 
@@ -153,8 +128,7 @@ struct AboutView: View {
             HelpParagraph("The data SetShot works with is inherently non-sensitive—it's system settings like toggles, sliders, and preferences, not passwords, documents, photos, or personal content. That said, SetShot is designed to keep your data private.")
             HelpBullet("**Snapshots, comparisons, and journal entries** are stored only on this Mac and are never transmitted anywhere.")
             HelpBullet("**Submissions** are the one exception. When you submit an unrecognized change, the technical setting name and its before and after values are sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record.")
-            HelpBullet("**Permissions:** SetShot requests access to Apple Music, your music and video activity, and your media library so it can read settings from those apps. These permissions are used only for reading settings—no content from your media library is ever read or transmitted.")
-            HelpBullet("**Full Disk Access:** SetShot appears in the Full Disk Access list in System Settings because it queries the system privacy database to detect changes to app permission settings (for example, if you grant an app microphone access). Enabling Full Disk Access is optional—without it, the app simply skips that one data source and everything else works normally.")
+            HelpBullet("**Full Disk Access:** SetShot can optionally appear in the Full Disk Access list in System Settings. Granting it allows SetShot to query the system privacy database to detect changes to app permission settings (for example, if you grant an app microphone access). It is not required—without it, SetShot simply skips that one data source and everything else works normally.")
         }
     }
 
