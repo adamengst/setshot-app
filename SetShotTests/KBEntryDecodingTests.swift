@@ -7,6 +7,9 @@ final class KBEntryDecodingTests: XCTestCase {
         "[{\(fields)}]".data(using: .utf8)!
     }
 
+    // All required non-optional fields. Removing any one of these causes the
+    // entire [KBEntry] array decode to throw — the app then silently falls back
+    // to the cached KB version. validate_kb.py in setshot-kb enforces this.
     private let base = """
         "id":"t","domain":"com.apple.test","key":"k","source":"defaults",
         "value_type":"string","ui_location":null,"settings_url":null,
@@ -37,5 +40,44 @@ final class KBEntryDecodingTests: XCTestCase {
         let data = json("\(base),\"description\":\"d\"")
         let entries = try JSONDecoder().decode([KBEntry].self, from: data)
         XCTAssertNil(entries[0].keyPrefix)
+    }
+
+    // MARK: - Required field coverage
+    // Each test removes one required field and asserts the whole array decode fails.
+    // If any of these tests start passing (decode succeeds), the field became
+    // optional in KBEntry and validate_kb.py should be updated to match.
+
+    private func baseDropping(_ field: String) -> Data {
+        let pairs = base.split(separator: ",").map(String.init)
+        let filtered = pairs.filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("\"\(field)\"") }
+        return "[{\(filtered.joined(separator: ","))}]".data(using: .utf8)!
+    }
+
+    func testMissingIdFailsDecode() {
+        XCTAssertThrowsError(try JSONDecoder().decode([KBEntry].self, from: baseDropping("id")))
+    }
+
+    func testMissingDomainFailsDecode() {
+        XCTAssertThrowsError(try JSONDecoder().decode([KBEntry].self, from: baseDropping("domain")))
+    }
+
+    func testMissingKeyFailsDecode() {
+        XCTAssertThrowsError(try JSONDecoder().decode([KBEntry].self, from: baseDropping("key")))
+    }
+
+    func testMissingSourceFailsDecode() {
+        XCTAssertThrowsError(try JSONDecoder().decode([KBEntry].self, from: baseDropping("source")))
+    }
+
+    func testMissingValueTypeFailsDecode() {
+        XCTAssertThrowsError(try JSONDecoder().decode([KBEntry].self, from: baseDropping("value_type")))
+    }
+
+    func testMissingNoiseFailsDecode() {
+        XCTAssertThrowsError(try JSONDecoder().decode([KBEntry].self, from: baseDropping("noise")))
+    }
+
+    func testMissingAiGeneratedFailsDecode() {
+        XCTAssertThrowsError(try JSONDecoder().decode([KBEntry].self, from: baseDropping("ai_generated")))
     }
 }
