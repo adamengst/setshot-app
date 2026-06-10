@@ -17,7 +17,6 @@
 		3057AD8A9EF7B4264D700825 /* SubmitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001649E989CE2587D04C5069 /* SubmitView.swift */; };
 		33054D82CADE5C8BECBF2B75 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590C3CF672ED6999CE28820A /* AboutView.swift */; };
 		42842CE4FCC716DC32A84C1F /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185D8A7E9F70FCBF6906DC64 /* main.swift */; };
-		4571E5BE087DBDE51A79C720 /* base_Tahoe_26.5.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = 7EB1256D7B7FD936884DF0DA /* base_Tahoe_26.5.txt.gz */; };
 		47AC526F099DF9CF37278AEC /* AboutPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78E54FFE685F4C0170A297ED /* AboutPanelView.swift */; };
 		497863C83A468D0F371C2292 /* SettingsPaneOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E52B71DAE20C739CE609A8 /* SettingsPaneOrder.swift */; };
 		515B9128CCCA9A4AC9E4FD7D /* KnowledgeBase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E06A63C729BADDD2983529 /* KnowledgeBase.swift */; };
@@ -41,6 +40,7 @@
 		D16BEB6F74764F6B073E7590 /* DiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C45826AE45C65796CCEA40B3 /* DiffEngineTests.swift */; };
 		D2F9C0255CEEAE045CB630DB /* SubmissionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C431D63A72455BB3A4661ECC /* SubmissionServiceTests.swift */; };
 		D8E26C41DA6FC333BC4FED64 /* StoredSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF4F0C992FB292A44537A04D /* StoredSnapshot.swift */; };
+		DA1CC6A6A51098DA4AC8A9C3 /* base_Tahoe_26.5.1.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = 7AB873D23027E4DE2AFA6CB7 /* base_Tahoe_26.5.1.txt.gz */; };
 		DA7FF8038AE6D2E1EB962360 /* SnapshotRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E1D922E36C27838EAAA810 /* SnapshotRunner.swift */; };
 		DDA9BBB69F20F04F9A89B74F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 0C93336F0A474BE93DF308C1 /* Sparkle */; };
 		E2E28FD6BDB9AB7D40EF464C /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A182A3E724717177EE351D /* ResultsView.swift */; };
@@ -92,7 +92,7 @@
 		74E1D922E36C27838EAAA810 /* SnapshotRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotRunner.swift; sourceTree = "<group>"; };
 		77124B45F467CD55260DF560 /* SetShot.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SetShot.entitlements; sourceTree = "<group>"; };
 		78E54FFE685F4C0170A297ED /* AboutPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPanelView.swift; sourceTree = "<group>"; };
-		7EB1256D7B7FD936884DF0DA /* base_Tahoe_26.5.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_Tahoe_26.5.txt.gz; sourceTree = "<group>"; };
+		7AB873D23027E4DE2AFA6CB7 /* base_Tahoe_26.5.1.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_Tahoe_26.5.1.txt.gz; sourceTree = "<group>"; };
 		872734B24900BAE17D6A0324 /* BaseSnapshots */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BaseSnapshots; path = SetShot/Resources/BaseSnapshots; sourceTree = SOURCE_ROOT; };
 		884A5EDA61C452330F26ED01 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		98C4B2DF407214C59E82FB25 /* SubmitAllPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmitAllPreviewView.swift; sourceTree = "<group>"; };
@@ -211,7 +211,7 @@
 			children = (
 				884A5EDA61C452330F26ED01 /* .gitkeep */,
 				9A62CC8B68E73050877CF1CF /* base_Sequoia_15.7.7.txt.gz */,
-				7EB1256D7B7FD936884DF0DA /* base_Tahoe_26.5.txt.gz */,
+				7AB873D23027E4DE2AFA6CB7 /* base_Tahoe_26.5.1.txt.gz */,
 			);
 			path = BaseSnapshots;
 			sourceTree = "<group>";
@@ -338,7 +338,7 @@
 				52F8DA0C6EAFD1D445DD474C /* Assets.xcassets in Resources */,
 				B45D0A7279309CB79EEB5996 /* BaseSnapshots in Resources */,
 				F6594C17115A34CE986B174D /* base_Sequoia_15.7.7.txt.gz in Resources */,
-				4571E5BE087DBDE51A79C720 /* base_Tahoe_26.5.txt.gz in Resources */,
+				DA1CC6A6A51098DA4AC8A9C3 /* base_Tahoe_26.5.1.txt.gz in Resources */,
 				8AFEF96A156F43C87BDC4252 /* setshot.sh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
