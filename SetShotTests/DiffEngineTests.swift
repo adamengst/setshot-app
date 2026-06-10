@@ -17,7 +17,7 @@ final class DiffEngineTests: XCTestCase {
     private func engine() -> DiffEngine { DiffEngine() }
 
     func testRecognizedEntry() {
-        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1)
+        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1, updatedAt: nil)
         let result = engine().parse(diffOutput: """
             -com.apple.dock :: show-recents = 1
             +com.apple.dock :: show-recents = 0
@@ -28,7 +28,7 @@ final class DiffEngineTests: XCTestCase {
     }
 
     func testUnrecognizedEntry() {
-        let kb = KnowledgeBase(entries: [], version: 1)
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
         let result = engine().parse(diffOutput: """
             -com.apple.dock :: unknown-key = 1
             +com.apple.dock :: unknown-key = 0
@@ -38,7 +38,7 @@ final class DiffEngineTests: XCTestCase {
     }
 
     func testNoiseEntry() {
-        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.FolderActionsDispatcher", keyPrefix: "folderActions.$objects[", noise: true)], version: 1)
+        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.FolderActionsDispatcher", keyPrefix: "folderActions.$objects[", noise: true)], version: 1, updatedAt: nil)
         let result = engine().parse(diffOutput: """
             -com.apple.FolderActionsDispatcher :: folderActions.$objects[7] = old.pdf
             +com.apple.FolderActionsDispatcher :: folderActions.$objects[7] = new.pdf
@@ -49,7 +49,7 @@ final class DiffEngineTests: XCTestCase {
 
     func testSemanticDuplicatesSkipped() {
         // "1" and "true" are semantically equal — should not appear in results
-        let kb = KnowledgeBase(entries: [], version: 1)
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
         let result = engine().parse(diffOutput: """
             -com.apple.dock :: show-recents = 1
             +com.apple.dock :: show-recents = true
@@ -58,7 +58,7 @@ final class DiffEngineTests: XCTestCase {
     }
 
     func testDomainNormalisationStripsPath() {
-        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1)
+        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1, updatedAt: nil)
         let result = engine().parse(diffOutput: """
             -/Users/adam/Library/Preferences/com.apple.dock.plist :: show-recents = 1
             +/Users/adam/Library/Preferences/com.apple.dock.plist :: show-recents = 0
@@ -67,7 +67,7 @@ final class DiffEngineTests: XCTestCase {
     }
 
     func testBeforeAndAfterValuesExtracted() {
-        let kb = KnowledgeBase(entries: [], version: 1)
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
         let result = engine().parse(diffOutput: """
             -com.apple.dock :: autohide = 0
             +com.apple.dock :: autohide = 1
@@ -80,7 +80,7 @@ final class DiffEngineTests: XCTestCase {
         let kb = KnowledgeBase(entries: [
             makeEntry(domain: "com.apple.dock", key: "show-recents"),
             makeEntry(domain: "com.apple.dock", key: "autohide-delay", noise: true),
-        ], version: 1)
+        ], version: 1, updatedAt: nil)
         let result = engine().parse(diffOutput: """
             -com.apple.dock :: show-recents = 1
             +com.apple.dock :: show-recents = 0

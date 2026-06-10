@@ -21,36 +21,36 @@ final class KnowledgeBaseTests: XCTestCase {
     }
 
     func testExactKeyMatch() {
-        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1)
+        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1, updatedAt: nil)
         XCTAssertNotNil(kb.entry(forDomain: "com.apple.dock", key: "show-recents"))
     }
 
     func testExactKeyNoMatchOnWrongKey() {
-        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1)
+        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1, updatedAt: nil)
         XCTAssertNil(kb.entry(forDomain: "com.apple.dock", key: "other-key"))
     }
 
     func testExactKeyNoMatchOnWrongDomain() {
-        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1)
+        let kb = KnowledgeBase(entries: [makeEntry(domain: "com.apple.dock", key: "show-recents")], version: 1, updatedAt: nil)
         XCTAssertNil(kb.entry(forDomain: "com.apple.finder", key: "show-recents"))
     }
 
     func testKeyPrefixMatch() {
         let entry = makeEntry(domain: "com.apple.FolderActionsDispatcher", keyPrefix: "folderActions.$objects[", noise: true)
-        let kb = KnowledgeBase(entries: [entry], version: 1)
+        let kb = KnowledgeBase(entries: [entry], version: 1, updatedAt: nil)
         XCTAssertNotNil(kb.entry(forDomain: "com.apple.FolderActionsDispatcher", key: "folderActions.$objects[7]"))
         XCTAssertNotNil(kb.entry(forDomain: "com.apple.FolderActionsDispatcher", key: "folderActions.$objects[100]"))
     }
 
     func testKeyPrefixNoMatchOnWrongPrefix() {
         let entry = makeEntry(domain: "com.apple.FolderActionsDispatcher", keyPrefix: "folderActions.$objects[", noise: true)
-        let kb = KnowledgeBase(entries: [entry], version: 1)
+        let kb = KnowledgeBase(entries: [entry], version: 1, updatedAt: nil)
         XCTAssertNil(kb.entry(forDomain: "com.apple.FolderActionsDispatcher", key: "folderActions.$version"))
     }
 
     func testEmptyKeyPrefixMatchesAllKeysInDomain() {
         let entry = makeEntry(domain: "com.apple.audio.DeviceSettings", keyPrefix: "", noise: true)
-        let kb = KnowledgeBase(entries: [entry], version: 1)
+        let kb = KnowledgeBase(entries: [entry], version: 1, updatedAt: nil)
         XCTAssertNotNil(kb.entry(forDomain: "com.apple.audio.DeviceSettings", key: "14-14-7D-E4-A5-D9:output.controls[1].value"))
         XCTAssertNotNil(kb.entry(forDomain: "com.apple.audio.DeviceSettings", key: "BuiltInMicrophoneDevice.controls[0].value"))
         XCTAssertNil(kb.entry(forDomain: "com.apple.dock", key: "anything"))
@@ -58,7 +58,7 @@ final class KnowledgeBaseTests: XCTestCase {
 
     func testNoiseEntryClassifiedAsNoise() {
         let entry = makeEntry(domain: "com.apple.dock", key: "someTransientKey", noise: true)
-        let kb = KnowledgeBase(entries: [entry], version: 1)
+        let kb = KnowledgeBase(entries: [entry], version: 1, updatedAt: nil)
         XCTAssertTrue(kb.entry(forDomain: "com.apple.dock", key: "someTransientKey")?.noise == true)
     }
 }
