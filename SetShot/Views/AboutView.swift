@@ -37,8 +37,8 @@ struct AboutView: View {
 
     private var permissions: some View {
         HelpSection("Permissions") {
-            HelpParagraph("SetShot takes snapshots without requiring any permission prompts. It reads settings directly from preference files on disk, which macOS allows without additional authorization.")
-            HelpParagraph("For complete coverage of privacy permission changes—for example, detecting that an app gained microphone or camera access—you can optionally grant **Full Disk Access** to SetShot in System Settings → Privacy & Security → Full Disk Access. Without it, SetShot simply skips that one data source and everything else works normally.")
+            HelpParagraph("When you take your first snapshot, macOS will display one permission dialog asking for **Media & Apple Music** access. Click **Allow** — SetShot needs it to read music-related settings such as Home Sharing and library configuration. This permission is remembered permanently.")
+            HelpParagraph("For complete coverage of privacy permission changes—for example, detecting that an app gained microphone or camera access—you can optionally grant **Full Disk Access** to SetShot in System Settings → Privacy & Security → Full Disk Access. SetShot will appear in that list automatically; just enable the toggle. Without it, SetShot simply skips that one data source and everything else works normally.")
         }
     }
 
