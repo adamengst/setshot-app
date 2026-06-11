@@ -104,4 +104,8 @@ actor JournalStore {
         save(entries)
         return entries
     }
+
+    func deleteAll() {
+        save([])
+    }
 }

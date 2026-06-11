@@ -6,5 +6,8 @@ import Foundation
 if CommandLine.arguments.contains("--flatten-plist") {
     PlistFlattener.run() // reads stdin, writes stdout, calls exit(0)
 }
+if CommandLine.arguments.contains("--explain-diff") {
+    DiffExplainer.run() // reads two snapshot paths from argv, calls exit(0)
+}
 
 SetShotApp.main()

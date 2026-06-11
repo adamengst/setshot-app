@@ -39,8 +39,23 @@ enum PlistFlattener {
                 flatten(dict[key]!, prefix: p)
             }
         case let arr as [Any]:
-            for (i, val) in arr.enumerated() {
-                flatten(val, prefix: "\(prefix)[\(i)]")
+            // Text replacement rules: each element is a dict with "replace" (trigger)
+            // and "with" (expansion). Use the trigger as the key so that adding or
+            // removing one entry doesn't cascade as changes to every subsequent index.
+            if let dicts = arr as? [[String: Any]],
+               !dicts.isEmpty,
+               dicts.allSatisfy({ $0["replace"] is String && $0["with"] is String }) {
+                for dict in dicts {
+                    let trigger   = dict["replace"] as! String
+                    let expansion = dict["with"]    as! String
+                    let on        = (dict["on"] as? Bool) ?? true
+                    let value     = on ? "\(trigger) → \(expansion)" : "\(trigger) → \(expansion) [off]"
+                    print("\(prefix)[\(trigger)] = \(value)")
+                }
+            } else {
+                for (i, val) in arr.enumerated() {
+                    flatten(val, prefix: "\(prefix)[\(i)]")
+                }
             }
         case let data as Data:
             // Try to interpret bytes as a nested plist before falling back.

@@ -1,5 +1,12 @@
 import Foundation
 
+enum SnapshotSchedule {
+    case interval(minutes: Int)
+    case daily(hour: Int, minute: Int)
+    case weekly(weekday: Int, hour: Int, minute: Int)
+    case monthly(day: Int, hour: Int, minute: Int)
+}
+
 struct SchedulerManager {
     static let label = "com.tidbits.SetShot.daily-snapshot"
 
@@ -16,36 +23,53 @@ struct SchedulerManager {
         FileManager.default.fileExists(atPath: plistURL.path)
     }
 
-    static func installedTime() -> Date? {
+    static func installedSchedule() -> SnapshotSchedule? {
         guard isInstalled,
-              let plist = NSDictionary(contentsOf: plistURL),
-              let interval = plist["StartCalendarInterval"] as? [String: Int],
-              let hour = interval["Hour"],
-              let minute = interval["Minute"]
-        else { return nil }
-        var comps = Calendar.current.dateComponents([.year, .month, .day], from: .now)
-        comps.hour = hour
-        comps.minute = minute
-        return Calendar.current.date(from: comps)
+              let plist = NSDictionary(contentsOf: plistURL) else { return nil }
+
+        if let seconds = plist["StartInterval"] as? Int {
+            return .interval(minutes: max(1, seconds / 60))
+        }
+
+        if let cal = plist["StartCalendarInterval"] as? [String: Int] {
+            let hour = cal["Hour"] ?? 8
+            let minute = cal["Minute"] ?? 0
+            if let weekday = cal["Weekday"] {
+                return .weekly(weekday: weekday, hour: hour, minute: minute)
+            }
+            if let day = cal["Day"] {
+                return .monthly(day: day, hour: hour, minute: minute)
+            }
+            return .daily(hour: hour, minute: minute)
+        }
+
+        return nil
     }
 
-    static func install(hour: Int, minute: Int) throws {
-        // Run the executable directly so TCC attributes permission requests to
-        // SetShot's bundle ID. Using `open` makes `open` the responsible process,
-        // which causes TCC to prompt on every defaults read instead of remembering.
+    static func install(schedule: SnapshotSchedule) throws {
         let executablePath = Bundle.main.executablePath!
-        let plist: NSDictionary = [
+        var plist: [String: Any] = [
             "Label": label,
             "ProgramArguments": [executablePath, "--background-snapshot"],
-            "StartCalendarInterval": ["Hour": hour, "Minute": minute],
             "StandardOutPath": "/tmp/setshot-daily.log",
             "StandardErrorPath": "/tmp/setshot-daily.log",
             "AssociatedBundleIdentifiers": "com.tidbits.SetShot",
         ]
 
+        switch schedule {
+        case .interval(let minutes):
+            plist["StartInterval"] = minutes * 60
+        case .daily(let hour, let minute):
+            plist["StartCalendarInterval"] = ["Hour": hour, "Minute": minute]
+        case .weekly(let weekday, let hour, let minute):
+            plist["StartCalendarInterval"] = ["Weekday": weekday, "Hour": hour, "Minute": minute]
+        case .monthly(let day, let hour, let minute):
+            plist["StartCalendarInterval"] = ["Day": day, "Hour": hour, "Minute": minute]
+        }
+
         try FileManager.default.createDirectory(at: launchAgentsDir, withIntermediateDirectories: true)
         if isInstalled { try? unload() }
-        plist.write(to: plistURL, atomically: true)
+        (plist as NSDictionary).write(to: plistURL, atomically: true)
         try load()
     }
 

@@ -1,5 +1,6 @@
 import SwiftUI
 import Sparkle
+import UserNotifications
 
 struct SetShotApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -180,7 +181,7 @@ private struct StaleComparisonDismisser: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool { true }
 
     func applicationWillFinishLaunching(_ notification: Notification) {
@@ -190,7 +191,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        guard CommandLine.arguments.contains("--background-snapshot") else { return }
+        if CommandLine.arguments.contains("--background-snapshot") {
+            runBackgroundSnapshot()
+        } else {
+            UNUserNotificationCenter.current().delegate = self
+        }
+    }
+
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                didReceive response: UNNotificationResponse,
+                                withCompletionHandler completionHandler: @escaping () -> Void) {
+        let info = response.notification.request.content.userInfo
+        if let beforeID = info["beforeID"] as? String,
+           let afterID = info["afterID"] as? String {
+            UserDefaults.standard.set(beforeID, forKey: "PendingComparisonBeforeID")
+            UserDefaults.standard.set(afterID, forKey: "PendingComparisonAfterID")
+            NotificationCenter.default.post(
+                name: .setshotOpenComparison,
+                object: nil,
+                userInfo: ["beforeID": beforeID, "afterID": afterID]
+            )
+        }
+        completionHandler()
+    }
+
+    private func runBackgroundSnapshot() {
         Task {
             do {
                 let existing = (try? await SnapshotStore.shared.list()) ?? []
@@ -205,11 +230,44 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                            before: Snapshot(takenAt: previous.date, rawOutput: b),
                            after: Snapshot(takenAt: stored.date, rawOutput: a),
                            kb: kb) {
-                        _ = await JournalStore.shared.add(recognized: result.recognized, afterSnapshot: stored)
+                        let r = result.recognized.count
+                        let u = result.unrecognized.count
+                        let autoDelete = UserDefaults.standard.bool(forKey: "AutoDeleteEmptyScheduledSnapshots")
+                        if autoDelete && r == 0 && u == 0 {
+                            try? await SnapshotStore.shared.delete(stored)
+                        } else {
+                            try? await SnapshotStore.shared.saveMeta(for: stored, recognized: r, unrecognized: u, scheduled: true)
+                            _ = await JournalStore.shared.add(recognized: result.recognized, afterSnapshot: stored)
+                            if r > 0 || u > 0 {
+                                await postSnapshotNotification(result: result, previous: previous, stored: stored)
+                            }
+                        }
                     }
                 }
             } catch {}
             await MainActor.run { NSApp.terminate(nil) }
         }
     }
+
+    private func postSnapshotNotification(result: DiffResult, previous: StoredSnapshot, stored: StoredSnapshot) async {
+        let center = UNUserNotificationCenter.current()
+        let content = UNMutableNotificationContent()
+        let r = result.recognized.count
+        let u = result.unrecognized.count
+        if r > 0 && u > 0 {
+            content.title = "SetShot: \(r) recognized, \(u) unrecognized change\(u == 1 ? "" : "s") detected"
+        } else if r > 0 {
+            content.title = "SetShot: \(r) recognized change\(r == 1 ? "" : "s") detected"
+        } else {
+            content.title = "SetShot: \(u) unrecognized change\(u == 1 ? "" : "s") detected"
+        }
+        content.body = "Click to compare with the previous snapshot."
+        content.userInfo = ["beforeID": previous.id, "afterID": stored.id]
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        try? await center.add(request)
+    }
+}
+
+extension Notification.Name {
+    static let setshotOpenComparison = Notification.Name("com.tidbits.SetShot.openComparison")
 }

@@ -38,7 +38,11 @@ actor SnapshotStore {
             }
             .compactMap { url -> StoredSnapshot? in
                 guard let (date, label) = parseDateAndLabel(from: url.lastPathComponent) else { return nil }
-                return StoredSnapshot(url: url, date: date, customLabel: label)
+                let meta = loadMeta(for: url)
+                return StoredSnapshot(url: url, date: date, customLabel: label,
+                                      recognizedCount: meta?.recognized,
+                                      unrecognizedCount: meta?.unrecognized,
+                                      isScheduled: meta?.scheduled ?? false)
             }
             .sorted { $0.date > $1.date }
     }
@@ -61,8 +65,15 @@ actor SnapshotStore {
             .sorted { ($0.baseDisplayName ?? "") < ($1.baseDisplayName ?? "") }
     }
 
+    func saveMeta(for snapshot: StoredSnapshot, recognized: Int, unrecognized: Int, scheduled: Bool) throws {
+        let meta = SnapshotMeta(recognized: recognized, unrecognized: unrecognized, scheduled: scheduled)
+        let data = try JSONEncoder().encode(meta)
+        try data.write(to: metaURL(for: snapshot.url))
+    }
+
     func delete(_ snapshot: StoredSnapshot) throws {
         try FileManager.default.removeItem(at: snapshot.url)
+        try? FileManager.default.removeItem(at: metaURL(for: snapshot.url))
     }
 
     func rename(_ snapshot: StoredSnapshot, to label: String) throws -> StoredSnapshot {
@@ -82,12 +93,37 @@ actor SnapshotStore {
         }
         let newURL = directory.appendingPathComponent(newName)
         if newURL.lastPathComponent != snapshot.url.lastPathComponent {
+            let oldMeta = metaURL(for: snapshot.url)
             try FileManager.default.moveItem(at: snapshot.url, to: newURL)
+            if FileManager.default.fileExists(atPath: oldMeta.path) {
+                try? FileManager.default.moveItem(at: oldMeta, to: metaURL(for: newURL))
+            }
         }
-        return StoredSnapshot(url: newURL, date: snapshot.date, customLabel: newLabel)
+        return StoredSnapshot(url: newURL, date: snapshot.date, customLabel: newLabel,
+                              recognizedCount: snapshot.recognizedCount,
+                              unrecognizedCount: snapshot.unrecognizedCount,
+                              isScheduled: snapshot.isScheduled)
     }
 
     // MARK: - Private
+
+    private struct SnapshotMeta: Codable {
+        var recognized: Int
+        var unrecognized: Int
+        var scheduled: Bool
+    }
+
+    private nonisolated func metaURL(for snapshotURL: URL) -> URL {
+        var name = snapshotURL.lastPathComponent
+        if name.hasSuffix(".txt.gz") { name = String(name.dropLast(7)) }
+        else if name.hasSuffix(".txt") { name = String(name.dropLast(4)) }
+        return snapshotURL.deletingLastPathComponent().appendingPathComponent(name + ".meta.json")
+    }
+
+    private func loadMeta(for url: URL) -> SnapshotMeta? {
+        guard let data = try? Data(contentsOf: metaURL(for: url)) else { return nil }
+        return try? JSONDecoder().decode(SnapshotMeta.self, from: data)
+    }
 
     // Derives "macOS Sequoia 15.7.7 defaults" from "base_Sequoia_15.7.7.txt.gz"
     private nonisolated func baseLabel(for filename: String) -> String? {

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		022E98AE65C8DF25677B38F1 /* DiffExplainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A0EB091BBE2B5BE9042963 /* DiffExplainer.swift */; };
 		02FF6A17EE49D6807656DA17 /* JournalEntryDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16BC8706F8185F017B4E6163 /* JournalEntryDecodingTests.swift */; };
 		0AFC03023DFBAD749E649981 /* JournalStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 347BED5814A5D9C1944FE30E /* JournalStoreTests.swift */; };
 		0E16E6D8791F4D87DDFECD0D /* DiffResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83C43C69E85AC39B6A1FDC4 /* DiffResult.swift */; };
@@ -16,6 +17,7 @@
 		1DB3BE15D1F1B3F3FD577AA0 /* Snapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6ABD7B7F567D2F3E47E28D4B /* Snapshot.swift */; };
 		3057AD8A9EF7B4264D700825 /* SubmitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001649E989CE2587D04C5069 /* SubmitView.swift */; };
 		33054D82CADE5C8BECBF2B75 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590C3CF672ED6999CE28820A /* AboutView.swift */; };
+		365FBF40F5A8F413779D06C9 /* KBFeedbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C893A2030276A4A2FE4EA80 /* KBFeedbackView.swift */; };
 		42842CE4FCC716DC32A84C1F /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185D8A7E9F70FCBF6906DC64 /* main.swift */; };
 		47AC526F099DF9CF37278AEC /* AboutPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78E54FFE685F4C0170A297ED /* AboutPanelView.swift */; };
 		497863C83A468D0F371C2292 /* SettingsPaneOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E52B71DAE20C739CE609A8 /* SettingsPaneOrder.swift */; };
@@ -95,6 +97,7 @@
 		7AB873D23027E4DE2AFA6CB7 /* base_Tahoe_26.5.1.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_Tahoe_26.5.1.txt.gz; sourceTree = "<group>"; };
 		872734B24900BAE17D6A0324 /* BaseSnapshots */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BaseSnapshots; path = SetShot/Resources/BaseSnapshots; sourceTree = SOURCE_ROOT; };
 		884A5EDA61C452330F26ED01 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
+		8C893A2030276A4A2FE4EA80 /* KBFeedbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBFeedbackView.swift; sourceTree = "<group>"; };
 		98C4B2DF407214C59E82FB25 /* SubmitAllPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmitAllPreviewView.swift; sourceTree = "<group>"; };
 		9A62CC8B68E73050877CF1CF /* base_Sequoia_15.7.7.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_Sequoia_15.7.7.txt.gz; sourceTree = "<group>"; };
 		9FB9705E796395269414C4D8 /* KBEntryDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBEntryDecodingTests.swift; sourceTree = "<group>"; };
@@ -113,6 +116,7 @@
 		E8FFE9A6FF3ED45FC4C95350 /* SetShotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SetShotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF4F0C992FB292A44537A04D /* StoredSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredSnapshot.swift; sourceTree = "<group>"; };
 		F6DC2A921ED003213349A822 /* JournalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalStore.swift; sourceTree = "<group>"; };
+		F7A0EB091BBE2B5BE9042963 /* DiffExplainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffExplainer.swift; sourceTree = "<group>"; };
 		FB1F3AEF104A368A0785F1AE /* SetShot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SetShot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -159,6 +163,7 @@
 				78E54FFE685F4C0170A297ED /* AboutPanelView.swift */,
 				590C3CF672ED6999CE28820A /* AboutView.swift */,
 				071D1ABF6A0037E3333B7BF7 /* JournalView.swift */,
+				8C893A2030276A4A2FE4EA80 /* KBFeedbackView.swift */,
 				B1CCB5A46AF855D9998F53D5 /* ReadyView.swift */,
 				66A182A3E724717177EE351D /* ResultsView.swift */,
 				30017B093D6AC6D842717D78 /* SettingsPaneIcon.swift */,
@@ -233,6 +238,7 @@
 			isa = PBXGroup;
 			children = (
 				C57C901AB4841ACACEBB1709 /* DiffEngine.swift */,
+				F7A0EB091BBE2B5BE9042963 /* DiffExplainer.swift */,
 				E2668D3A288EB70D68063779 /* HTMLExporter.swift */,
 				F6DC2A921ED003213349A822 /* JournalStore.swift */,
 				61336BF2958C0E7F041BDB4B /* KBFetcher.swift */,
@@ -355,12 +361,14 @@
 				F932C362BDFA26623A14BFB3 /* AppModel.swift in Sources */,
 				177A74A9B34AA5B0A987A5D5 /* ContentView.swift in Sources */,
 				84003123710E517BD6FCD2F0 /* DiffEngine.swift in Sources */,
+				022E98AE65C8DF25677B38F1 /* DiffExplainer.swift in Sources */,
 				0E16E6D8791F4D87DDFECD0D /* DiffResult.swift in Sources */,
 				CDBDE04C2E871D4326AD8D6D /* HTMLExporter.swift in Sources */,
 				63D2341D409F5EEED9B4461A /* JournalEntry.swift in Sources */,
 				FA45E69608F29852F581E969 /* JournalStore.swift in Sources */,
 				C9748E0A308C147BCCDD21A5 /* JournalView.swift in Sources */,
 				E401DA3BE1DDFBA099217586 /* KBEntry.swift in Sources */,
+				365FBF40F5A8F413779D06C9 /* KBFeedbackView.swift in Sources */,
 				1AC38EE084F59508519D5045 /* KBFetcher.swift in Sources */,
 				515B9128CCCA9A4AC9E4FD7D /* KnowledgeBase.swift in Sources */,
 				FE14285D9EB25E8B55EB5212 /* PingService.swift in Sources */,

@@ -4,6 +4,7 @@ struct JournalView: View {
     @EnvironmentObject var appModel: AppModel
     @AppStorage("OldestFirst") private var oldestFirst = false
     @State private var searchQuery = ""
+    @State private var showingClearConfirm = false
 
     private var filteredEntries: [JournalEntry] {
         guard !searchQuery.isEmpty else { return appModel.journal }
@@ -67,9 +68,23 @@ struct JournalView: View {
                 }
                 .buttonStyle(.plain)
             }
+            if !appModel.journal.isEmpty {
+                Button("Clear All") {
+                    showingClearConfirm = true
+                }
+                .foregroundStyle(.red)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        .confirmationDialog("Clear the entire journal?", isPresented: $showingClearConfirm, titleVisibility: .visible) {
+            Button("Clear Journal", role: .destructive) {
+                Task { await appModel.clearJournal() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete all journal entries. This cannot be undone.")
+        }
     }
 
     private var emptyState: some View {

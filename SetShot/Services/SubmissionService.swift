@@ -49,8 +49,27 @@ actor SubmissionService {
         return p
     }
 
-    private func post<T: Encodable>(_ body: T) async throws {
-        var request = URLRequest(url: workerURL)
+    func submitKBFeedback(entry: KBEntry, diff: DiffLine,
+                          issues: [KBFeedbackIssue], notes: String) async throws {
+        var payload: [String: String] = [
+            "entry_id":               entry.id,
+            "domain":                 entry.domain,
+            "key":                    entry.key,
+            "current_description":    entry.description ?? "",
+            "current_ui_location":    entry.uiLocation ?? "",
+            "current_settings_url":   entry.settingsURL ?? "",
+            "current_icon_bundle_id": entry.iconBundleID ?? "",
+            "macos_version":          diff.macOSVersion,
+            "issues":                 issues.map(\.rawValue).joined(separator: ",")
+        ]
+        let trimmed = notes.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty { payload["notes"] = trimmed }
+        try await post(payload, path: "/kb-feedback")
+    }
+
+    private func post<T: Encodable>(_ body: T, path: String = "") async throws {
+        let url = path.isEmpty ? workerURL : workerURL.appendingPathComponent(path)
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)

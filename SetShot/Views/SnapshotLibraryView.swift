@@ -41,7 +41,21 @@ struct SnapshotLibraryView: View {
                 footer
             }
         }
-        .task { await appModel.loadSnapshots() }
+        .task {
+            await appModel.loadSnapshots()
+            checkPendingComparison()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await appModel.loadSnapshots() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .setshotOpenComparison)) { notification in
+            guard let info = notification.userInfo,
+                  let beforeID = info["beforeID"] as? String,
+                  let afterID = info["afterID"] as? String else { return }
+            UserDefaults.standard.removeObject(forKey: "PendingComparisonBeforeID")
+            UserDefaults.standard.removeObject(forKey: "PendingComparisonAfterID")
+            openComparison(beforeID: beforeID, afterID: afterID)
+        }
         .onChange(of: activeTab) { newTab in
             if newTab != .about {
                 UserDefaults.standard.set(true, forKey: "HasSeenAbout")
@@ -210,6 +224,28 @@ struct SnapshotLibraryView: View {
 
     private func compare() {
         guard let before = selectedBefore, let after = selectedAfter else { return }
+        runComparison(before: before, after: after)
+    }
+
+    private func checkPendingComparison() {
+        guard let beforeID = UserDefaults.standard.string(forKey: "PendingComparisonBeforeID"),
+              let afterID = UserDefaults.standard.string(forKey: "PendingComparisonAfterID") else { return }
+        UserDefaults.standard.removeObject(forKey: "PendingComparisonBeforeID")
+        UserDefaults.standard.removeObject(forKey: "PendingComparisonAfterID")
+        openComparison(beforeID: beforeID, afterID: afterID)
+    }
+
+    private func openComparison(beforeID: String, afterID: String) {
+        Task {
+            await appModel.loadSnapshots()
+            let allSnapshots = appModel.snapshots + appModel.baseSnapshots
+            guard let before = allSnapshots.first(where: { $0.id == beforeID }),
+                  let after = allSnapshots.first(where: { $0.id == afterID }) else { return }
+            runComparison(before: before, after: after)
+        }
+    }
+
+    private func runComparison(before: StoredSnapshot, after: StoredSnapshot) {
         isComparing = true
         Task {
             do {
@@ -247,6 +283,12 @@ private struct SnapshotRow: View {
                     .foregroundStyle(isExcluded ? .tertiary : .primary)
             }
             Spacer()
+            if !isEditing {
+                changeCountLabel
+                Text(snapshot.formattedFileSize)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
             if isSelected && !isEditing {
                 Image(systemName: "checkmark")
                     .foregroundStyle(Color.accentColor)
@@ -268,6 +310,17 @@ private struct SnapshotRow: View {
         }
     }
 
+    @ViewBuilder
+    private var changeCountLabel: some View {
+        let r = snapshot.recognizedCount
+        if let r, r > 0 {
+            Text("\(r) change\(r == 1 ? "" : "s")")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.trailing, 4)
+        }
+    }
+
     private func commitRename() {
         let trimmed = editText.trimmingCharacters(in: .whitespaces)
         isEditing = false
@@ -286,6 +339,9 @@ private struct BaseSnapshotRow: View {
                 .foregroundStyle(.secondary)
                 .font(.subheadline)
             Spacer()
+            Text(snapshot.formattedFileSize)
+                .font(.caption)
+                .foregroundStyle(.tertiary)
             if isSelected {
                 Image(systemName: "checkmark")
                     .foregroundStyle(Color.accentColor)

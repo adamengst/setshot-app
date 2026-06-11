@@ -12,6 +12,7 @@ struct AboutView: View {
                 understandingResults
                 theJournal
                 submittingChanges
+                improvingRecognized
                 automaticSnapshots
                 privacy
             }
@@ -28,7 +29,7 @@ struct AboutView: View {
             Text("About SetShot")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-            Text("Have you ever thought a macOS update changed some setting silently? Or have you explored System Settings and wondered later what you clicked? With SetShot, you can find out what settings have changed over time, making it easy to see what you've done and revert inadvertent changes.")
+            Text("Have you ever thought a macOS update changed some setting silently? Or have you spelunnked through System Settings and wondered later what you clicked? With SetShot, you can find out what settings have changed over time, making it easy to see what you've done and revert inadvertent changes.")
                 .fixedSize(horizontal: false, vertical: true)
             Text("SetShot lets you capture a complete snapshot of your Mac's settings at any point in time so you can compare any two snapshots and see exactly what changed, in plain English. Each recognized change comes with a description, its location in System Settings, and—where possible—a button that opens the exact pane directly.")
                 .fixedSize(horizontal: false, vertical: true)
@@ -37,8 +38,17 @@ struct AboutView: View {
 
     private var permissions: some View {
         HelpSection("Permissions") {
-            HelpParagraph("When you take your first snapshot, macOS will display one permission dialog asking for **Media & Apple Music** access. Click **Allow** — SetShot needs it to read music-related settings such as Home Sharing and library configuration. This permission is remembered permanently.")
-            HelpParagraph("For complete coverage of privacy permission changes—for example, detecting that an app gained microphone or camera access—you can optionally grant **Full Disk Access** to SetShot in System Settings → Privacy & Security → Full Disk Access. SetShot will appear in that list automatically; just enable the toggle. Without it, SetShot simply skips that one data source and everything else works normally.")
+            HelpParagraph("On your first snapshot, macOS will display a **Media & Apple Music** permission dialog — click **Allow**. SetShot needs it to read music-related settings such as Home Sharing and library configuration. This permission is remembered permanently.")
+            screenshot("PermissionMusicAccess")
+            HelpParagraph("Two optional permissions expand what SetShot can do:")
+
+            HelpCallout("Full Disk Access") {
+                Text("Allows SetShot to query the system privacy database to detect changes to app permission settings — for example, if an app gained microphone or camera access. It also eliminates the Media & Apple Music dialog. Grant it in **System Settings → Privacy & Security → Full Disk Access**. Without it, SetShot skips that one data source and everything else works normally.")
+            }
+
+            HelpCallout("Notifications") {
+                Text("Required to receive alerts from automatic snapshots. When you enable automatic snapshots in Settings, macOS will ask for Notifications permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison.")
+            }
         }
     }
 
@@ -71,7 +81,8 @@ struct AboutView: View {
             HelpParagraph("SetShot's core function is to take and compare snapshots. To that end, it scans nearly 500 settings files across more than a dozen system data sources. It currently recognizes over 400 settings and knows to ignore over 50 additional changes that are just macOS noise.")
             HelpParagraph("To take a snapshot of the current state of your Mac's settings, click **Take Snapshot** at the bottom of the Snapshots view. SetShot saves the result to the snapshot library with the date and time. Snapshots are stored in `~/Library/Application Support/SetShot/snapshots` as gzipped files that occupy little space. Capturing typically takes less than a minute.")
             screenshot("ScreenshotSnapshotsContext")
-            HelpParagraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labelling snapshots with context—for example, **Before macOS 26.6** or **After update**.")
+            HelpParagraph("Each snapshot line shows the number of recognized changes from the previous snapshot and the size of the snapshot file.")
+            HelpParagraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labelling snapshots with context—for example, “Before macOS 26.6” or “After Accessibility testing.”")
             HelpParagraph("To remove an unnecessary snapshot, Control-click it and choose **Delete**.")
         }
     }
@@ -91,7 +102,7 @@ struct AboutView: View {
             HelpParagraph("Results are divided into two sections:")
 
             HelpCallout("Recognized Changes") {
-                Text("Settings already in SetShot's knowledge base. Each entry shows a plain-English description, the path to find it in System Settings, and—where possible—an **Open in Settings** button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue.")
+                Text("Settings already in SetShot's knowledge base. Each entry shows a plain-English description, the path to find it in System Settings, and—where possible—an **Open in Settings** button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue. A **Submit Feedback** button lets you flag issues with the description, path, icon, or value formatting to help improve SetShot for everyone.")
             }
 
             HelpCallout("Unrecognized Changes") {
@@ -123,19 +134,30 @@ struct AboutView: View {
         }
     }
 
+    private var improvingRecognized: some View {
+        HelpSection("Improving Recognized Changes") {
+            HelpParagraph("Even recognized changes can have room for improvement: an icon may be missing, a description may be unclear, a System Settings path may be wrong, or values may show as raw numbers instead of readable labels.")
+            HelpParagraph("Click **Submit Feedback** on any recognized change row to open a feedback panel anchored right below the entry. Check the issues that apply, add any notes that might help, and click **Submit**. The panel shows a summary of the current description and location so you can refer to them while writing.")
+            HelpParagraph("Feedback is reviewed by the developer and incorporated into future knowledge base updates, making SetShot more accurate for everyone.")
+        }
+    }
+
     private var privacy: some View {
         HelpSection("Privacy") {
             HelpParagraph("The data SetShot works with is inherently non-sensitive—it's system settings like toggles, sliders, and preferences, not passwords, documents, photos, or personal content. That said, SetShot is designed to keep your data private.")
             HelpBullet("**Snapshots, comparisons, and journal entries** are stored only on this Mac and are never transmitted anywhere.")
-            HelpBullet("**Submissions** are the one exception. When you submit an unrecognized change, the technical setting name and its before and after values are sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record.")
-            HelpBullet("**Full Disk Access:** SetShot can optionally appear in the Full Disk Access list in System Settings. Granting it allows SetShot to query the system privacy database to detect changes to app permission settings (for example, if you grant an app microphone access). It is not required—without it, SetShot simply skips that one data source and everything else works normally.")
+            HelpBullet("**Submissions** are the one exception. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record.")
+            HelpBullet("**Full Disk Access:** SetShot appears in the Full Disk Access list in System Settings, but it must be turned on manually. Granting Full Disk Access allows SetShot to query the system privacy database to detect changes to app permission settings (for example, if you grant an app microphone access). Full Disk Access is not required—without it, SetShot simply skips that one data source and everything else works normally.")
+            HelpParagraph("SetShot is open source. If you want to verify exactly what data the app collects and how it is handled, the full source code is available at [github.com/adamengst/setshot-app](https://github.com/adamengst/setshot-app).")
         }
     }
 
     private var automaticSnapshots: some View {
         HelpSection("Automatic Snapshots") {
-            HelpParagraph("SetShot can take snapshots automatically on a schedule. Click Settings in the segmented control at the top to open the scheduler settings.")
+            HelpParagraph("SetShot can take snapshots automatically on a schedule. Click **Settings** in the segmented control at the top, then select **Take automatic snapshots** and choose how often: every N minutes, every N hours, once a day, once a week, or once a month. For day, week, and month intervals, you can also set the time of day.")
             HelpParagraph("Automatic snapshots are taken silently in the background without SetShot's window appearing. This lets you build up a history of your Mac's settings over time without having to remember to capture manually.")
+            HelpParagraph("When you enable automatic snapshots, macOS will ask for **Notifications** permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison in SetShot.")
+            HelpParagraph("Enable **Delete scheduled snapshots with no changes** to automatically remove snapshots taken by the scheduler that found no changes, keeping your library uncluttered.")
             screenshot("ScreenshotSettings")
         }
     }
@@ -144,7 +166,7 @@ struct AboutView: View {
         HelpSection("The Journal") {
             HelpParagraph("The journal keeps a cumulative record of every recognized change found across all your comparisons. Switch to it by clicking **Journal** in the segmented control at the top of the SetShot window.")
             HelpParagraph("Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before and after values. An **Open in Settings** button appears when possible.")
-            HelpParagraph("Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once.")
+            HelpParagraph("Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once. To wipe the entire journal, click **Clear All** to the right of the search field — you'll be asked to confirm first.")
             HelpParagraph("The journal automatically eliminates redundant entries: if the same change appears more than once—for instance, if you run the same comparison twice—only the earliest occurrence is kept.")
             screenshot("ScreenshotJournal")
         }

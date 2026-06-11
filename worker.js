@@ -6,6 +6,14 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const BATCH_SIZE_MAX = 50;
 
 const REQUIRED_FIELDS = ['domain', 'key', 'source', 'before_value', 'after_value', 'macos_version'];
+const KB_FEEDBACK_REQUIRED_FIELDS = ['entry_id', 'domain', 'key', 'macos_version', 'issues'];
+const VALID_KB_ISSUES = new Set(['no_or_incorrect_icon', 'description_needs_improvement', 'path_is_wrong', 'values_not_human_readable']);
+const ISSUE_LABELS = {
+  no_or_incorrect_icon: 'No or incorrect icon',
+  description_needs_improvement: 'Description needs improvement',
+  path_is_wrong: 'Path is wrong',
+  values_not_human_readable: "Values aren't human-readable"
+};
 const IDENTIFIER_FIELDS = ['domain', 'key', 'source', 'macos_version'];
 const MAX_IDENTIFIER_LENGTH = 500;
 const MAX_VALUE_LENGTH = 2000;
@@ -74,6 +82,10 @@ export default {
                request.headers.get('X-Forwarded-For') ||
                'unknown';
 
+    if (path === '/kb-feedback') {
+      return handleKBFeedback(body, ip, env);
+    }
+
     const isBatch = Array.isArray(body);
 
     if (isBatch) {
@@ -139,7 +151,7 @@ export default {
   }
 };
 
-async function postIssue(env, title, body) {
+async function postIssue(env, title, body, labels = ['pending']) {
   const [owner, repo] = env.GITHUB_REPO.split('/');
   return fetch(
     `https://api.github.com/repos/${owner}/${repo}/issues`,
@@ -152,7 +164,63 @@ async function postIssue(env, title, body) {
         'User-Agent': 'SetShot-Worker/1.0',
         'X-GitHub-Api-Version': '2022-11-28'
       },
-      body: JSON.stringify({ title, body, labels: ['pending'] })
+      body: JSON.stringify({ title, body, labels })
     }
   );
+}
+
+function validateKBFeedback(item) {
+  for (const field of KB_FEEDBACK_REQUIRED_FIELDS) {
+    if (typeof item[field] !== 'string' || item[field].length === 0) return false;
+  }
+  for (const field of ['entry_id', 'domain', 'key', 'macos_version']) {
+    if (item[field].length > MAX_IDENTIFIER_LENGTH) return false;
+    if (URL_PATTERN.test(item[field]) || HTML_PATTERN.test(item[field])) return false;
+  }
+  const issues = item.issues.split(',').map(s => s.trim()).filter(Boolean);
+  if (issues.length === 0) return false;
+  for (const issue of issues) {
+    if (!VALID_KB_ISSUES.has(issue)) return false;
+  }
+  if (item.notes !== undefined) {
+    if (typeof item.notes !== 'string') return false;
+    if (item.notes.length > MAX_FEEDBACK_NOTES_LENGTH) return false;
+    if (URL_PATTERN.test(item.notes) || HTML_PATTERN.test(item.notes)) return false;
+  }
+  return true;
+}
+
+async function handleKBFeedback(body, ip, env) {
+  if (!validateKBFeedback(body)) return new Response(null, { status: 400 });
+  if (!checkRateLimit(ip, 'single', RATE_LIMIT_SINGLE_MAX)) return new Response(null, { status: 429 });
+
+  const issues = body.issues.split(',').map(s => s.trim()).filter(Boolean);
+  const allIssueKeys = ['no_or_incorrect_icon', 'description_needs_improvement', 'path_is_wrong', 'values_not_human_readable'];
+  const checkboxes = allIssueKeys
+    .map(k => `- [${issues.includes(k) ? 'x' : ' '}] ${ISSUE_LABELS[k]}`)
+    .join('\n');
+
+  const issueTitle = `[KB Feedback] ${body.entry_id}`;
+  const issueBody = `## Entry
+**ID:** ${body.entry_id}
+**Domain:** ${body.domain} :: ${body.key}
+**Current description:** ${body.current_description || '(none)'}
+**Current location:** ${body.current_ui_location || '(none)'}
+**Current settings URL:** ${body.current_settings_url || '(none)'}
+**Current icon bundle:** ${body.current_icon_bundle_id || '(none)'}
+**macOS:** ${body.macos_version}
+
+## Issues Reported
+${checkboxes}
+
+## Notes
+${body.notes || '(none)'}
+
+## Metadata
+\`\`\`json
+${JSON.stringify({ ...body, submitted_at: new Date().toISOString() }, null, 2)}
+\`\`\``;
+
+  const githubResponse = await postIssue(env, issueTitle, issueBody, ['kb-feedback']);
+  return githubResponse.ok ? new Response(null, { status: 200 }) : new Response(null, { status: 502 });
 }

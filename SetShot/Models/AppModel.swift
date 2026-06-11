@@ -49,12 +49,20 @@ class AppModel: ObservableObject {
     }
 
     func takeSnapshot() async throws -> StoredSnapshot {
+        // Attempt a real open() on the TCC database so macOS registers SetShot
+        // in System Settings > Privacy & Security > Full Disk Access. The result
+        // is intentionally ignored — snapshots proceed regardless of FDA status.
+        let tccPath = (NSHomeDirectory() as NSString)
+            .appendingPathComponent("Library/Application Support/com.apple.TCC/TCC.db")
+        if let fh = FileHandle(forReadingAtPath: tccPath) { try? fh.close() }
+
         let previous = snapshots.sorted { $0.date < $1.date }.last
         let snapshot = try await SnapshotRunner().run()
         let stored = try await store.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
         snapshots = (try? await store.list()) ?? []
         if let previous {
-            Task { await updateJournal(before: previous, after: stored) }
+            await updateCountsAndJournal(before: previous, after: stored)
+            snapshots = (try? await store.list()) ?? []
         }
         return stored
     }
@@ -97,6 +105,11 @@ class AppModel: ObservableObject {
         journal = await journalStore.delete(afterSnapshotId: afterSnapshotId)
     }
 
+    func clearJournal() async {
+        await journalStore.deleteAll()
+        journal = []
+    }
+
     // MARK: - Journal auto-building
 
     // Re-runs all adjacent snapshot diffs when the KB version advances.
@@ -116,6 +129,18 @@ class AppModel: ObservableObject {
         for (before, after) in zip(sorted, sorted.dropFirst()) {
             await updateJournal(before: before, after: after)
         }
+    }
+
+    private func updateCountsAndJournal(before: StoredSnapshot, after: StoredSnapshot) async {
+        async let beforeText = try? store.load(before)
+        async let afterText = try? store.load(after)
+        guard let b = await beforeText, let a = await afterText else { return }
+        guard let result = try? await DiffEngine().diff(
+            before: Snapshot(takenAt: before.date, rawOutput: b),
+            after: Snapshot(takenAt: after.date, rawOutput: a),
+            kb: kb) else { return }
+        try? await store.saveMeta(for: after, recognized: result.recognized.count, unrecognized: result.unrecognized.count, scheduled: false)
+        journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after)
     }
 
     private func updateJournal(before: StoredSnapshot, after: StoredSnapshot) async {

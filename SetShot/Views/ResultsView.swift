@@ -5,6 +5,7 @@ struct ResultsView: View {
     let before: StoredSnapshot
     let after: StoredSnapshot
     @State private var submittedIDs: Set<UUID> = []
+    @State private var feedbackSubmittedIDs: Set<String> = []
     @State private var isSubmittingAll = false
     @State private var showSubmitAllPreview = false
     @State private var submitError: String? = nil
@@ -21,6 +22,9 @@ struct ResultsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
+                if let warning = diff.limitedAccessWarning {
+                    limitedAccessBanner(warning)
+                }
                 recognizedSection
                 unrecognizedSection
             }
@@ -73,6 +77,20 @@ struct ResultsView: View {
         try? html.write(to: url, atomically: true, encoding: .utf8)
     }
 
+    private func limitedAccessBanner(_ message: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+            Text(message)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .font(.callout)
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.orange.opacity(0.12))
+        .cornerRadius(8)
+    }
+
     private var recognizedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             SectionHeader("Recognized Changes", count: valueChanges.count)
@@ -81,7 +99,9 @@ struct ResultsView: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(valueChanges, id: \.diff.id) { item in
-                    RecognizedRow(entry: item.entry, diff: item.diff)
+                    RecognizedRow(entry: item.entry, diff: item.diff,
+                                  feedbackSubmittedIDs: feedbackSubmittedIDs,
+                                  onMarkFeedbackSubmitted: { feedbackSubmittedIDs.insert($0) })
                 }
             }
             if !firstTimeChanges.isEmpty {
@@ -108,6 +128,7 @@ struct ResultsView: View {
                 .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .modifier(NoFocusEffect())
 
             if showFirstTime {
                 Text("These settings were written for the first time between the two snapshots. They may reflect macOS initializing defaults rather than a deliberate change.")
@@ -115,7 +136,9 @@ struct ResultsView: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
                 ForEach(firstTimeChanges, id: \.diff.id) { item in
-                    RecognizedRow(entry: item.entry, diff: item.diff)
+                    RecognizedRow(entry: item.entry, diff: item.diff,
+                                  feedbackSubmittedIDs: feedbackSubmittedIDs,
+                                  onMarkFeedbackSubmitted: { feedbackSubmittedIDs.insert($0) })
                 }
             }
         }
@@ -213,6 +236,12 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
     if key.localizedCaseInsensitiveContains("volume"), let f = Double(raw) {
         return "\(Int((f * 100).rounded()))%"
     }
+    // Highlight color: "R G B ColorName" — extract just the name
+    let parts = raw.split(separator: " ")
+    if parts.count == 4,
+       Double(parts[0]) != nil, Double(parts[1]) != nil, Double(parts[2]) != nil {
+        return String(parts[3])
+    }
     return raw
 }
 
@@ -236,6 +265,10 @@ private struct SectionHeader: View {
 private struct RecognizedRow: View {
     let entry: KBEntry
     let diff: DiffLine
+    let feedbackSubmittedIDs: Set<String>
+    let onMarkFeedbackSubmitted: (String) -> Void
+
+    @State private var showFeedback = false
 
     private static let macOSMajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
 
@@ -246,8 +279,8 @@ private struct RecognizedRow: View {
         HStack(alignment: .top, spacing: 12) {
             SettingsPaneIcon(settingsURL: entry.settingsURL, domain: diff.domain, iconBundleID: entry.iconBundleID)
                 .padding(.top, 2)
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top) {
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(entry.description ?? "")
                             .fontWeight(.medium)
@@ -257,23 +290,39 @@ private struct RecognizedRow: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    Spacer()
+                    HStack(spacing: 6) {
+                        Text({ let v = formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap); return v.isEmpty ? "(none)" : v }())
+                            .foregroundStyle(.orange)
+                        Text("→")
+                            .foregroundStyle(.secondary)
+                        Text({ let v = formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap); return v.isEmpty ? "(none)" : v }())
+                            .foregroundStyle(.blue)
+                    }
+                    .font(.system(.callout, design: .monospaced))
+                }
+                Spacer()
+                VStack(alignment: .center, spacing: 0) {
                     if let url = settingsURL {
                         Button("Open in Settings") {
                             NSWorkspace.shared.open(url)
                         }
                         .controlSize(.small)
                     }
+                    Spacer(minLength: 8)
+                    if feedbackSubmittedIDs.contains(entry.id) {
+                        Label("Feedback Sent", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .font(.caption)
+                    } else {
+                        Button("Submit Feedback") { showFeedback = true }
+                            .controlSize(.small)
+                            .popover(isPresented: $showFeedback, arrowEdge: .top) {
+                                KBFeedbackView(entry: entry, diff: diff, isPresented: $showFeedback) {
+                                    onMarkFeedbackSubmitted(entry.id)
+                                }
+                            }
+                    }
                 }
-                HStack(spacing: 6) {
-                    Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap))
-                        .foregroundStyle(.orange)
-                    Text("→")
-                        .foregroundStyle(.secondary)
-                    Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap))
-                        .foregroundStyle(.blue)
-                }
-                .font(.system(.callout, design: .monospaced))
             }
         }
         .padding(12)
@@ -416,6 +465,16 @@ private struct UnrecognizedRow: View {
         .cornerRadius(8)
         .sheet(isPresented: $showSheet) {
             SubmitView(diff: diff, isPresented: $showSheet, onSubmitted: onMarkSubmitted)
+        }
+    }
+}
+
+private struct NoFocusEffect: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 14.0, *) {
+            content.focusEffectDisabled()
+        } else {
+            content
         }
     }
 }

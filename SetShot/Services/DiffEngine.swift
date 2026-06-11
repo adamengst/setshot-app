@@ -37,7 +37,24 @@ struct DiffEngine {
             arguments: [scriptCopy.path, "diff", beforeFile.path, afterFile.path]
         )
 
-        return parse(diffOutput: diffOutput, kb: kb)
+        let parsed = parse(diffOutput: diffOutput, kb: kb)
+
+        let beforeLimited = before.rawOutput.contains("grant Full Disk Access to SetShot")
+        let afterLimited = after.rawOutput.contains("grant Full Disk Access to SetShot")
+        let warning: String?
+        if beforeLimited && afterLimited {
+            warning = "Both snapshots were taken without Full Disk Access for SetShot \u{2014} privacy permission data and some app preferences are missing from both."
+        } else if beforeLimited {
+            warning = "The before snapshot was taken without Full Disk Access for SetShot. Settings from some apps (Music, TV, Messages, etc.) and privacy permissions are absent, which may cause false first-time changes in the results. Grant SetShot Full Disk Access in System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access, then retake the snapshot."
+        } else if afterLimited {
+            warning = "The after snapshot was taken without Full Disk Access for SetShot. Settings from some apps (Music, TV, Messages, etc.) and privacy permissions are absent, which may cause false deleted changes in the results. Grant SetShot Full Disk Access in System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access, then retake the snapshot."
+        } else {
+            warning = nil
+        }
+
+        return DiffResult(recognized: parsed.recognized, unrecognized: parsed.unrecognized,
+                          noise: parsed.noise, unrecognizedOverflow: parsed.unrecognizedOverflow,
+                          limitedAccessWarning: warning)
     }
 
     // Caps to prevent UI hangs when comparing snapshots across major version
@@ -138,7 +155,7 @@ struct DiffEngine {
             return (lhs.entry.description ?? "") < (rhs.entry.description ?? "")
         }
 
-        return DiffResult(recognized: recognized, unrecognized: unrecognized, noise: noise, unrecognizedOverflow: overflow)
+        return DiffResult(recognized: recognized, unrecognized: unrecognized, noise: noise, unrecognizedOverflow: overflow, limitedAccessWarning: nil)
     }
 
     private func normalizeDomain(_ raw: String) -> String {

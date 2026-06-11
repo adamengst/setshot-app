@@ -22,7 +22,7 @@ You can keep as many snapshots as you like and compare any pair. Snapshots can b
 
 ## What you see in results
 
-**Recognized changes** are settings that SetShot's knowledge base knows about. Each one gets a plain-English description, the path to find it in System Settings, and — where possible — an **Open in Settings** button that takes you directly to the relevant pane. Changed values are displayed in readable form: toggles show On or Off, volume shows a percentage, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number.
+**Recognized changes** are settings that SetShot's knowledge base knows about. Each one gets a plain-English description, the path to find it in System Settings, and — where possible — an **Open in Settings** button that takes you directly to the relevant pane. Changed values are displayed in readable form: toggles show On or Off, volume shows a percentage, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number. A **Submit Feedback** button on each row lets you flag issues with the description, path, icon, or value formatting.
 
 **Unrecognized changes** are settings not yet in the knowledge base. You can see the raw technical name and its old and new values. Submit unrecognized changes so they can be reviewed and added to the knowledge base, where they improve everyone's experience.
 
@@ -30,19 +30,23 @@ You can keep as many snapshots as you like and compare any pair. Snapshots can b
 
 ## The journal
 
-Journal view keeps a running history of recognized changes from all your comparisons. Flip to the journal to see a timeline of everything that has changed on your Mac. Entries are grouped by comparison, searchable, and can be deleted individually or by comparison.
+Journal view keeps a running history of recognized changes from all your comparisons. Flip to the journal to see a timeline of everything that has changed on your Mac. Entries are grouped by comparison, searchable, and can be deleted individually, by comparison, or all at once with the **Clear All** button.
 
 ---
 
 ## Automatic snapshots
 
-SetShot can take snapshots on a daily schedule, silently in the background, without its window ever appearing. Click the gear icon to set a time. This builds up a history automatically so you can always look back at what changed and when.
+SetShot can take snapshots on a schedule — every N minutes or hours, daily, weekly, or monthly. Click **Settings** to configure it. Snapshots are taken silently in the background without the app window appearing, building up a history automatically. When a scheduled snapshot finds recognized changes, a notification appears; click it to open the comparison.
+
+The first time you enable automatic snapshots, macOS will ask for **Notifications** permission so SetShot can alert you to changes.
 
 ---
 
-## First launch
+## Permissions
 
-On your first snapshot, macOS will ask for permission twice — click Allow each time. These permissions let SetShot read system preferences and media library settings; it doesn't transmit any of this data.
+On your first snapshot, macOS will ask for **Media & Apple Music** access — click Allow. SetShot needs it to read music-related settings such as Home Sharing and library configuration.
+
+Optionally, granting **Full Disk Access** (in System Settings → Privacy & Security) lets SetShot detect changes to app permission settings, such as an app gaining microphone or camera access, and also eliminates the Media & Apple Music dialog. Without it, SetShot simply skips that one data source.
 
 ---
 
