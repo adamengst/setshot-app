@@ -255,7 +255,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         let r = result.recognized.count
         let u = result.unrecognized.count
         if r > 0 && u > 0 {
-            content.title = "SetShot: \(r) recognized, \(u) unrecognized change\(u == 1 ? "" : "s") detected"
+            content.title = "SetShot: \(r) recognized change\(r == 1 ? "" : "s"), \(u) unrecognized change\(u == 1 ? "" : "s") detected"
         } else if r > 0 {
             content.title = "SetShot: \(r) recognized change\(r == 1 ? "" : "s") detected"
         } else {

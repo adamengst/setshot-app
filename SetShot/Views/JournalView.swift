@@ -121,11 +121,14 @@ struct JournalView: View {
     }
 
     private func sectionHeader(_ section: JournalSection) -> some View {
-        HStack {
+        let count = section.entries.count
+        let isFromBaseline = section.entries.allSatisfy(\.fromBaseline)
+        let label = "\(count) change\(count == 1 ? "" : "s")\(isFromBaseline ? " from baseline" : "")"
+        return HStack {
             Text(section.snapshotDate, format: .dateTime.weekday(.wide).month(.wide).day().year().hour().minute())
                 .font(.headline)
             Spacer()
-            Text("\(section.entries.count) change\(section.entries.count == 1 ? "" : "s")")
+            Text(label)
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

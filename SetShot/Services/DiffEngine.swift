@@ -49,7 +49,16 @@ struct DiffEngine {
         } else if afterLimited {
             warning = "The after snapshot was taken without Full Disk Access for SetShot. Settings from some apps (Music, TV, Messages, etc.) and privacy permissions are absent, which may cause false deleted changes in the results. Grant SetShot Full Disk Access in System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access, then retake the snapshot."
         } else {
-            warning = nil
+            // Detect snapshots where many plist files were briefly locked or unavailable,
+            // causing recognized settings to appear deleted. Threshold: 5+ deletions and
+            // more than half of all recognized changes are values disappearing.
+            let deletedCount = parsed.recognized.filter { $0.diff.afterValue.isEmpty }.count
+            let total = parsed.recognized.count
+            if deletedCount >= 5 && total > 0 && deletedCount * 2 > total {
+                warning = "The after snapshot appears incomplete \u{2014} \(deletedCount) of \(total) recognized settings show a value disappearing. This can happen when preferences files are briefly locked or unavailable during a snapshot (for example, right after a reboot). Consider retaking the snapshot."
+            } else {
+                warning = nil
+            }
         }
 
         return DiffResult(recognized: parsed.recognized, unrecognized: parsed.unrecognized,
@@ -125,22 +134,34 @@ struct DiffEngine {
                 return Self.uidValueRegex.firstMatch(in: v, range: NSRange(location: 0, length: ns.length)) != nil
             }
             guard !isUID(before) && !isUID(after) else { continue }
-            let diffLine = DiffLine(
-                domain: p.domain,
-                key: p.key,
-                source: inferSource(rawDomain: p.rawDomain),
-                beforeValue: before,
-                afterValue: after,
-                macOSVersion: macOSVersion,
-                rawLine: "\(p.rawDomain) :: \(p.key)"
-            )
             if let entry = kb.entry(forDomain: p.domain, key: p.key) {
+                let effectiveBefore = before.isEmpty ? (entry.implicitDefault ?? "") : before
+                let diffLine = DiffLine(
+                    domain: p.domain,
+                    key: p.key,
+                    source: inferSource(rawDomain: p.rawDomain),
+                    beforeValue: effectiveBefore,
+                    afterValue: after,
+                    macOSVersion: macOSVersion,
+                    rawLine: "\(p.rawDomain) :: \(p.key)",
+                    isFirstTime: before.isEmpty && entry.implicitDefault == nil
+                )
                 if entry.noise {
                     noise.append((entry, diffLine))
                 } else {
                     recognized.append((entry, diffLine))
                 }
             } else {
+                let diffLine = DiffLine(
+                    domain: p.domain,
+                    key: p.key,
+                    source: inferSource(rawDomain: p.rawDomain),
+                    beforeValue: before,
+                    afterValue: after,
+                    macOSVersion: macOSVersion,
+                    rawLine: "\(p.rawDomain) :: \(p.key)",
+                    isFirstTime: before.isEmpty
+                )
                 unrecognized.append(diffLine)
             }
         }

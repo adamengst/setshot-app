@@ -13,10 +13,10 @@ struct ResultsView: View {
     @State private var showFirstTime = false
 
     private var valueChanges: [(entry: KBEntry, diff: DiffLine)] {
-        diff.recognized.filter { !$0.diff.beforeValue.isEmpty }
+        diff.recognized.filter { !$0.diff.isFirstTime }
     }
     private var firstTimeChanges: [(entry: KBEntry, diff: DiffLine)] {
-        diff.recognized.filter { $0.diff.beforeValue.isEmpty }
+        diff.recognized.filter { $0.diff.isFirstTime }
     }
 
     var body: some View {
@@ -131,7 +131,7 @@ struct ResultsView: View {
             .modifier(NoFocusEffect())
 
             if showFirstTime {
-                Text("These settings were written for the first time between the two snapshots. They may reflect macOS initializing defaults rather than a deliberate change.")
+                Text("These settings were written for the first time between the two snapshots. They may reflect turning on Full Disk Access or macOS initializing defaults rather than a deliberate change, although changing a default manually has the same effect.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -316,7 +316,7 @@ private struct RecognizedRow: View {
                     } else {
                         Button("Submit Feedback") { showFeedback = true }
                             .controlSize(.small)
-                            .popover(isPresented: $showFeedback, arrowEdge: .top) {
+                            .sheet(isPresented: $showFeedback) {
                                 KBFeedbackView(entry: entry, diff: diff, isPresented: $showFeedback) {
                                     onMarkFeedbackSubmitted(entry.id)
                                 }

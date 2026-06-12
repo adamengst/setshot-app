@@ -45,7 +45,7 @@ final class JournalStoreTests: XCTestCase {
                                before: String = "False", after: String = "True") -> DiffLine {
         DiffLine(domain: domain, key: key, source: "defaults",
                  beforeValue: before, afterValue: after,
-                 macOSVersion: "15.0", rawLine: "\(domain) :: \(key)")
+                 macOSVersion: "15.0", rawLine: "\(domain) :: \(key)", isFirstTime: before.isEmpty)
     }
 
     private func makeSnapshot(id: String = "setshot_2026-01-01_1200.txt.gz", date: Date = Date()) -> StoredSnapshot {

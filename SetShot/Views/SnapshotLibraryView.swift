@@ -128,6 +128,7 @@ struct SnapshotLibraryView: View {
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
             Divider()
             ScrollView {
                 VStack(spacing: 0) {

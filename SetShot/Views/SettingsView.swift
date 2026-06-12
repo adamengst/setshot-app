@@ -47,9 +47,17 @@ struct SettingsView: View {
         }
     }
 
+    private var schedulerDescription: AttributedString {
+        var str = AttributedString("SetShot installs a macOS LaunchAgent that runs on the chosen schedule, saving a snapshot without opening the app. If recognized changes are found, a notification appears that you can click to see the comparison. For notifications that stay on screen until clicked or dismissed, set SetShot's Alert Style to Persistent in ")
+        var link = AttributedString("System Settings \u{2192} Notifications.")
+        link.link = URL(string: "x-apple.systempreferences:com.apple.preference.notifications?com.tidbits.SetShot")!
+        str += link
+        return str
+    }
+
     private var schedulerSection: some View {
         SettingsSection("Automatic Snapshots") {
-            Text("SetShot installs a macOS LaunchAgent that runs on the chosen schedule, saving a snapshot without opening the app. If recognized changes are found, a notification appears that you can click to see the comparison.")
+            Text(schedulerDescription)
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

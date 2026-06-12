@@ -128,7 +128,7 @@ struct AboutView: View {
             }
 
             HelpParagraph("You can also add a short note with any context that might help with review. Both fields are entirely optional, but adding context may help categorize the change more accurately.")
-            screenshot("ScreenshotSubmit")
+            screenshot("ScreenshotSubmitUnrecognized")
             HelpParagraph("If you have several unrecognized changes, click **Submit All** to review and send them all at once. Submitted changes are reviewed, added to the knowledge base, and loaded on the next launch, making SetShot more useful for everyone.")
             HelpParagraph("Already-submitted rows are marked with a checkmark for the duration of the session.")
         }
@@ -137,7 +137,8 @@ struct AboutView: View {
     private var improvingRecognized: some View {
         HelpSection("Improving Recognized Changes") {
             HelpParagraph("Even recognized changes can have room for improvement: an icon may be missing, a description may be unclear, a System Settings path may be wrong, or values may show as raw numbers instead of readable labels.")
-            HelpParagraph("Click **Submit Feedback** on any recognized change row to open a feedback panel anchored right below the entry. Check the issues that apply, add any notes that might help, and click **Submit**. The panel shows a summary of the current description and location so you can refer to them while writing.")
+            HelpParagraph("Click **Submit Feedback** on any recognized change row to open a feedback sheet. Check the issues that apply, add any notes that might help, and click **Submit**. The sheet shows a summary of the current description and location so you can refer to them while writing.")
+            screenshot("ScreenshotSubmitRecognized")
             HelpParagraph("Feedback is reviewed by the developer and incorporated into future knowledge base updates, making SetShot more accurate for everyone.")
         }
     }

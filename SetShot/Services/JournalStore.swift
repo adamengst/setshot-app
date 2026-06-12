@@ -63,7 +63,7 @@ actor JournalStore {
     }
 
     @discardableResult
-    func add(recognized: [(entry: KBEntry, diff: DiffLine)], afterSnapshot: StoredSnapshot) -> [JournalEntry] {
+    func add(recognized: [(entry: KBEntry, diff: DiffLine)], afterSnapshot: StoredSnapshot, fromBaseline: Bool = false) -> [JournalEntry] {
         var entries = load()
         let existingKeys = Set(entries.map { dedupKey(domain: $0.domain, key: $0.key, old: $0.oldValue, new: $0.newValue) })
         let now = Date()
@@ -82,7 +82,8 @@ actor JournalStore {
                 settingsURL: item.entry.settingsURL,
                 oldValue: item.diff.beforeValue,
                 newValue: item.diff.afterValue,
-                addedAt: now
+                addedAt: now,
+                fromBaseline: fromBaseline
             ))
         }
         save(entries)

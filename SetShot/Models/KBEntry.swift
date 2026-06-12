@@ -29,6 +29,7 @@ struct KBEntry: Codable, Identifiable {
     let valueMap: [String: String]?
     let keyPrefix: String?
     let iconBundleID: String?
+    let implicitDefault: String?
 
     enum CodingKeys: String, CodingKey {
         case id, domain, key, source, noise, notes, description
@@ -43,6 +44,7 @@ struct KBEntry: Codable, Identifiable {
         case valueMap = "value_map"
         case keyPrefix = "key_prefix"
         case iconBundleID = "icon_bundle_id"
+        case implicitDefault = "implicit_default"
     }
 
     func effectiveUILocation(macOSMajor: Int) -> String? {

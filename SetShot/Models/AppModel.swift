@@ -63,8 +63,16 @@ class AppModel: ObservableObject {
         if let previous {
             await updateCountsAndJournal(before: previous, after: stored)
             snapshots = (try? await store.list()) ?? []
+        } else if let baseline = matchingBaseline() {
+            await updateCountsAndJournal(before: baseline, after: stored, fromBaseline: true)
+            snapshots = (try? await store.list()) ?? []
         }
         return stored
+    }
+
+    private func matchingBaseline() -> StoredSnapshot? {
+        let major = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
+        return baseSnapshots.first { $0.baseMacOSMajor == major }
     }
 
     func deleteSnapshot(_ snapshot: StoredSnapshot) async {
@@ -131,7 +139,7 @@ class AppModel: ObservableObject {
         }
     }
 
-    private func updateCountsAndJournal(before: StoredSnapshot, after: StoredSnapshot) async {
+    private func updateCountsAndJournal(before: StoredSnapshot, after: StoredSnapshot, fromBaseline: Bool = false) async {
         async let beforeText = try? store.load(before)
         async let afterText = try? store.load(after)
         guard let b = await beforeText, let a = await afterText else { return }
@@ -140,7 +148,7 @@ class AppModel: ObservableObject {
             after: Snapshot(takenAt: after.date, rawOutput: a),
             kb: kb) else { return }
         try? await store.saveMeta(for: after, recognized: result.recognized.count, unrecognized: result.unrecognized.count, scheduled: false)
-        journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after)
+        journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after, fromBaseline: fromBaseline)
     }
 
     private func updateJournal(before: StoredSnapshot, after: StoredSnapshot) async {
