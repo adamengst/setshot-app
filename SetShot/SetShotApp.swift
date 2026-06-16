@@ -234,7 +234,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
                        let result = try? await DiffEngine().diff(
                            before: Snapshot(takenAt: previous.date, rawOutput: b),
                            after: Snapshot(takenAt: stored.date, rawOutput: a),
-                           kb: kb) {
+                           kb: kb)
+                           .filteringHardware(hasBattery: SnapshotRunner.hasBattery) {
                         let r = result.recognized.count
                         let u = result.unrecognized.count
                         let autoDelete = UserDefaults.standard.bool(forKey: "AutoDeleteEmptyScheduledSnapshots")

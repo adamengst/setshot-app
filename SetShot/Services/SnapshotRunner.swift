@@ -1,4 +1,5 @@
 import Foundation
+import IOKit.ps
 import MusicKit
 
 enum SnapshotError: LocalizedError {
@@ -41,6 +42,17 @@ struct SnapshotRunner {
     static func musicGranted() -> Bool {
         MusicAuthorization.currentStatus == .authorized
     }
+
+    /// Whether this Mac has an internal battery. Evaluated once at launch and
+    /// cached; hardware doesn't change while the app is running.
+    static let hasBattery: Bool = {
+        let info = IOPSCopyPowerSourcesInfo().takeRetainedValue()
+        let list = IOPSCopyPowerSourcesList(info).takeRetainedValue() as [CFTypeRef]
+        return list.contains { src in
+            let desc = IOPSGetPowerSourceDescription(info, src).takeUnretainedValue() as? [String: Any]
+            return desc?[kIOPSTypeKey as String] as? String == kIOPSInternalBatteryType
+        }
+    }()
 
     func run() async throws -> Snapshot {
         guard let bundledScript = Bundle.main.url(forResource: "setshot", withExtension: "sh") else {

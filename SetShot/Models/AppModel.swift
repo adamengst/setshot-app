@@ -100,6 +100,7 @@ class AppModel: ObservableObject {
         let bSnap = Snapshot(takenAt: before.date, rawOutput: b)
         let aSnap = Snapshot(takenAt: after.date, rawOutput: a)
         let result = try await DiffEngine().diff(before: bSnap, after: aSnap, kb: kb)
+            .filteringHardware(hasBattery: SnapshotRunner.hasBattery)
         journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after)
         return result
     }
@@ -145,7 +146,8 @@ class AppModel: ObservableObject {
         guard let result = try? await DiffEngine().diff(
             before: Snapshot(takenAt: before.date, rawOutput: b),
             after: Snapshot(takenAt: after.date, rawOutput: a),
-            kb: kb) else { return }
+            kb: kb)
+            .filteringHardware(hasBattery: SnapshotRunner.hasBattery) else { return }
         try? await store.saveMeta(for: after, recognized: result.recognized.count, unrecognized: result.unrecognized.count, scheduled: false, fromBaseline: fromBaseline)
         journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after, fromBaseline: fromBaseline)
     }
@@ -163,7 +165,7 @@ class AppModel: ObservableObject {
             before: Snapshot(takenAt: before.date, rawOutput: b),
             after: Snapshot(takenAt: after.date, rawOutput: a),
             kb: kb
-        )
+        ).filteringHardware(hasBattery: SnapshotRunner.hasBattery)
         return result.recognized
     }
 }

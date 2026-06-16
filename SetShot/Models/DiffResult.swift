@@ -20,4 +20,12 @@ struct DiffResult {
     let limitedAccessWarning: String?  // non-nil when a snapshot was taken without Full Disk Access
 
     static let empty = DiffResult(recognized: [], unrecognized: [], noise: [], unrecognizedOverflow: 0, limitedAccessWarning: nil)
+
+    func filteringHardware(hasBattery: Bool) -> DiffResult {
+        guard !hasBattery else { return self }
+        let filtered = recognized.filter { $0.entry.requiresHardware?.contains("battery") != true }
+        guard filtered.count != recognized.count else { return self }
+        return DiffResult(recognized: filtered, unrecognized: unrecognized, noise: noise,
+                          unrecognizedOverflow: unrecognizedOverflow, limitedAccessWarning: limitedAccessWarning)
+    }
 }
