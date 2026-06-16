@@ -29,6 +29,7 @@ struct ResultsView: View {
                 unrecognizedSection
             }
             .padding(32)
+            .textSelection(.enabled)
             .background(GeometryReader { geo in
                 Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
             })
@@ -207,6 +208,35 @@ struct ResultsView: View {
 
 }
 
+func recognizedRowText(description: String, location: String?, old: String, new: String) -> some View {
+    let bodyFont  = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .medium)
+    let calloutFont = NSFont.systemFont(ofSize: NSFont.systemFontSize - 1)
+    let monoFont  = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize - 1, weight: .regular)
+    func para(_ spacing: CGFloat) -> NSParagraphStyle {
+        let s = NSMutableParagraphStyle(); s.paragraphSpacing = spacing; return s
+    }
+    let ns = NSMutableAttributedString()
+    ns.append(NSAttributedString(string: description, attributes: [
+        .font: bodyFont, .paragraphStyle: para(location != nil ? 3 : 8)
+    ]))
+    if let location {
+        ns.append(NSAttributedString(string: "\n" + location, attributes: [
+            .font: calloutFont, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: para(8)
+        ]))
+    }
+    let oldDisplay = old.isEmpty ? "(none)" : old
+    let newDisplay = new.isEmpty ? "(none)" : new
+    ns.append(NSAttributedString(string: "\n" + oldDisplay,
+        attributes: [.font: monoFont, .foregroundColor: NSColor.systemOrange]))
+    ns.append(NSAttributedString(string: "  \u{2192}  ",
+        attributes: [.font: monoFont, .foregroundColor: NSColor.secondaryLabelColor]))
+    ns.append(NSAttributedString(string: newDisplay,
+        attributes: [.font: monoFont, .foregroundColor: NSColor.systemBlue]))
+    return Text(AttributedString(ns))
+        .lineSpacing(4)
+        .fixedSize(horizontal: false, vertical: true)
+}
+
 func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil) -> String {
     if let map = valueMap {
         // Normalize True/False → 1/0 for value_map lookup since FLATTEN_PY
@@ -287,26 +317,12 @@ private struct RecognizedRow: View {
             SettingsPaneIcon(settingsURL: entry.settingsURL, domain: diff.domain, iconBundleID: entry.iconBundleID)
                 .padding(.top, 2)
             HStack(alignment: .top, spacing: 8) {
-                VStack(alignment: .leading, spacing: 8) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(entry.description ?? "")
-                            .fontWeight(.medium)
-                        if let location = uiLocation {
-                            Text(location)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    HStack(spacing: 6) {
-                        Text({ let v = formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap); return v.isEmpty ? "(none)" : v }())
-                            .foregroundStyle(.orange)
-                        Text("→")
-                            .foregroundStyle(.secondary)
-                        Text({ let v = formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap); return v.isEmpty ? "(none)" : v }())
-                            .foregroundStyle(.blue)
-                    }
-                    .font(.system(.callout, design: .monospaced))
-                }
+                recognizedRowText(
+                    description: entry.description ?? "",
+                    location: uiLocation,
+                    old: formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap),
+                    new: formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap)
+                )
                 Spacer()
                 VStack(alignment: .center, spacing: 0) {
                     if let url = settingsURL {

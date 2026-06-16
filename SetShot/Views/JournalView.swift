@@ -52,6 +52,7 @@ struct JournalView: View {
                         }
                     }
                     .padding(20)
+                    .textSelection(.enabled)
                 }
             }
         }
@@ -173,26 +174,12 @@ private struct JournalRow: View {
             SettingsPaneIcon(settingsURL: kbEntry?.settingsURL ?? entry.settingsURL, domain: entry.domain, iconBundleID: kbEntry?.iconBundleID)
                 .padding(.top, 2)
             HStack(alignment: .top, spacing: 8) {
-                VStack(alignment: .leading, spacing: 8) {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(description)
-                            .fontWeight(.medium)
-                        if let location {
-                            Text(location)
-                                .font(.callout)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    HStack(spacing: 6) {
-                        Text(oldFormatted.isEmpty ? "(none)" : oldFormatted)
-                            .foregroundStyle(.orange)
-                        Text("→")
-                            .foregroundStyle(.secondary)
-                        Text(newFormatted.isEmpty ? "(none)" : newFormatted)
-                            .foregroundStyle(.blue)
-                    }
-                    .font(.system(.callout, design: .monospaced))
-                }
+                recognizedRowText(
+                    description: description,
+                    location: location,
+                    old: oldFormatted,
+                    new: newFormatted
+                )
                 Spacer()
                 VStack(alignment: .center, spacing: 0) {
                     if let url = settingsURL {
