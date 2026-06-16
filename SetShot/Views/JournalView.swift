@@ -144,6 +144,22 @@ private struct JournalRow: View {
     let entry: JournalEntry
     let kb: KnowledgeBase
 
+    @State private var feedbackSubmitted = false
+    @State private var showFeedback = false
+
+    private static let macOSVersion: String = {
+        let v = ProcessInfo.processInfo.operatingSystemVersion
+        return "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
+    }()
+
+    private func makeDiffLine() -> DiffLine {
+        DiffLine(domain: entry.domain, key: entry.key, source: "defaults",
+                 beforeValue: entry.oldValue, afterValue: entry.newValue,
+                 macOSVersion: Self.macOSVersion,
+                 rawLine: "\(entry.domain) :: \(entry.key)",
+                 isFirstTime: entry.oldValue.isEmpty)
+    }
+
     var body: some View {
         let kbEntry = kb.entry(forDomain: entry.domain, key: entry.key)
         let description = kbEntry?.description ?? entry.entryDescription
@@ -156,8 +172,8 @@ private struct JournalRow: View {
         HStack(alignment: .top, spacing: 12) {
             SettingsPaneIcon(settingsURL: kbEntry?.settingsURL ?? entry.settingsURL, domain: entry.domain, iconBundleID: kbEntry?.iconBundleID)
                 .padding(.top, 2)
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top) {
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 8) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(description)
                             .fontWeight(.medium)
@@ -167,23 +183,42 @@ private struct JournalRow: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    Spacer()
+                    HStack(spacing: 6) {
+                        Text(oldFormatted.isEmpty ? "(none)" : oldFormatted)
+                            .foregroundStyle(.orange)
+                        Text("→")
+                            .foregroundStyle(.secondary)
+                        Text(newFormatted.isEmpty ? "(none)" : newFormatted)
+                            .foregroundStyle(.blue)
+                    }
+                    .font(.system(.callout, design: .monospaced))
+                }
+                Spacer()
+                VStack(alignment: .center, spacing: 0) {
                     if let url = settingsURL {
                         Button("Open in Settings") {
                             NSWorkspace.shared.open(url)
                         }
                         .controlSize(.small)
                     }
+                    Spacer(minLength: 8)
+                    if let kbEntry {
+                        if feedbackSubmitted {
+                            Label("Feedback Sent", systemImage: "checkmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        } else {
+                            Button("Submit Feedback") { showFeedback = true }
+                                .controlSize(.small)
+                                .sheet(isPresented: $showFeedback) {
+                                    KBFeedbackView(entry: kbEntry, diff: makeDiffLine(),
+                                                   isPresented: $showFeedback) {
+                                        feedbackSubmitted = true
+                                    }
+                                }
+                        }
+                    }
                 }
-                HStack(spacing: 6) {
-                    Text(oldFormatted.isEmpty ? "(none)" : oldFormatted)
-                        .foregroundStyle(.orange)
-                    Text("→")
-                        .foregroundStyle(.secondary)
-                    Text(newFormatted.isEmpty ? "(none)" : newFormatted)
-                        .foregroundStyle(.blue)
-                }
-                .font(.system(.callout, design: .monospaced))
             }
         }
         .padding(12)

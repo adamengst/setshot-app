@@ -1,3 +1,4 @@
+import MusicKit
 import SwiftUI
 import UserNotifications
 
@@ -5,6 +6,9 @@ struct SettingsView: View {
     @AppStorage("OldestFirst") private var oldestFirst = false
     @AppStorage("AutoDeleteEmptyScheduledSnapshots") private var autoDeleteEmpty = false
     @State private var isEnabled = SchedulerManager.isInstalled
+    @State private var fdaGranted: Bool? = nil
+    @State private var musicGranted: Bool? = nil
+    @State private var requestingMusic = false
     @State private var scheduleUnit: ScheduleUnit = Self.loadedUnit()
     @State private var intervalCount: Int = Self.loadedIntervalCount()
     @State private var scheduleTime: Date = Self.loadedTime()
@@ -28,12 +32,15 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 32) {
-                displayOrderSection
                 schedulerSection
+                dataSourcesSection
+                displayOrderSection
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(40)
         }
         .frame(maxWidth: .infinity)
+        .task { await loadPermissionState() }
     }
 
     // MARK: - Sections
@@ -47,6 +54,75 @@ struct SettingsView: View {
         }
     }
 
+    private var dataSourcesSection: some View {
+        SettingsSection("Optional Data Sources") {
+            Text("SetShot can read two additional data sources when you have granted the necessary permissions. Neither is required, and both can be revoked at any time.")
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Media & Apple Music Settings\(musicGranted.map { $0 ? " (Enabled)" : " (Disabled)" } ?? "")")
+                    .font(.system(size: 14))
+                    .fontWeight(.medium)
+                Text(musicDescription)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                if musicGranted == false {
+                    Button("Request Media & Apple Music Access") {
+                        Task { await requestMusicAccess() }
+                    }
+                    .disabled(requestingMusic)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("App Privacy Permissions\(fdaGranted.map { $0 ? " (Enabled)" : " (Disabled)" } ?? "")")
+                    .font(.system(size: 14))
+                    .fontWeight(.medium)
+                Text(fdaDescription)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var fdaDescription: AttributedString {
+        var str = AttributedString("For SetShot to detect which apps have been granted access to the microphone, camera, contacts, and similar resources, it needs Full Disk Access, which must be turned on manually. You can do so in ")
+        var link = AttributedString("System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access.")
+        link.link = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!
+        str += link
+        return str
+    }
+
+    private var musicDescription: AttributedString {
+        var str = AttributedString("For SetShot to read settings from the Music app, Home Sharing, and related systems, it needs Media & Apple Music access, which can be reviewed and revoked in ")
+        var link = AttributedString("System Settings \u{2192} Privacy & Security \u{2192} Media & Apple Music.")
+        link.link = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Media")!
+        str += link
+        return str
+    }
+
+    private func loadPermissionState() async {
+        async let fda = Task.detached(priority: .userInitiated) {
+            SnapshotRunner.canReadSystemTCC()
+        }.value
+        async let music = Task.detached(priority: .utility) {
+            SnapshotRunner.musicGranted()
+        }.value
+        fdaGranted = await fda
+        musicGranted = await music
+    }
+
+    private func requestMusicAccess() async {
+        requestingMusic = true
+        defer { requestingMusic = false }
+        _ = await MusicAuthorization.request()
+        musicGranted = MusicAuthorization.currentStatus == .authorized
+    }
+
     private var schedulerDescription: AttributedString {
         var str = AttributedString("SetShot installs a macOS LaunchAgent that runs on the chosen schedule, saving a snapshot without opening the app. If recognized changes are found, a notification appears that you can click to see the comparison. For notifications that stay on screen until clicked or dismissed, set SetShot's Alert Style to Persistent in ")
         var link = AttributedString("System Settings \u{2192} Notifications.")
@@ -58,7 +134,7 @@ struct SettingsView: View {
     private var schedulerSection: some View {
         SettingsSection("Automatic Snapshots") {
             Text(schedulerDescription)
-                .font(.caption)
+                .font(.system(size: 14))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -327,7 +403,10 @@ private struct SettingsSection<Content: View>: View {
             Text(title)
                 .font(.title2)
                 .fontWeight(.semibold)
-            content
+            VStack(alignment: .leading, spacing: 10) {
+                content
+            }
+            .padding(.leading, 12)
         }
     }
 }

@@ -34,11 +34,16 @@ struct SetShotApp: App {
                     .task { await appModel.start(); PingService.pingIfNeeded() }
             }
         }
-        .defaultSize(width: 750, height: 600)
+        .defaultSize(width: 750, height: 760)
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("About SetShot") {
-                    AboutWindowController.shared.show(appModel: appModel)
+                    let flags = NSEvent.modifierFlags
+                    if flags.contains(.control) && flags.contains(.option) && flags.contains(.command) {
+                        FactoryReset.confirmAndRun()
+                    } else {
+                        AboutWindowController.shared.show(appModel: appModel)
+                    }
                 }
             }
             CommandGroup(after: .appInfo) {

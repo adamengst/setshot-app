@@ -1,6 +1,7 @@
 // In-memory rate limit store — best-effort, not shared across worker instances
 const rateLimitStore = new Map();
 const RATE_LIMIT_SINGLE_MAX = 10;
+const RATE_LIMIT_KB_FEEDBACK_MAX = 100;
 const RATE_LIMIT_BATCH_MAX = 50;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const BATCH_SIZE_MAX = 50;
@@ -192,7 +193,7 @@ function validateKBFeedback(item) {
 
 async function handleKBFeedback(body, ip, env) {
   if (!validateKBFeedback(body)) return new Response(null, { status: 400 });
-  if (!checkRateLimit(ip, 'single', RATE_LIMIT_SINGLE_MAX)) return new Response(null, { status: 429 });
+  if (!checkRateLimit(ip, 'kb-feedback', RATE_LIMIT_KB_FEEDBACK_MAX)) return new Response(null, { status: 429 });
 
   const issues = body.issues.split(',').map(s => s.trim()).filter(Boolean);
   const allIssueKeys = ['no_or_incorrect_icon', 'description_needs_improvement', 'path_is_wrong', 'values_not_human_readable'];

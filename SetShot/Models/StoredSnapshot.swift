@@ -11,6 +11,7 @@ struct StoredSnapshot: Identifiable, Sendable {
     var recognizedCount: Int? = nil
     var unrecognizedCount: Int? = nil
     var isScheduled: Bool = false
+    var fromBaseline: Bool = false
 
     var fileSize: Int64? {
         let attrs = try? FileManager.default.attributesOfItem(atPath: url.path)

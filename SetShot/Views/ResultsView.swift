@@ -242,6 +242,13 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
        Double(parts[0]) != nil, Double(parts[1]) != nil, Double(parts[2]) != nil {
         return String(parts[3])
     }
+    // Trim floats with more than 2 decimal places to 2
+    if let dot = raw.firstIndex(of: ".") {
+        let decimals = raw.distance(from: raw.index(after: dot), to: raw.endIndex)
+        if decimals > 2, let f = Double(raw) {
+            return String((f * 100).rounded() / 100)
+        }
+    }
     return raw
 }
 
@@ -353,6 +360,7 @@ private struct ComparisonWindowPositioner: NSViewRepresentable {
     func updateNSView(_ nsView: PositionerView, context: Context) {
         nsView.contentHeight = contentHeight
         nsView.applyWhenReady()
+        nsView.expandIfNeeded()
     }
 
     class PositionerView: NSView {
@@ -360,6 +368,8 @@ private struct ComparisonWindowPositioner: NSViewRepresentable {
         var contentHeight: CGFloat = 0
         private var windowReady = false
         private var done = false
+        private var lastAppliedHeight: CGFloat = 0
+        private var expandPending = false
         private var closeObserver: NSObjectProtocol?
 
         override func viewDidMoveToWindow() {
@@ -415,10 +425,34 @@ private struct ComparisonWindowPositioner: NSViewRepresentable {
                     window.setFrame(f, display: false, animate: false)
                 }
 
+                self.lastAppliedHeight = self.contentHeight
+
                 NSAnimationContext.runAnimationGroup { ctx in
                     ctx.duration = 0.15
                     window.animator().alphaValue = 1
                 }
+            }
+        }
+
+        func expandIfNeeded() {
+            guard done, !expandPending, contentHeight > lastAppliedHeight, let window else { return }
+            expandPending = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self, weak window] in
+                guard let self, let window else { return }
+                self.expandPending = false
+                let h = self.contentHeight
+                guard h > self.lastAppliedHeight else { return }
+                guard let screen = window.screen ?? NSScreen.main else { return }
+                let titleBarH = window.frame.height - (window.contentView?.bounds.height ?? window.frame.height)
+                let sf = screen.visibleFrame
+                let targetTotal = h + 44 + titleBarH
+                let capped = min(targetTotal, window.frame.maxY - sf.minY)
+                guard capped > window.frame.height else { return }
+                var f = window.frame
+                f.origin.y = f.maxY - capped
+                f.size.height = capped
+                window.setFrame(f, display: true, animate: true)
+                self.lastAppliedHeight = h
             }
         }
 

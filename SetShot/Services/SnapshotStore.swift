@@ -42,7 +42,8 @@ actor SnapshotStore {
                 return StoredSnapshot(url: url, date: date, customLabel: label,
                                       recognizedCount: meta?.recognized,
                                       unrecognizedCount: meta?.unrecognized,
-                                      isScheduled: meta?.scheduled ?? false)
+                                      isScheduled: meta?.scheduled ?? false,
+                                      fromBaseline: meta?.fromBaseline ?? false)
             }
             .sorted { $0.date > $1.date }
     }
@@ -65,8 +66,8 @@ actor SnapshotStore {
             .sorted { ($0.baseDisplayName ?? "") < ($1.baseDisplayName ?? "") }
     }
 
-    func saveMeta(for snapshot: StoredSnapshot, recognized: Int, unrecognized: Int, scheduled: Bool) throws {
-        let meta = SnapshotMeta(recognized: recognized, unrecognized: unrecognized, scheduled: scheduled)
+    func saveMeta(for snapshot: StoredSnapshot, recognized: Int, unrecognized: Int, scheduled: Bool, fromBaseline: Bool = false) throws {
+        let meta = SnapshotMeta(recognized: recognized, unrecognized: unrecognized, scheduled: scheduled, fromBaseline: fromBaseline)
         let data = try JSONEncoder().encode(meta)
         try data.write(to: metaURL(for: snapshot.url))
     }
@@ -102,7 +103,8 @@ actor SnapshotStore {
         return StoredSnapshot(url: newURL, date: snapshot.date, customLabel: newLabel,
                               recognizedCount: snapshot.recognizedCount,
                               unrecognizedCount: snapshot.unrecognizedCount,
-                              isScheduled: snapshot.isScheduled)
+                              isScheduled: snapshot.isScheduled,
+                              fromBaseline: snapshot.fromBaseline)
     }
 
     // MARK: - Private
@@ -111,6 +113,7 @@ actor SnapshotStore {
         var recognized: Int
         var unrecognized: Int
         var scheduled: Bool
+        var fromBaseline: Bool = false
     }
 
     private nonisolated func metaURL(for snapshotURL: URL) -> URL {

@@ -25,6 +25,7 @@
 		52F8DA0C6EAFD1D445DD474C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F1789A22D8F676149B825D9 /* Assets.xcassets */; };
 		590AA0768AEA08BB83C79A16 /* PlistFlattener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8889A9EA64910626B609D9 /* PlistFlattener.swift */; };
 		63D2341D409F5EEED9B4461A /* JournalEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0C61EA6C2B010EEC849475 /* JournalEntry.swift */; };
+		68F873A795B82F0D6861B419 /* FactoryReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E20F91FDB20C007662B0264 /* FactoryReset.swift */; };
 		6B70D4DA7BB86DBA2326CAE8 /* SnapshotLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B5F566BCF5465D0E537F1E /* SnapshotLibraryView.swift */; };
 		750961F0FB45F04AB158FB6A /* SetShotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E8B01CA91F970990260529 /* SetShotApp.swift */; };
 		7657036547D21AA8777CD4C2 /* SettingsPaneIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30017B093D6AC6D842717D78 /* SettingsPaneIcon.swift */; };
@@ -47,6 +48,7 @@
 		DDA9BBB69F20F04F9A89B74F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 0C93336F0A474BE93DF308C1 /* Sparkle */; };
 		E2E28FD6BDB9AB7D40EF464C /* ResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A182A3E724717177EE351D /* ResultsView.swift */; };
 		E401DA3BE1DDFBA099217586 /* KBEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4812AB60001E9D6F2D98CAF /* KBEntry.swift */; };
+		E52858FCA732E1E1D292B888 /* MusicKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B14C522DB332A096A903EB34 /* MusicKit.framework */; };
 		E77D478F90D0A824480273CE /* KBEntryDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FB9705E796395269414C4D8 /* KBEntryDecodingTests.swift */; };
 		F0117CDA3B3F3EB9E30E2707 /* SettingsPaneIconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458C8E9D2E3CAD28CC042E3B /* SettingsPaneIconProvider.swift */; };
 		F47D72C2AF599F298153C92B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040F5608E284333E4CDB0C21 /* SettingsView.swift */; };
@@ -98,10 +100,12 @@
 		872734B24900BAE17D6A0324 /* BaseSnapshots */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BaseSnapshots; path = SetShot/Resources/BaseSnapshots; sourceTree = SOURCE_ROOT; };
 		884A5EDA61C452330F26ED01 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		8C893A2030276A4A2FE4EA80 /* KBFeedbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBFeedbackView.swift; sourceTree = "<group>"; };
+		8E20F91FDB20C007662B0264 /* FactoryReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryReset.swift; sourceTree = "<group>"; };
 		98C4B2DF407214C59E82FB25 /* SubmitAllPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmitAllPreviewView.swift; sourceTree = "<group>"; };
 		9A62CC8B68E73050877CF1CF /* base_Sequoia_15.7.7.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_Sequoia_15.7.7.txt.gz; sourceTree = "<group>"; };
 		9FB9705E796395269414C4D8 /* KBEntryDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBEntryDecodingTests.swift; sourceTree = "<group>"; };
 		A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = setshot.sh; sourceTree = "<group>"; };
+		B14C522DB332A096A903EB34 /* MusicKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MusicKit.framework; path = System/Library/Frameworks/MusicKit.framework; sourceTree = SDKROOT; };
 		B1CCB5A46AF855D9998F53D5 /* ReadyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadyView.swift; sourceTree = "<group>"; };
 		B5E8B01CA91F970990260529 /* SetShotApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetShotApp.swift; sourceTree = "<group>"; };
 		BB0D699B589A9EFAC3D051F1 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -126,6 +130,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DDA9BBB69F20F04F9A89B74F /* Sparkle in Frameworks */,
+				E52858FCA732E1E1D292B888 /* MusicKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -182,8 +187,17 @@
 				872734B24900BAE17D6A0324 /* BaseSnapshots */,
 				17364500D5C9A14AD5F77D3D /* SetShot */,
 				9E972B6375B43AEA36F43CEE /* SetShotTests */,
+				52C2F706A7009EED84C2C835 /* Frameworks */,
 				1E35D5D6AF998D6A5DB193BE /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		52C2F706A7009EED84C2C835 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B14C522DB332A096A903EB34 /* MusicKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		5D560421770DFD5AC55C8440 /* Models */ = {
@@ -239,6 +253,7 @@
 			children = (
 				C57C901AB4841ACACEBB1709 /* DiffEngine.swift */,
 				F7A0EB091BBE2B5BE9042963 /* DiffExplainer.swift */,
+				8E20F91FDB20C007662B0264 /* FactoryReset.swift */,
 				E2668D3A288EB70D68063779 /* HTMLExporter.swift */,
 				F6DC2A921ED003213349A822 /* JournalStore.swift */,
 				61336BF2958C0E7F041BDB4B /* KBFetcher.swift */,
@@ -363,6 +378,7 @@
 				84003123710E517BD6FCD2F0 /* DiffEngine.swift in Sources */,
 				022E98AE65C8DF25677B38F1 /* DiffExplainer.swift in Sources */,
 				0E16E6D8791F4D87DDFECD0D /* DiffResult.swift in Sources */,
+				68F873A795B82F0D6861B419 /* FactoryReset.swift in Sources */,
 				CDBDE04C2E871D4326AD8D6D /* HTMLExporter.swift in Sources */,
 				63D2341D409F5EEED9B4461A /* JournalEntry.swift in Sources */,
 				FA45E69608F29852F581E969 /* JournalStore.swift in Sources */,
@@ -598,6 +614,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SetShot/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SetShot;
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "SetShot reads Music app settings and Home Sharing configuration to include them in privacy permission snapshots.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml";
 				INFOPLIST_KEY_SUPublicEDKey = "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg=";
@@ -630,6 +647,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SetShot/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SetShot;
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "SetShot reads Music app settings and Home Sharing configuration to include them in privacy permission snapshots.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml";
 				INFOPLIST_KEY_SUPublicEDKey = "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg=";

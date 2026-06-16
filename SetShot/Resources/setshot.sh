@@ -1101,7 +1101,9 @@ do_snapshot() {
         -o -name "LockdownMode.plist" \
         -o -name "screentimedx.plist" \
         -o -name "sharing.plist" \
-      \) -maxdepth 2 2>/dev/null | sort)
+      \) -maxdepth 2 2>/dev/null \
+      | if [ "${SETSHOT_CHECK_MUSIC:-0}" != "1" ]; then grep -vE "/(com\.apple\.Music\.|com\.apple\.iTunes\.|com\.apple\.amp\.mediasharingd\.)"; else cat; fi \
+      | sort)
 
     section "PLIST FILES: /Library/Preferences"
     while IFS= read -r f; do
@@ -1342,6 +1344,7 @@ JSEOF
       done
     done
 
+    if [ "${SETSHOT_CHECK_TCC:-0}" = "1" ]; then
     section "TCC PRIVACY DATABASE"
     echo "# Format: service | client | client_type | auth_value | auth_reason | modified"
     echo "# auth_value: 0=denied  2=allowed"
@@ -1370,6 +1373,7 @@ JSEOF
     else
       echo "TCC-system :: (not readable — grant Full Disk Access to SetShot)"
     fi
+    fi  # SETSHOT_CHECK_TCC
 
     section "SYSTEM STATE"
     echo "SIP         :: $(csrutil status       2>/dev/null || echo '(unavailable)')"

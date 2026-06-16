@@ -25,6 +25,12 @@ class AppModel: ObservableObject {
         _ = await (kbLoad, snapshotsLoad)
         await loadJournal()
         await refreshJournalIfNeeded()
+        // Probe the legacy FDA-protected path so SetShot appears in the Full
+        // Disk Access list on older macOS. On macOS 15+, this file no longer
+        // exists and the probe is a harmless no-op.
+        Task.detached(priority: .background) {
+            FileHandle(forReadingAtPath: "/var/db/TCC/TCC.db")?.closeFile()
+        }
     }
 
     func loadKB() async {
@@ -49,13 +55,6 @@ class AppModel: ObservableObject {
     }
 
     func takeSnapshot() async throws -> StoredSnapshot {
-        // Attempt a real open() on the TCC database so macOS registers SetShot
-        // in System Settings > Privacy & Security > Full Disk Access. The result
-        // is intentionally ignored — snapshots proceed regardless of FDA status.
-        let tccPath = (NSHomeDirectory() as NSString)
-            .appendingPathComponent("Library/Application Support/com.apple.TCC/TCC.db")
-        if let fh = FileHandle(forReadingAtPath: tccPath) { try? fh.close() }
-
         let previous = snapshots.sorted { $0.date < $1.date }.last
         let snapshot = try await SnapshotRunner().run()
         let stored = try await store.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
@@ -147,7 +146,7 @@ class AppModel: ObservableObject {
             before: Snapshot(takenAt: before.date, rawOutput: b),
             after: Snapshot(takenAt: after.date, rawOutput: a),
             kb: kb) else { return }
-        try? await store.saveMeta(for: after, recognized: result.recognized.count, unrecognized: result.unrecognized.count, scheduled: false)
+        try? await store.saveMeta(for: after, recognized: result.recognized.count, unrecognized: result.unrecognized.count, scheduled: false, fromBaseline: fromBaseline)
         journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after, fromBaseline: fromBaseline)
     }
 

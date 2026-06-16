@@ -313,8 +313,12 @@ private struct SnapshotRow: View {
 
     @ViewBuilder
     private var changeCountLabel: some View {
-        let r = snapshot.recognizedCount
-        if let r, r > 0 {
+        if snapshot.fromBaseline {
+            Text("First snapshot")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.trailing, 4)
+        } else if let r = snapshot.recognizedCount, r > 0 {
             Text("\(r) change\(r == 1 ? "" : "s")")
                 .font(.caption)
                 .foregroundStyle(.secondary)

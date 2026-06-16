@@ -2,14 +2,17 @@
 
 ## Reviewing KB Submissions
 
-New submissions arrive as GitHub Issues in `adamengst/setshot-submissions` (private) with the label `pending`. Run through these steps in order:
+New submissions arrive as GitHub Issues in `adamengst/setshot-submissions` (private). Run through these steps in order:
 
-1. List open submissions:
+1. List open submissions — always check **both** labels:
    ```
    gh issue list --repo adamengst/setshot-submissions --label pending
+   gh issue list --repo adamengst/setshot-submissions --label kb-feedback
    ```
+   - `pending`: unrecognized changes submitted by users — decide **noise**, **KB entry**, or **needs more info**.
+   - `kb-feedback`: user corrections to existing recognized entries — fix the KB entry (description, location, value_map, settings URL, etc.) and close with a comment.
 
-2. View each issue and decide: **noise** (suppress silently), **KB entry** (add with description/location), or **needs more info**.
+2. View each issue. For `pending`, decide: **noise** (suppress silently), **KB entry** (add with description/location), or **needs more info**. For `kb-feedback`, apply the reported correction to the existing entry.
 
 3. Edit `settings-kb.json` in `/Users/adam/Documents/GitHub/setshot-kb/`:
    - Noise entry: `"noise": true`, `"noise_reason": "..."`, leave `description`/`ui_location`/`settings_url` null.

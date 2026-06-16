@@ -31,6 +31,7 @@ targets:
     dependencies:
       - package: Sparkle
         product: Sparkle
+      - sdk: MusicKit.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.tidbits.SetShot
@@ -41,6 +42,7 @@ targets:
         CURRENT_PROJECT_VERSION: "18"
         INFOPLIST_KEY_CFBundleDisplayName: SetShot
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
+        INFOPLIST_KEY_NSAppleMusicUsageDescription: "SetShot reads Music app settings and Home Sharing configuration to include them in privacy permission snapshots."
         INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml"
         INFOPLIST_KEY_SUPublicEDKey: "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg="
         INFOPLIST_KEY_SUScheduledCheckInterval: "3600"

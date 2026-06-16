@@ -1,4 +1,5 @@
 import Foundation
+import MusicKit
 
 enum SnapshotError: LocalizedError {
     case scriptNotFound
@@ -15,6 +16,32 @@ enum SnapshotError: LocalizedError {
 }
 
 struct SnapshotRunner {
+    /// Whether the system TCC database is readable, meaning SetShot can detect
+    /// which apps have been granted privacy permissions. On macOS 15+, the db
+    /// moved to /Library/Application Support/com.apple.TCC/TCC.db and became
+    /// world-readable. On older macOS, /var/db/TCC/TCC.db requires Full Disk
+    /// Access.
+    static func canReadSystemTCC() -> Bool {
+        let paths = [
+            "/Library/Application Support/com.apple.TCC/TCC.db",
+            "/var/db/TCC/TCC.db",
+        ]
+        for path in paths {
+            if let fh = FileHandle(forReadingAtPath: path) {
+                fh.closeFile()
+                return true
+            }
+        }
+        return false
+    }
+
+    /// Whether SetShot currently holds the `kTCCServiceMediaLibrary` (Media &
+    /// Apple Music) grant. Uses MusicAuthorization.currentStatus — the public
+    /// API — which returns the current state without triggering a dialog.
+    static func musicGranted() -> Bool {
+        MusicAuthorization.currentStatus == .authorized
+    }
+
     func run() async throws -> Snapshot {
         guard let bundledScript = Bundle.main.url(forResource: "setshot", withExtension: "sh") else {
             throw SnapshotError.scriptNotFound
@@ -36,6 +63,8 @@ struct SnapshotRunner {
         if let bin = Bundle.main.executableURL?.path {
             env["SETSHOT_BIN"] = bin
         }
+        env["SETSHOT_CHECK_TCC"] = Self.canReadSystemTCC() ? "1" : "0"
+        env["SETSHOT_CHECK_MUSIC"] = Self.musicGranted() ? "1" : "0"
 
         let exitCode = try await spawnProcess(
             executable: "/bin/bash",
