@@ -54,6 +54,10 @@ class AppModel: ObservableObject {
         journal = await journalStore.load()
     }
 
+    func setJournalNote(entryID: UUID, note: String?) async {
+        journal = await journalStore.updateNote(for: entryID, note: note)
+    }
+
     func takeSnapshot() async throws -> StoredSnapshot {
         let previous = snapshots.sorted { $0.date < $1.date }.last
         let snapshot = try await SnapshotRunner().run()

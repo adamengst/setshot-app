@@ -4,6 +4,7 @@ actor JournalStore {
     static let shared = JournalStore()
 
     private let fileURL: URL
+    private var cache: [JournalEntry]?
 
     private static var defaultURL: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -20,12 +21,17 @@ actor JournalStore {
     }
 
     func load() -> [JournalEntry] {
-        guard let data = try? Data(contentsOf: fileURL) else { return [] }
+        if let c = cache { return c }
+        guard let data = try? Data(contentsOf: fileURL) else {
+            cache = []
+            return []
+        }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         let entries = (try? decoder.decode([JournalEntry].self, from: data)) ?? []
         let deduped = deduplicated(entries)
         if deduped.count != entries.count { save(deduped) }
+        cache = deduped
         return deduped
     }
 
@@ -55,6 +61,7 @@ actor JournalStore {
     }
 
     private func save(_ entries: [JournalEntry]) {
+        cache = entries
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -87,6 +94,17 @@ actor JournalStore {
             ))
         }
         save(entries)
+        return entries
+    }
+
+    @discardableResult
+    func updateNote(for entryID: UUID, note: String?) -> [JournalEntry] {
+        var entries = load()
+        if let idx = entries.firstIndex(where: { $0.id == entryID }) {
+            let trimmed = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+            entries[idx].userNote = (trimmed?.isEmpty == false) ? trimmed : nil
+            save(entries)
+        }
         return entries
     }
 

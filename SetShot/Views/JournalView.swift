@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 struct JournalView: View {
     @EnvironmentObject var appModel: AppModel
@@ -46,7 +47,7 @@ struct JournalView: View {
                 noResults
             } else {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
+                    LazyVStack(alignment: .leading, spacing: 24) {
                         ForEach(sections, id: \.snapshotId) { section in
                             sectionBlock(section)
                         }
@@ -70,6 +71,7 @@ struct JournalView: View {
                 .buttonStyle(.plain)
             }
             if !appModel.journal.isEmpty {
+                Button("Export HTML…") { exportJournal() }
                 Button("Clear All") {
                     showingClearConfirm = true
                 }
@@ -86,6 +88,16 @@ struct JournalView: View {
         } message: {
             Text("This will permanently delete all journal entries. This cannot be undone.")
         }
+    }
+
+    private func exportJournal() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.html]
+        panel.nameFieldStringValue = "SetShot Journal.html"
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        let html = JournalHTMLExporter.export(journal: appModel.journal, oldestFirst: oldestFirst)
+        try? html.data(using: .utf8)?.write(to: url, options: .atomic)
     }
 
     private var emptyState: some View {
@@ -111,12 +123,14 @@ struct JournalView: View {
         VStack(alignment: .leading, spacing: 8) {
             sectionHeader(section)
             ForEach(section.entries) { entry in
-                JournalRow(entry: entry, kb: appModel.kb)
-                    .contextMenu {
-                        Button("Delete Entry", role: .destructive) {
-                            Task { await appModel.deleteJournalEntry(entry) }
-                        }
+                JournalRow(entry: entry, kb: appModel.kb) { note in
+                    Task { await appModel.setJournalNote(entryID: entry.id, note: note) }
+                }
+                .contextMenu {
+                    Button("Delete Entry", role: .destructive) {
+                        Task { await appModel.deleteJournalEntry(entry) }
                     }
+                }
             }
         }
     }
@@ -145,9 +159,18 @@ struct JournalView: View {
 private struct JournalRow: View {
     let entry: JournalEntry
     let kb: KnowledgeBase
+    let onNoteChanged: (String?) -> Void
 
     @State private var feedbackSubmitted = false
     @State private var showFeedback = false
+    @State private var noteText: String = ""
+    @FocusState private var noteFocused: Bool
+
+    init(entry: JournalEntry, kb: KnowledgeBase, onNoteChanged: @escaping (String?) -> Void) {
+        self.entry = entry
+        self.kb = kb
+        self.onNoteChanged = onNoteChanged
+    }
 
     private static let macOSVersion: String = {
         let v = ProcessInfo.processInfo.operatingSystemVersion
@@ -171,42 +194,61 @@ private struct JournalRow: View {
         let oldFormatted = formatValue(entry.oldValue, key: entry.key, valueMap: valueMap)
         let newFormatted = formatValue(entry.newValue, key: entry.key, valueMap: valueMap)
 
-        HStack(alignment: .top, spacing: 12) {
-            SettingsPaneIcon(settingsURL: kbEntry?.settingsURL ?? entry.settingsURL, domain: entry.domain, iconBundleID: kbEntry?.iconBundleID)
-                .padding(.top, 2)
-            HStack(alignment: .top, spacing: 8) {
-                recognizedRowText(
-                    description: description,
-                    location: location,
-                    old: oldFormatted,
-                    new: newFormatted
-                )
-                Spacer()
-                VStack(alignment: .center, spacing: 0) {
-                    if let url = settingsURL {
-                        Button("Open in Settings") {
-                            NSWorkspace.shared.open(url)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top, spacing: 12) {
+                SettingsPaneIcon(settingsURL: kbEntry?.settingsURL ?? entry.settingsURL, domain: entry.domain, iconBundleID: kbEntry?.iconBundleID)
+                    .padding(.top, 2)
+                HStack(alignment: .top, spacing: 8) {
+                    recognizedRowText(
+                        description: description,
+                        location: location,
+                        old: oldFormatted,
+                        new: newFormatted
+                    )
+                    Spacer()
+                    VStack(alignment: .center, spacing: 0) {
+                        if let url = settingsURL {
+                            Button("Open in Settings") {
+                                NSWorkspace.shared.open(url)
+                            }
+                            .controlSize(.small)
                         }
-                        .controlSize(.small)
-                    }
-                    Spacer(minLength: 8)
-                    if let kbEntry {
-                        if feedbackSubmitted {
-                            Label("Feedback Sent", systemImage: "checkmark.circle.fill")
-                                .foregroundStyle(.secondary)
-                                .font(.caption)
-                        } else {
-                            Button("Submit Feedback") { showFeedback = true }
-                                .controlSize(.small)
-                                .sheet(isPresented: $showFeedback) {
-                                    KBFeedbackView(entry: kbEntry, diff: makeDiffLine(),
-                                                   isPresented: $showFeedback) {
-                                        feedbackSubmitted = true
+                        Spacer(minLength: 8)
+                        if let kbEntry {
+                            if feedbackSubmitted {
+                                Label("Feedback Sent", systemImage: "checkmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                                    .font(.caption)
+                            } else {
+                                Button("Submit Feedback") { showFeedback = true }
+                                    .controlSize(.small)
+                                    .sheet(isPresented: $showFeedback) {
+                                        KBFeedbackView(entry: kbEntry, diff: makeDiffLine(),
+                                                       isPresented: $showFeedback) {
+                                            feedbackSubmitted = true
+                                        }
                                     }
-                                }
+                            }
                         }
                     }
                 }
+            }
+
+            // Note field — indented to align with text content (icon 32pt + spacing 12pt)
+            HStack(spacing: 0) {
+                Spacer().frame(width: 44)
+                TextField("Add note…", text: $noteText, axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .font(.caption)
+                    .foregroundStyle(noteText.isEmpty ? Color.secondary.opacity(0.5) : .secondary)
+                    .focused($noteFocused)
+                    .onAppear { noteText = entry.userNote ?? "" }
+                    .onChange(of: noteFocused) { isFocused in
+                        guard !isFocused else { return }
+                        let trimmed = noteText.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let newNote: String? = trimmed.isEmpty ? nil : trimmed
+                        if newNote != entry.userNote { onNoteChanged(newNote) }
+                    }
             }
         }
         .padding(12)

@@ -25,6 +25,7 @@
 		52F8DA0C6EAFD1D445DD474C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2F1789A22D8F676149B825D9 /* Assets.xcassets */; };
 		590AA0768AEA08BB83C79A16 /* PlistFlattener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8889A9EA64910626B609D9 /* PlistFlattener.swift */; };
 		63D2341D409F5EEED9B4461A /* JournalEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C0C61EA6C2B010EEC849475 /* JournalEntry.swift */; };
+		665FA48D5216B9CF36FAD003 /* JournalHTMLExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB8E7ECF5F89426B390E5B4E /* JournalHTMLExporter.swift */; };
 		68F873A795B82F0D6861B419 /* FactoryReset.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E20F91FDB20C007662B0264 /* FactoryReset.swift */; };
 		6B70D4DA7BB86DBA2326CAE8 /* SnapshotLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B5F566BCF5465D0E537F1E /* SnapshotLibraryView.swift */; };
 		750961F0FB45F04AB158FB6A /* SetShotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E8B01CA91F970990260529 /* SetShotApp.swift */; };
@@ -116,6 +117,7 @@
 		C4812AB60001E9D6F2D98CAF /* KBEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBEntry.swift; sourceTree = "<group>"; };
 		C57C901AB4841ACACEBB1709 /* DiffEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffEngine.swift; sourceTree = "<group>"; };
 		C83C43C69E85AC39B6A1FDC4 /* DiffResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiffResult.swift; sourceTree = "<group>"; };
+		DB8E7ECF5F89426B390E5B4E /* JournalHTMLExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalHTMLExporter.swift; sourceTree = "<group>"; };
 		E2668D3A288EB70D68063779 /* HTMLExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLExporter.swift; sourceTree = "<group>"; };
 		E8FFE9A6FF3ED45FC4C95350 /* SetShotTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SetShotTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EF4F0C992FB292A44537A04D /* StoredSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoredSnapshot.swift; sourceTree = "<group>"; };
@@ -255,6 +257,7 @@
 				F7A0EB091BBE2B5BE9042963 /* DiffExplainer.swift */,
 				8E20F91FDB20C007662B0264 /* FactoryReset.swift */,
 				E2668D3A288EB70D68063779 /* HTMLExporter.swift */,
+				DB8E7ECF5F89426B390E5B4E /* JournalHTMLExporter.swift */,
 				F6DC2A921ED003213349A822 /* JournalStore.swift */,
 				61336BF2958C0E7F041BDB4B /* KBFetcher.swift */,
 				1874758C891BF8554EDD4FE8 /* PingService.swift */,
@@ -381,6 +384,7 @@
 				68F873A795B82F0D6861B419 /* FactoryReset.swift in Sources */,
 				CDBDE04C2E871D4326AD8D6D /* HTMLExporter.swift in Sources */,
 				63D2341D409F5EEED9B4461A /* JournalEntry.swift in Sources */,
+				665FA48D5216B9CF36FAD003 /* JournalHTMLExporter.swift in Sources */,
 				FA45E69608F29852F581E969 /* JournalStore.swift in Sources */,
 				C9748E0A308C147BCCDD21A5 /* JournalView.swift in Sources */,
 				E401DA3BE1DDFBA099217586 /* KBEntry.swift in Sources */,

@@ -14,8 +14,18 @@ struct JournalEntry: Identifiable, Codable, Sendable {
     let newValue: String
     let addedAt: Date
     let fromBaseline: Bool
+    var userNote: String?
 
-    // Custom decoder so existing journal files (missing fromBaseline) decode cleanly.
+    // Existing JSON uses camelCase property names; only userNote uses a custom key.
+    enum CodingKeys: String, CodingKey {
+        case id, domain, key
+        case afterSnapshotId, afterSnapshotDate, afterSnapshotName
+        case entryDescription, uiLocation, settingsURL
+        case oldValue, newValue, addedAt, fromBaseline
+        case userNote = "user_note"
+    }
+
+    // Custom decoder so existing journal files (missing fromBaseline/userNote) decode cleanly.
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id               = try c.decode(UUID.self,   forKey: .id)
@@ -31,17 +41,19 @@ struct JournalEntry: Identifiable, Codable, Sendable {
         newValue         = try c.decode(String.self, forKey: .newValue)
         addedAt          = try c.decode(Date.self,   forKey: .addedAt)
         fromBaseline     = (try? c.decodeIfPresent(Bool.self, forKey: .fromBaseline)) ?? false
+        userNote         = try? c.decodeIfPresent(String.self, forKey: .userNote)
     }
 
     init(id: UUID, afterSnapshotId: String, afterSnapshotDate: Date, afterSnapshotName: String,
          domain: String, key: String, entryDescription: String, uiLocation: String?,
          settingsURL: String?, oldValue: String, newValue: String, addedAt: Date,
-         fromBaseline: Bool = false) {
+         fromBaseline: Bool = false, userNote: String? = nil) {
         self.id = id; self.afterSnapshotId = afterSnapshotId
         self.afterSnapshotDate = afterSnapshotDate; self.afterSnapshotName = afterSnapshotName
         self.domain = domain; self.key = key; self.entryDescription = entryDescription
         self.uiLocation = uiLocation; self.settingsURL = settingsURL
         self.oldValue = oldValue; self.newValue = newValue
         self.addedAt = addedAt; self.fromBaseline = fromBaseline
+        self.userNote = userNote
     }
 }
