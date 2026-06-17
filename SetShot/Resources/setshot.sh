@@ -431,8 +431,6 @@ NOISE_PATTERN='(
   AssetCache.*:: Region\s*=|
   AssetCache.*:: SavedCacheSize\s*=|
   AssetCache.*:: SavedCacheDetails\.|
-  AssetCache.*:: CacheLimit\s*=|
-  AssetCache.*:: DataPath\s*=|
   AssetCache.*:: ListenWithPeersAndParents\s*=|
   AssetCache.*:: LocalSubnetsOnly\s*=|
   AssetCache.*:: PeerLocalSubnetsOnly\s*=|
