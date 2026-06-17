@@ -133,6 +133,7 @@ struct JournalView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+        .textSelection(.disabled)
         .contextMenu {
             Button("Delete All from This Comparison", role: .destructive) {
                 Task { await appModel.deleteJournalSection(afterSnapshotId: section.snapshotId) }
