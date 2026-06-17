@@ -1397,7 +1397,15 @@ JSEOF
     systemsetup -getremoteappleevents 2>/dev/null || echo "(unavailable)"
 
     section "SHARING SERVICES"
-    # Reports enabled/disabled for each service based on launchctl load state.
+    # Reports enabled/disabled for each service by reading the system-domain
+    # disabled-overrides table. launchctl list (user session) cannot see system
+    # daemons on macOS 13+, so it always returned "disabled" regardless of state.
+    # print-disabled system shows the explicit override for each daemon:
+    #   "com.apple.foo" => enabled   → service was enabled via System Settings
+    #   "com.apple.foo" => disabled  → service was explicitly disabled
+    #   (absent)                     → using plist default, which for sharing
+    #                                  daemons is Disabled=true → disabled
+    _lctl_disabled=$(launchctl print-disabled system 2>/dev/null)
     for svc in \
         com.apple.screensharing \
         com.apple.smbd \
@@ -1406,7 +1414,7 @@ JSEOF
         com.apple.RemoteDesktop.agent \
         com.apple.blued \
         com.apple.AirPlayXPCHelper; do
-      if launchctl list "$svc" &>/dev/null; then
+      if echo "$_lctl_disabled" | grep -qF "\"${svc}\" => enabled"; then
         echo "sharing :: ${svc} = enabled"
       else
         echo "sharing :: ${svc} = disabled"
