@@ -1412,8 +1412,9 @@ JSEOF
         com.apple.netbiosd \
         com.apple.AppleFileServer \
         com.apple.RemoteDesktop.agent \
-        com.apple.blued \
-        com.apple.AirPlayXPCHelper; do
+        com.apple.AirPlayXPCHelper \
+        com.openssh.sshd \
+        com.apple.AEServer; do
       if echo "$_lctl_disabled" | grep -qF "\"${svc}\" => enabled"; then
         echo "sharing :: ${svc} = enabled"
       else
