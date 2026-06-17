@@ -148,23 +148,23 @@ struct SnapshotLibraryView: View {
                         }
                         .id("\(label)-\(snapshot.id)")
                     }
-                    if !matchingBaseSnapshots.isEmpty {
-                        Divider()
-                            .padding(.top, 4)
-                        Text("Baselines")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                        Divider()
-                        ForEach(matchingBaseSnapshots) { snapshot in
-                            let isSelected = selected.wrappedValue?.id == snapshot.id
-                            BaseSnapshotRow(snapshot: snapshot, isSelected: isSelected) {
-                                selected.wrappedValue = isSelected ? nil : snapshot
-                            }
-                            .id("\(label)-\(snapshot.id)")
-                        }
+                }
+            }
+            if !matchingBaseSnapshots.isEmpty {
+                Divider()
+                Text("Baselines")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                Divider()
+                ForEach(matchingBaseSnapshots) { snapshot in
+                    let isSelected = selected.wrappedValue?.id == snapshot.id
+                    BaseSnapshotRow(snapshot: snapshot, isSelected: isSelected) {
+                        selected.wrappedValue = isSelected ? nil : snapshot
                     }
+                    .id("\(label)-\(snapshot.id)")
                 }
             }
         }
