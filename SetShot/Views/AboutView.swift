@@ -127,7 +127,8 @@ private let aboutHelpContent: [HelpContent] = [
     .section("The Journal"),
     .paragraph("The journal keeps a cumulative record of every recognized change found across all your comparisons. Switch to it by clicking **Journal** in the segmented control at the top of the SetShot window."),
     .paragraph("Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before and after values. An **Open in Settings** button appears when possible."),
-    .paragraph("Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once. To wipe the entire journal, click **Clear All** to the right of the search field \u{2014} you'll be asked to confirm first."),
+    .paragraph("To add a personal note to any entry, click **Add note…** at the bottom of the row and type. Your note is saved automatically when you click away."),
+    .paragraph("Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once. Click **Export HTML…** to save the entire journal as an HTML file, or **Clear All** to permanently delete all entries (you'll be asked to confirm)."),
     .paragraph("The journal automatically eliminates redundant entries: if the same change appears more than once \u{2014} for instance, if you run the same comparison twice \u{2014} only the earliest occurrence is kept."),
     .screenshot("ScreenshotJournal"),
 
@@ -172,6 +173,13 @@ private let aboutHelpContent: [HelpContent] = [
     .bullet("**Snapshots, comparisons, and journal entries** are stored only on this Mac and are never transmitted anywhere."),
     .bullet("**Submissions** are the one exception. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record."),
     .paragraph("SetShot is open source. If you want to verify exactly what data the app collects and how it is handled, the full source code is available at [github.com/adamengst/setshot-app](https://github.com/adamengst/setshot-app)."),
+
+    .section("What\u{2019}s New in 1.0b18"),
+    .bullet("**Journal notes** \u{2014} Click **Add note\u{2026}** at the bottom of any journal entry to add a personal annotation. Notes save automatically and appear in HTML exports."),
+    .bullet("**Journal HTML export** \u{2014} Click **Export HTML\u{2026}** next to **Clear All** to save the entire journal as a portable HTML file."),
+    .bullet("**More recognized settings** \u{2014} Added Bluetooth Sharing (file receiving behavior, remote browsing permissions), Content Caching (cache size in GB, cache location, Share Internet Connection), Remote Login (Allow Full Disk Access for Remote Users), and Internet Sharing (source and target interfaces) to the knowledge base."),
+    .bullet("**Selectable text** \u{2014} Text in the About view and the About SetShot dialog can now be selected and copied."),
+    .bullet("**Desktop Mac improvements** \u{2014} Battery-specific settings (Battery Power sleep timers, charge limit, battery menu bar icon, etc.) no longer appear as recognized changes on desktop Macs without a battery."),
 ]
 
 /// Renders the entire help document as a single selectable NSTextView so the
@@ -386,6 +394,7 @@ struct AboutView: View {
                             automaticSnapshots
                             permissions
                             privacy
+                            releaseNotes
                         }
                         .environment(\.aboutSearchQuery, searchQuery)
                         .environment(\.aboutActiveNodeId, activeNodeId)
@@ -541,10 +550,12 @@ struct AboutView: View {
                           id: "n-journal-0")
             HelpParagraph("Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before and after values. An **Open in Settings** button appears when possible.",
                           id: "n-journal-1")
-            HelpParagraph("Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once. To wipe the entire journal, click **Clear All** to the right of the search field \u{2014} you'll be asked to confirm first.",
+            HelpParagraph("To add a personal note to any entry, click **Add note\u{2026}** at the bottom of the row and type. Your note is saved automatically when you click away.",
                           id: "n-journal-2")
-            HelpParagraph("The journal automatically eliminates redundant entries: if the same change appears more than once \u{2014} for instance, if you run the same comparison twice \u{2014} only the earliest occurrence is kept.",
+            HelpParagraph("Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once. Click **Export HTML\u{2026}** to save the entire journal as an HTML file, or **Clear All** to permanently delete all entries (you\u{2019}ll be asked to confirm).",
                           id: "n-journal-3")
+            HelpParagraph("The journal automatically eliminates redundant entries: if the same change appears more than once \u{2014} for instance, if you run the same comparison twice \u{2014} only the earliest occurrence is kept.",
+                          id: "n-journal-4")
             screenshot("ScreenshotJournal")
         }
     }
@@ -616,6 +627,21 @@ struct AboutView: View {
         }
     }
 
+    private var releaseNotes: some View {
+        HelpSection("What\u{2019}s New in 1.0b18", id: "about-relnotes") {
+            HelpBullet("**Journal notes** \u{2014} Click **Add note\u{2026}** at the bottom of any journal entry to add a personal annotation. Notes save automatically and appear in HTML exports.",
+                       id: "n-relnotes-b0")
+            HelpBullet("**Journal HTML export** \u{2014} Click **Export HTML\u{2026}** next to **Clear All** to save the entire journal as a portable HTML file.",
+                       id: "n-relnotes-b1")
+            HelpBullet("**More recognized settings** \u{2014} Added Bluetooth Sharing (file receiving behavior, remote browsing permissions), Content Caching (cache size in GB, cache location, Share Internet Connection), Remote Login (Allow Full Disk Access for Remote Users), and Internet Sharing (source and target interfaces) to the knowledge base.",
+                       id: "n-relnotes-b2")
+            HelpBullet("**Selectable text** \u{2014} Text in the About view and the About SetShot dialog can now be selected and copied.",
+                       id: "n-relnotes-b3")
+            HelpBullet("**Desktop Mac improvements** \u{2014} Battery-specific settings (Battery Power sleep timers, charge limit, battery menu bar icon, etc.) no longer appear as recognized changes on desktop Macs without a battery.",
+                       id: "n-relnotes-b4")
+        }
+    }
+
     private var privacy: some View {
         HelpSection("Privacy", id: "about-privacy") {
             HelpParagraph("The data SetShot works with is inherently non-sensitive \u{2014} it's system settings like toggles, sliders, and preferences, not passwords, documents, photos, or personal content. That said, SetShot is designed to keep your data private.",
@@ -677,8 +703,9 @@ struct AboutView: View {
         ("about-journal", "The Journal"),
         ("n-journal-0",   "The journal keeps a cumulative record of every recognized change found across all your comparisons. Switch to it by clicking Journal in the segmented control at the top of the SetShot window."),
         ("n-journal-1",   "Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before and after values. An Open in Settings button appears when possible."),
-        ("n-journal-2",   "Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once. To wipe the entire journal, click Clear All to the right of the search field \u{2014} you'll be asked to confirm first."),
-        ("n-journal-3",   "The journal automatically eliminates redundant entries: if the same change appears more than once \u{2014} for instance, if you run the same comparison twice \u{2014} only the earliest occurrence is kept."),
+        ("n-journal-2",   "To add a personal note to any entry, click Add note\u{2026} at the bottom of the row and type. Your note is saved automatically when you click away."),
+        ("n-journal-3",   "Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once. Click Export HTML\u{2026} to save the entire journal as an HTML file, or Clear All to permanently delete all entries."),
+        ("n-journal-4",   "The journal automatically eliminates redundant entries: if the same change appears more than once \u{2014} for instance, if you run the same comparison twice \u{2014} only the earliest occurrence is kept."),
         // Submitting Unrecognized Changes
         ("about-submitting", "Submitting Unrecognized Changes"),
         ("n-submitting-0",   "When you find an unrecognized change that is either noise or that you think should be included in the knowledge base, click Submit on that row. A confirmation sheet shows exactly what data will be sent \u{2014} the internal setting name, its old and new values, and your macOS version \u{2014} and nothing else."),
@@ -712,6 +739,13 @@ struct AboutView: View {
         ("n-privacy-b0",  "Snapshots, comparisons, and journal entries are stored only on this Mac and are never transmitted anywhere."),
         ("n-privacy-b1",  "Submissions are the one exception. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record."),
         ("n-privacy-1",   "SetShot is open source. If you want to verify exactly what data the app collects and how it is handled, the full source code is available at github.com/adamengst/setshot-app."),
+        // What's New
+        ("about-relnotes", "What\u{2019}s New in 1.0b18"),
+        ("n-relnotes-b0",  "Journal notes \u{2014} Click Add note\u{2026} at the bottom of any journal entry to add a personal annotation. Notes save automatically and appear in HTML exports."),
+        ("n-relnotes-b1",  "Journal HTML export \u{2014} Click Export HTML\u{2026} next to Clear All to save the entire journal as a portable HTML file."),
+        ("n-relnotes-b2",  "More recognized settings \u{2014} Added Bluetooth Sharing, Content Caching, Remote Login Full Disk Access, and Internet Sharing interfaces to the knowledge base."),
+        ("n-relnotes-b3",  "Selectable text \u{2014} Text in the About view and the About SetShot dialog can now be selected and copied."),
+        ("n-relnotes-b4",  "Desktop Mac improvements \u{2014} Battery-specific settings no longer appear as recognized changes on desktop Macs without a battery."),
     ]
 }
 
