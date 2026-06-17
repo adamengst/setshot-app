@@ -405,7 +405,8 @@ NOISE_PATTERN='(
   com\.apple\.dock.*:: region\s*=|
   mediasharingd.*:: home-sharing-computer-id|
   mediasharingd.*:: home-sharing-group-id|
-  mediasharingd.*:: home-sharing-settings\.|
+  mediasharingd.*:: home-sharing-settings\.home-sharing-user-id|
+  mediasharingd.*:: home-sharing-settings\.home-sharing-user-name|
   mediasharingd.*:: photo-sharing-settings\.|
   ncprefs.*:: apps\[|
   GlobalPreferences.*:: com\.apple\.finder\.SyncExtensions\.dirMap\.|
@@ -429,13 +430,23 @@ NOISE_PATTERN='(
   AssetCache.*:: LastRegOrFlush\s*=|
   AssetCache.*:: Region\s*=|
   AssetCache.*:: SavedCacheSize\s*=|
-  AssetCache.*:: AllowTetheredCaching\s*=|
   AssetCache.*:: SavedCacheDetails\.|
+  AssetCache.*:: CacheLimit\s*=|
+  AssetCache.*:: DataPath\s*=|
+  AssetCache.*:: ListenWithPeersAndParents\s*=|
+  AssetCache.*:: LocalSubnetsOnly\s*=|
+  AssetCache.*:: PeerLocalSubnetsOnly\s*=|
+  AssetCache.*:: Port\s*=|
+  AssetCache.*:: ReservedVolumeSpace\s*=|
+  AssetCache.*:: ServerGUID\s*=|
+  AssetCache.*:: Version\s*=|
   bluetooth.*:: BluetoothAutoSeek|
   RemoteDesktop.*:: RSAKeySize\s*=|
   RemoteManagement.*:: allowInsecureDH\s*=|
   nat.*:: NAT\.AirPort\.|
-  nat.*:: NAT\.PrimaryInterface\.|
+  nat.*:: NAT\.PrimaryInterface\.Device\s*=|
+  nat.*:: NAT\.PrimaryInterface\.Enabled\s*=|
+  nat.*:: NAT\.PrimaryInterface\.HardwareKey\s*=|
   nat.*:: NAT\.SharingNetwork|
   nat.*:: NAT\.NatPortMapDisabled\s*=|
   nat.*:: NAT\.PrimaryService\s*=|
