@@ -198,7 +198,6 @@ struct AboutView: View {
             Text("About SetShot")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .textSelection(.enabled)
             HelpParagraph("Have you ever thought a macOS update changed some setting silently? Or have you spelunked through System Settings and wondered later what you clicked? With SetShot, you can find out what settings have changed over time, making it easy to see what you've done and revert inadvertent changes.",
                           id: "n-intro-0")
             HelpParagraph("SetShot lets you capture a complete snapshot of your Mac's settings at any point in time so you can compare any two snapshots and see exactly what changed, in plain English. Each recognized change comes with a description, its location in System Settings, and \u{2014} where possible \u{2014} a button that opens the exact pane directly.",
@@ -469,10 +468,15 @@ struct HelpSection<Content: View>: View {
     var body: some View {
         let titleActive = sectionId == activeNodeId ? activeOccurrence : -1
         VStack(alignment: .leading, spacing: 10) {
-            Text(highlighted(title, query: searchQuery, activeOccurrence: titleActive))
-                .font(.title2)
-                .fontWeight(.semibold)
-                .textSelection(.enabled)
+            Group {
+                if searchQuery.isEmpty {
+                    Text(LocalizedStringKey(title))
+                } else {
+                    Text(highlighted(title, query: searchQuery, activeOccurrence: titleActive))
+                }
+            }
+            .font(.title2)
+            .fontWeight(.semibold)
             content
         }
         .id(sectionId)
@@ -493,10 +497,15 @@ struct HelpParagraph: View {
 
     var body: some View {
         let occIdx = nodeId == activeNodeId ? activeOccurrence : -1
-        Text(highlighted(text, query: searchQuery, activeOccurrence: occIdx))
-            .fixedSize(horizontal: false, vertical: true)
-            .textSelection(.enabled)
-            .id(nodeId)
+        Group {
+            if searchQuery.isEmpty {
+                Text(LocalizedStringKey(text))
+            } else {
+                Text(highlighted(text, query: searchQuery, activeOccurrence: occIdx))
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .id(nodeId)
     }
 }
 
@@ -516,9 +525,14 @@ struct HelpBullet: View {
         let occIdx = nodeId == activeNodeId ? activeOccurrence : -1
         HStack(alignment: .top, spacing: 6) {
             Text("\u{2022}").foregroundStyle(.secondary)
-            Text(highlighted(text, query: searchQuery, activeOccurrence: occIdx))
-                .fixedSize(horizontal: false, vertical: true)
-                .textSelection(.enabled)
+            Group {
+                if searchQuery.isEmpty {
+                    Text(LocalizedStringKey(text))
+                } else {
+                    Text(highlighted(text, query: searchQuery, activeOccurrence: occIdx))
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
         }
         .id(nodeId)
     }
@@ -544,13 +558,23 @@ struct HelpCallout: View {
         let labelActive = (occIdx >= 0 && occIdx < labelCount) ? occIdx : -1
         let contentActive = (occIdx >= labelCount) ? occIdx - labelCount : -1
         VStack(alignment: .leading, spacing: 4) {
-            Text(highlighted(label, query: searchQuery, activeOccurrence: labelActive))
-                .fontWeight(.medium)
-                .textSelection(.enabled)
-            Text(highlighted(content, query: searchQuery, activeOccurrence: contentActive))
-                .fixedSize(horizontal: false, vertical: true)
-                .foregroundStyle(.secondary)
-                .textSelection(.enabled)
+            Group {
+                if searchQuery.isEmpty {
+                    Text(LocalizedStringKey(label))
+                } else {
+                    Text(highlighted(label, query: searchQuery, activeOccurrence: labelActive))
+                }
+            }
+            .fontWeight(.medium)
+            Group {
+                if searchQuery.isEmpty {
+                    Text(LocalizedStringKey(content))
+                } else {
+                    Text(highlighted(content, query: searchQuery, activeOccurrence: contentActive))
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .foregroundStyle(.secondary)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
