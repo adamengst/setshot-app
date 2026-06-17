@@ -266,6 +266,9 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
     if key.localizedCaseInsensitiveContains("volume"), let f = Double(raw) {
         return "\(Int((f * 100).rounded()))%"
     }
+    if key == "CacheLimit", let bytes = Int64(raw), bytes > 0 {
+        return "\(bytes / 1_000_000_000) GB"
+    }
     // Highlight color: "R G B ColorName" — extract just the name
     let parts = raw.split(separator: " ")
     if parts.count == 4,
