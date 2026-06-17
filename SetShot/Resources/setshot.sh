@@ -403,7 +403,6 @@ NOISE_PATTERN='(
   iCal.*:: BirthdayEvents|
   iCal.*:: NotificationsLastLocale|
   com\.apple\.dock.*:: region\s*=|
-  Bluetooth.*:: PrefKeyServicesEnabled\s*=|
   mediasharingd.*:: home-sharing-computer-id|
   mediasharingd.*:: home-sharing-group-id|
   mediasharingd.*:: home-sharing-settings\.|
@@ -1102,7 +1101,7 @@ do_snapshot() {
         -o -name "screentimedx.plist" \
         -o -name "sharing.plist" \
       \) -maxdepth 2 2>/dev/null \
-      | if [ "${SETSHOT_CHECK_MUSIC:-0}" != "1" ]; then grep -vE "/(com\.apple\.Music\.|com\.apple\.iTunes\.|com\.apple\.amp\.mediasharingd\.)"; else cat; fi \
+      | if [ "${SETSHOT_CHECK_MUSIC:-0}" != "1" ]; then grep -vE "/(com\.apple\.Music\.|com\.apple\.iTunes\.)"; else cat; fi \
       | sort)
 
     section "PLIST FILES: /Library/Preferences"
@@ -1411,7 +1410,6 @@ JSEOF
         com.apple.smbd \
         com.apple.netbiosd \
         com.apple.AppleFileServer \
-        com.apple.RemoteDesktop.agent \
         com.apple.AirPlayXPCHelper \
         com.openssh.sshd \
         com.apple.AEServer; do
@@ -1421,6 +1419,22 @@ JSEOF
         echo "sharing :: ${svc} = disabled"
       fi
     done
+    # Printer Sharing is controlled by the CUPS scheduler (not a launchd override).
+    _cups_share=$(cupsctl 2>/dev/null | grep '^_share_printers=' | cut -d= -f2)
+    if [ "${_cups_share}" = "1" ]; then
+      echo "sharing :: org.cups.PrintingPrefs.PrinterSharing = enabled"
+    else
+      echo "sharing :: org.cups.PrintingPrefs.PrinterSharing = disabled"
+    fi
+    # Remote Management is a LaunchAgent controlled by KeepAlive.PathState on a
+    # sentinel file, not a LaunchDaemon with a disabled override — so it never
+    # appears in print-disabled system. Check the sentinel file directly instead.
+    _rdm_sentinel="/Library/Application Support/Apple/Remote Desktop/RemoteManagement.launchd"
+    if [ -f "$_rdm_sentinel" ]; then
+      echo "sharing :: com.apple.RemoteDesktop.agent = enabled"
+    else
+      echo "sharing :: com.apple.RemoteDesktop.agent = disabled"
+    fi
 
     section "TIME MACHINE"
     tmutil destinationinfo 2>/dev/null || echo "(no destinations configured)"
