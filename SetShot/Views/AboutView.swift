@@ -198,6 +198,7 @@ struct AboutView: View {
             Text("About SetShot")
                 .font(.largeTitle)
                 .fontWeight(.bold)
+                .textSelection(.enabled)
             HelpParagraph("Have you ever thought a macOS update changed some setting silently? Or have you spelunked through System Settings and wondered later what you clicked? With SetShot, you can find out what settings have changed over time, making it easy to see what you've done and revert inadvertent changes.",
                           id: "n-intro-0")
             HelpParagraph("SetShot lets you capture a complete snapshot of your Mac's settings at any point in time so you can compare any two snapshots and see exactly what changed, in plain English. Each recognized change comes with a description, its location in System Settings, and \u{2014} where possible \u{2014} a button that opens the exact pane directly.",
@@ -471,6 +472,7 @@ struct HelpSection<Content: View>: View {
             Text(highlighted(title, query: searchQuery, activeOccurrence: titleActive))
                 .font(.title2)
                 .fontWeight(.semibold)
+                .textSelection(.enabled)
             content
         }
         .id(sectionId)
@@ -493,6 +495,7 @@ struct HelpParagraph: View {
         let occIdx = nodeId == activeNodeId ? activeOccurrence : -1
         Text(highlighted(text, query: searchQuery, activeOccurrence: occIdx))
             .fixedSize(horizontal: false, vertical: true)
+            .textSelection(.enabled)
             .id(nodeId)
     }
 }
@@ -515,6 +518,7 @@ struct HelpBullet: View {
             Text("\u{2022}").foregroundStyle(.secondary)
             Text(highlighted(text, query: searchQuery, activeOccurrence: occIdx))
                 .fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
         }
         .id(nodeId)
     }
@@ -542,9 +546,11 @@ struct HelpCallout: View {
         VStack(alignment: .leading, spacing: 4) {
             Text(highlighted(label, query: searchQuery, activeOccurrence: labelActive))
                 .fontWeight(.medium)
+                .textSelection(.enabled)
             Text(highlighted(content, query: searchQuery, activeOccurrence: contentActive))
                 .fixedSize(horizontal: false, vertical: true)
                 .foregroundStyle(.secondary)
+                .textSelection(.enabled)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
