@@ -208,6 +208,28 @@ struct ResultsView: View {
 
 }
 
+func unrecognizedRowText(rawLine: String, before: String, after: String, key: String) -> some View {
+    let mono = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize - 1, weight: .regular)
+    func para(_ spacing: CGFloat) -> NSParagraphStyle {
+        let s = NSMutableParagraphStyle(); s.paragraphSpacing = spacing; return s
+    }
+    let ns = NSMutableAttributedString()
+    ns.append(NSAttributedString(string: rawLine, attributes: [
+        .font: mono, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: para(8),
+    ]))
+    let b = before.isEmpty ? "(none)" : formatValue(before, key: key)
+    let a = after.isEmpty  ? "(none)" : formatValue(after,  key: key)
+    ns.append(NSAttributedString(string: "\n" + b,
+        attributes: [.font: mono, .foregroundColor: NSColor.systemOrange]))
+    ns.append(NSAttributedString(string: "  \u{2192}  ",
+        attributes: [.font: mono, .foregroundColor: NSColor.secondaryLabelColor]))
+    ns.append(NSAttributedString(string: a,
+        attributes: [.font: mono, .foregroundColor: NSColor.systemBlue]))
+    return Text(AttributedString(ns))
+        .lineSpacing(4)
+        .fixedSize(horizontal: false, vertical: true)
+}
+
 func recognizedRowText(description: String, location: String?, old: String, new: String) -> some View {
     let bodyFont  = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .medium)
     let calloutFont = NSFont.systemFont(ofSize: NSFont.systemFontSize - 1)
@@ -488,21 +510,11 @@ private struct UnrecognizedRow: View {
     @State private var showSheet = false
 
     var body: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(diff.rawLine)
-                    .font(.system(.callout, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                HStack(spacing: 6) {
-                    Text(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key))
-                        .foregroundStyle(.orange)
-                    Text("→")
-                        .foregroundStyle(.secondary)
-                    Text(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key))
-                        .foregroundStyle(.blue)
-                }
-                .font(.system(.callout, design: .monospaced))
-            }
+        HStack(alignment: .top, spacing: 8) {
+            unrecognizedRowText(rawLine: diff.rawLine,
+                                before: diff.beforeValue,
+                                after: diff.afterValue,
+                                key: diff.key)
             Spacer()
             if isSubmitted {
                 Label("Submitted", systemImage: "checkmark.circle.fill")

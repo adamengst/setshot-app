@@ -52,7 +52,11 @@ struct SetShotApp: App {
                 }
                 .disabled(!updaterController.updater.canCheckForUpdates)
             }
-            CommandGroup(replacing: .help) {}
+            CommandGroup(replacing: .help) {
+                Button("Release Notes") {
+                    ReleaseNotesWindowController.shared.show()
+                }
+            }
         }
 
         WindowGroup(for: UUID.self) { $id in
@@ -64,6 +68,40 @@ struct SetShotApp: App {
         }
         .defaultSize(width: 720, height: 540)
 
+    }
+}
+
+final class ReleaseNotesWindowController {
+    static let shared = ReleaseNotesWindowController()
+    private var window: NSWindow?
+
+    func show() {
+        if let window, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        let hosting = NSHostingController(rootView: ReleaseNotesView())
+        let win = NSWindow(contentViewController: hosting)
+        win.title = "Release Notes"
+        win.styleMask = [.titled, .closable, .resizable, .miniaturizable]
+        win.isReleasedWhenClosed = false
+        win.setContentSize(NSSize(width: 680, height: 560))
+        win.alphaValue = 0
+        win.makeKeyAndOrderFront(nil)
+        DispatchQueue.main.async {
+            if let main = NSApp.windows.first(where: { $0.title == "SetShot" && $0.isVisible }) {
+                let mf = main.frame
+                let wf = win.frame
+                win.setFrameOrigin(NSPoint(
+                    x: mf.midX - wf.width / 2,
+                    y: mf.midY - wf.height / 2
+                ))
+            } else {
+                win.center()
+            }
+            win.alphaValue = 1
+        }
+        self.window = win
     }
 }
 

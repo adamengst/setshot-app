@@ -75,8 +75,27 @@ actor JournalStore {
         let existingKeys = Set(entries.map { dedupKey(domain: $0.domain, key: $0.key, old: $0.oldValue, new: $0.newValue) })
         let now = Date()
         for item in recognized {
-            let key = dedupKey(domain: item.diff.domain, key: item.diff.key, old: item.diff.beforeValue, new: item.diff.afterValue)
+            let before = item.diff.beforeValue
+            let after = item.diff.afterValue
+            let key = dedupKey(domain: item.diff.domain, key: item.diff.key, old: before, new: after)
             guard !existingKeys.contains(key) else { continue }
+
+            // A key appearing from nothing or vanishing to nothing may be half of a
+            // round-trip (X → ∅ → X) caused by a preference domain being temporarily
+            // deleted — typically during an app auto-update. If the journal already
+            // holds the exact opposite change for the same domain+key, cancel both:
+            // neither half represents a real user-driven change.
+            if before.isEmpty || after.isEmpty,
+               let reverseIdx = entries.firstIndex(where: {
+                   $0.domain == item.diff.domain &&
+                   $0.key == item.diff.key &&
+                   $0.oldValue == after &&
+                   $0.newValue == before
+               }) {
+                entries.remove(at: reverseIdx)
+                continue
+            }
+
             entries.append(JournalEntry(
                 id: UUID(),
                 afterSnapshotId: afterSnapshot.id,
@@ -87,8 +106,8 @@ actor JournalStore {
                 entryDescription: item.entry.description ?? "",
                 uiLocation: item.entry.uiLocation,
                 settingsURL: item.entry.settingsURL,
-                oldValue: item.diff.beforeValue,
-                newValue: item.diff.afterValue,
+                oldValue: before,
+                newValue: after,
                 addedAt: now,
                 fromBaseline: fromBaseline
             ))

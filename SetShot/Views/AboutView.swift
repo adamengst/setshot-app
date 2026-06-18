@@ -174,12 +174,6 @@ private let aboutHelpContent: [HelpContent] = [
     .bullet("**Submissions** are the one exception. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record."),
     .paragraph("SetShot is open source. If you want to verify exactly what data the app collects and how it is handled, the full source code is available at [github.com/adamengst/setshot-app](https://github.com/adamengst/setshot-app)."),
 
-    .section("What\u{2019}s New in 1.0b18"),
-    .bullet("**Journal notes** \u{2014} Click **Add note\u{2026}** at the bottom of any journal entry to add a personal annotation. Notes save automatically and appear in HTML exports."),
-    .bullet("**Journal HTML export** \u{2014} Click **Export HTML\u{2026}** next to **Clear All** to save the entire journal as a portable HTML file."),
-    .bullet("**More recognized settings** \u{2014} Added Bluetooth Sharing (file receiving behavior, remote browsing permissions), Content Caching (cache size in GB, cache location, Share Internet Connection), Remote Login (Allow Full Disk Access for Remote Users), and Internet Sharing (source and target interfaces) to the knowledge base."),
-    .bullet("**Selectable text** \u{2014} Text in the About view and the About SetShot dialog can now be selected and copied."),
-    .bullet("**Desktop Mac improvements** \u{2014} Battery-specific settings (Battery Power sleep timers, charge limit, battery menu bar icon, etc.) no longer appear as recognized changes on desktop Macs without a battery."),
 ]
 
 /// Renders the entire help document as a single selectable NSTextView so the
@@ -394,7 +388,6 @@ struct AboutView: View {
                             automaticSnapshots
                             permissions
                             privacy
-                            releaseNotes
                         }
                         .environment(\.aboutSearchQuery, searchQuery)
                         .environment(\.aboutActiveNodeId, activeNodeId)
@@ -627,21 +620,6 @@ struct AboutView: View {
         }
     }
 
-    private var releaseNotes: some View {
-        HelpSection("What\u{2019}s New in 1.0b18", id: "about-relnotes") {
-            HelpBullet("**Journal notes** \u{2014} Click **Add note\u{2026}** at the bottom of any journal entry to add a personal annotation. Notes save automatically and appear in HTML exports.",
-                       id: "n-relnotes-b0")
-            HelpBullet("**Journal HTML export** \u{2014} Click **Export HTML\u{2026}** next to **Clear All** to save the entire journal as a portable HTML file.",
-                       id: "n-relnotes-b1")
-            HelpBullet("**More recognized settings** \u{2014} Added Bluetooth Sharing (file receiving behavior, remote browsing permissions), Content Caching (cache size in GB, cache location, Share Internet Connection), Remote Login (Allow Full Disk Access for Remote Users), and Internet Sharing (source and target interfaces) to the knowledge base.",
-                       id: "n-relnotes-b2")
-            HelpBullet("**Selectable text** \u{2014} Text in the About view and the About SetShot dialog can now be selected and copied.",
-                       id: "n-relnotes-b3")
-            HelpBullet("**Desktop Mac improvements** \u{2014} Battery-specific settings (Battery Power sleep timers, charge limit, battery menu bar icon, etc.) no longer appear as recognized changes on desktop Macs without a battery.",
-                       id: "n-relnotes-b4")
-        }
-    }
-
     private var privacy: some View {
         HelpSection("Privacy", id: "about-privacy") {
             HelpParagraph("The data SetShot works with is inherently non-sensitive \u{2014} it's system settings like toggles, sliders, and preferences, not passwords, documents, photos, or personal content. That said, SetShot is designed to keep your data private.",
@@ -739,13 +717,6 @@ struct AboutView: View {
         ("n-privacy-b0",  "Snapshots, comparisons, and journal entries are stored only on this Mac and are never transmitted anywhere."),
         ("n-privacy-b1",  "Submissions are the one exception. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record."),
         ("n-privacy-1",   "SetShot is open source. If you want to verify exactly what data the app collects and how it is handled, the full source code is available at github.com/adamengst/setshot-app."),
-        // What's New
-        ("about-relnotes", "What\u{2019}s New in 1.0b18"),
-        ("n-relnotes-b0",  "Journal notes \u{2014} Click Add note\u{2026} at the bottom of any journal entry to add a personal annotation. Notes save automatically and appear in HTML exports."),
-        ("n-relnotes-b1",  "Journal HTML export \u{2014} Click Export HTML\u{2026} next to Clear All to save the entire journal as a portable HTML file."),
-        ("n-relnotes-b2",  "More recognized settings \u{2014} Added Bluetooth Sharing, Content Caching, Remote Login Full Disk Access, and Internet Sharing interfaces to the knowledge base."),
-        ("n-relnotes-b3",  "Selectable text \u{2014} Text in the About view and the About SetShot dialog can now be selected and copied."),
-        ("n-relnotes-b4",  "Desktop Mac improvements \u{2014} Battery-specific settings no longer appear as recognized changes on desktop Macs without a battery."),
     ]
 }
 

@@ -239,8 +239,8 @@ private struct JournalRow: View {
                 Spacer().frame(width: 44)
                 TextField("Add note…", text: $noteText, axis: .vertical)
                     .textFieldStyle(.plain)
-                    .font(.caption)
-                    .foregroundStyle(noteText.isEmpty ? Color.secondary.opacity(0.5) : .secondary)
+                    .font(.callout)
+                    .foregroundStyle(noteText.isEmpty ? Color.secondary.opacity(0.5) : Color.red)
                     .focused($noteFocused)
                     .onAppear { noteText = entry.userNote ?? "" }
                     .onChange(of: noteFocused) { isFocused in

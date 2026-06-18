@@ -30,6 +30,7 @@
 		6B70D4DA7BB86DBA2326CAE8 /* SnapshotLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59B5F566BCF5465D0E537F1E /* SnapshotLibraryView.swift */; };
 		750961F0FB45F04AB158FB6A /* SetShotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E8B01CA91F970990260529 /* SetShotApp.swift */; };
 		7657036547D21AA8777CD4C2 /* SettingsPaneIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30017B093D6AC6D842717D78 /* SettingsPaneIcon.swift */; };
+		7743F116DF1E7C882CE9E1EE /* ReleaseNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53F8A1D0A17B7C3AC861E7A9 /* ReleaseNotesView.swift */; };
 		7ADDE1A25FF0088471FAFE20 /* SnapshotTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC851344C45F930AD15B70EA /* SnapshotTakenView.swift */; };
 		84003123710E517BD6FCD2F0 /* DiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57C901AB4841ACACEBB1709 /* DiffEngine.swift */; };
 		8AFEF96A156F43C87BDC4252 /* setshot.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */; };
@@ -52,6 +53,7 @@
 		E52858FCA732E1E1D292B888 /* MusicKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B14C522DB332A096A903EB34 /* MusicKit.framework */; };
 		E77D478F90D0A824480273CE /* KBEntryDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FB9705E796395269414C4D8 /* KBEntryDecodingTests.swift */; };
 		F0117CDA3B3F3EB9E30E2707 /* SettingsPaneIconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458C8E9D2E3CAD28CC042E3B /* SettingsPaneIconProvider.swift */; };
+		F25E2322FE4DD805DBB1A76F /* ReleaseNotes.md in Resources */ = {isa = PBXBuildFile; fileRef = 6C95C8C7F8EC3EB8E036928F /* ReleaseNotes.md */; };
 		F47D72C2AF599F298153C92B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040F5608E284333E4CDB0C21 /* SettingsView.swift */; };
 		F6594C17115A34CE986B174D /* base_Sequoia_15.7.7.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = 9A62CC8B68E73050877CF1CF /* base_Sequoia_15.7.7.txt.gz */; };
 		F932C362BDFA26623A14BFB3 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E256CCC724BA590CC12FEDB /* AppModel.swift */; };
@@ -89,11 +91,13 @@
 		4F82F5191799C0CF87026222 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		53E06A63C729BADDD2983529 /* KnowledgeBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeBase.swift; sourceTree = "<group>"; };
 		53E52B71DAE20C739CE609A8 /* SettingsPaneOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPaneOrder.swift; sourceTree = "<group>"; };
+		53F8A1D0A17B7C3AC861E7A9 /* ReleaseNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseNotesView.swift; sourceTree = "<group>"; };
 		590C3CF672ED6999CE28820A /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		59B5F566BCF5465D0E537F1E /* SnapshotLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotLibraryView.swift; sourceTree = "<group>"; };
 		61336BF2958C0E7F041BDB4B /* KBFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBFetcher.swift; sourceTree = "<group>"; };
 		66A182A3E724717177EE351D /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		6ABD7B7F567D2F3E47E28D4B /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
+		6C95C8C7F8EC3EB8E036928F /* ReleaseNotes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ReleaseNotes.md; sourceTree = "<group>"; };
 		74E1D922E36C27838EAAA810 /* SnapshotRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotRunner.swift; sourceTree = "<group>"; };
 		77124B45F467CD55260DF560 /* SetShot.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SetShot.entitlements; sourceTree = "<group>"; };
 		78E54FFE685F4C0170A297ED /* AboutPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPanelView.swift; sourceTree = "<group>"; };
@@ -172,6 +176,7 @@
 				071D1ABF6A0037E3333B7BF7 /* JournalView.swift */,
 				8C893A2030276A4A2FE4EA80 /* KBFeedbackView.swift */,
 				B1CCB5A46AF855D9998F53D5 /* ReadyView.swift */,
+				53F8A1D0A17B7C3AC861E7A9 /* ReleaseNotesView.swift */,
 				66A182A3E724717177EE351D /* ResultsView.swift */,
 				30017B093D6AC6D842717D78 /* SettingsPaneIcon.swift */,
 				040F5608E284333E4CDB0C21 /* SettingsView.swift */,
@@ -221,6 +226,7 @@
 			isa = PBXGroup;
 			children = (
 				2F1789A22D8F676149B825D9 /* Assets.xcassets */,
+				6C95C8C7F8EC3EB8E036928F /* ReleaseNotes.md */,
 				A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */,
 				9A00B862C033C91F4109B410 /* BaseSnapshots */,
 			);
@@ -361,6 +367,7 @@
 			files = (
 				52F8DA0C6EAFD1D445DD474C /* Assets.xcassets in Resources */,
 				B45D0A7279309CB79EEB5996 /* BaseSnapshots in Resources */,
+				F25E2322FE4DD805DBB1A76F /* ReleaseNotes.md in Resources */,
 				F6594C17115A34CE986B174D /* base_Sequoia_15.7.7.txt.gz in Resources */,
 				DA1CC6A6A51098DA4AC8A9C3 /* base_Tahoe_26.5.1.txt.gz in Resources */,
 				8AFEF96A156F43C87BDC4252 /* setshot.sh in Resources */,
@@ -394,6 +401,7 @@
 				FE14285D9EB25E8B55EB5212 /* PingService.swift in Sources */,
 				590AA0768AEA08BB83C79A16 /* PlistFlattener.swift in Sources */,
 				A5906661B8264FCD5B817DE6 /* ReadyView.swift in Sources */,
+				7743F116DF1E7C882CE9E1EE /* ReleaseNotesView.swift in Sources */,
 				E2E28FD6BDB9AB7D40EF464C /* ResultsView.swift in Sources */,
 				944E4312B5E0726F5FC7C28F /* SchedulerManager.swift in Sources */,
 				750961F0FB45F04AB158FB6A /* SetShotApp.swift in Sources */,
@@ -609,7 +617,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6SCP2R96HY;
 				ENABLE_DEBUG_DYLIB = NO;
@@ -628,7 +636,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0b17;
+				MARKETING_VERSION = 1.0b18;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tidbits.SetShot;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;
@@ -643,7 +651,7 @@
 				CODE_SIGN_IDENTITY = "Developer ID Application";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = 6SCP2R96HY;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -661,7 +669,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0b17;
+				MARKETING_VERSION = 1.0b18;
 				PRODUCT_BUNDLE_IDENTIFIER = com.tidbits.SetShot;
 				SDKROOT = macosx;
 				SWIFT_VERSION = 5.9;

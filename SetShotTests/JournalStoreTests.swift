@@ -143,4 +143,31 @@ final class JournalStoreTests: XCTestCase {
         let entries = await store.load()
         XCTAssertTrue(entries.isEmpty)
     }
+
+    func testRoundTripThroughEmptyCancelsXToEmpty() async {
+        // X → ∅ followed by ∅ → X should cancel both entries (pref domain temporarily deleted)
+        let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))
+        let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))
+        _ = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "True", after: ""))], afterSnapshot: snap1)
+        let entries = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "", after: "True"))], afterSnapshot: snap2)
+        XCTAssertTrue(entries.isEmpty, "X→∅→X round-trip should cancel both entries")
+    }
+
+    func testRoundTripThroughEmptyCancelsEmptyToX() async {
+        // ∅ → X followed by X → ∅ should also cancel (inverse direction)
+        let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))
+        let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))
+        _ = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "", after: "True"))], afterSnapshot: snap1)
+        let entries = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "True", after: ""))], afterSnapshot: snap2)
+        XCTAssertTrue(entries.isEmpty, "∅→X→∅ round-trip should cancel both entries")
+    }
+
+    func testNonEmptyRoundTripNotCancelled() async {
+        // A → B → A with no empty values must NOT cancel (could be a deliberate toggle)
+        let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))
+        let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))
+        _ = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "False", after: "True"))], afterSnapshot: snap1)
+        let entries = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "True", after: "False"))], afterSnapshot: snap2)
+        XCTAssertEqual(entries.count, 2, "Non-empty round-trip should not be cancelled")
+    }
 }
