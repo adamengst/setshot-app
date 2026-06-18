@@ -1,3 +1,7 @@
+## 1.0b19
+
+- **Check for Updates fix** — "Check for Updates" in the SetShot menu was incorrectly greyed out. Fixed.
+
 ## 1.0b18
 
 - **Journal notes** — Click **Add note…** at the bottom of any journal entry to add a personal annotation. Notes save automatically when you click away and appear in HTML exports.

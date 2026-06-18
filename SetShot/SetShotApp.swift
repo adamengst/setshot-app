@@ -2,22 +2,32 @@ import SwiftUI
 import Sparkle
 import UserNotifications
 
+// Holds the Sparkle controller and KVO-observes canCheckForUpdates so SwiftUI
+// can reactively enable/disable "Check for Updates". Without KVO, the disabled()
+// modifier evaluates once and stays greyed out while Sparkle's auto-check runs.
+private final class UpdaterState: ObservableObject {
+    @Published var canCheckForUpdates = false
+    let controller: SPUStandardUpdaterController
+    private var observation: NSKeyValueObservation?
+
+    init() {
+        let start: Bool
+        #if DEBUG
+        start = false
+        #else
+        start = true
+        #endif
+        controller = SPUStandardUpdaterController(startingUpdater: start, updaterDelegate: nil, userDriverDelegate: nil)
+        observation = controller.updater.observe(\.canCheckForUpdates, options: [.initial, .new]) { [weak self] updater, _ in
+            DispatchQueue.main.async { self?.canCheckForUpdates = updater.canCheckForUpdates }
+        }
+    }
+}
+
 struct SetShotApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appModel = AppModel()
-    // Don't start the updater in debug builds: the local signing identity
-    // doesn't re-sign Sparkle's XPC services, causing a spurious error dialog.
-    private let updaterController = SPUStandardUpdaterController(
-        startingUpdater: {
-            #if DEBUG
-            return false
-            #else
-            return true
-            #endif
-        }(),
-        updaterDelegate: nil,
-        userDriverDelegate: nil
-    )
+    @StateObject private var updaterState = UpdaterState()
 
     private static let isBackgroundLaunch =
         CommandLine.arguments.contains("--background-snapshot")
@@ -48,9 +58,9 @@ struct SetShotApp: App {
             }
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") {
-                    updaterController.updater.checkForUpdates()
+                    updaterState.controller.updater.checkForUpdates()
                 }
-                .disabled(!updaterController.updater.canCheckForUpdates)
+                .disabled(!updaterState.canCheckForUpdates)
             }
             CommandGroup(replacing: .help) {
                 Button("Release Notes") {
