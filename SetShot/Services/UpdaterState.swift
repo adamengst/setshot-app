@@ -1,0 +1,36 @@
+import Sparkle
+import Combine
+
+// Holds the Sparkle controller and KVO-observes canCheckForUpdates so SwiftUI
+// can reactively enable/disable "Check for Updates". Without KVO, the disabled()
+// modifier evaluates once and stays greyed out while Sparkle's auto-check runs.
+//
+// Must be held as @StateObject (not a plain stored property) in the App struct so
+// SwiftUI owns the lifetime. A plain stored property on a value-type App struct can
+// be released and recreated across body evaluations, tearing down Sparkle mid-run.
+final class UpdaterState: ObservableObject {
+    @Published var canCheckForUpdates = false
+    let controller: SPUStandardUpdaterController
+    private var observation: NSKeyValueObservation?
+
+    // False in debug/test builds so Sparkle's XPC services aren't invoked without
+    // the correct signing identity. True in release builds. Exposed for testing.
+    static let startsInRelease: Bool = {
+        #if DEBUG
+        return false
+        #else
+        return true
+        #endif
+    }()
+
+    init() {
+        controller = SPUStandardUpdaterController(
+            startingUpdater: Self.startsInRelease,
+            updaterDelegate: nil,
+            userDriverDelegate: nil
+        )
+        observation = controller.updater.observe(\.canCheckForUpdates, options: [.initial, .new]) { [weak self] updater, _ in
+            DispatchQueue.main.async { self?.canCheckForUpdates = updater.canCheckForUpdates }
+        }
+    }
+}

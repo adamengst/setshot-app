@@ -2,28 +2,6 @@ import SwiftUI
 import Sparkle
 import UserNotifications
 
-// Holds the Sparkle controller and KVO-observes canCheckForUpdates so SwiftUI
-// can reactively enable/disable "Check for Updates". Without KVO, the disabled()
-// modifier evaluates once and stays greyed out while Sparkle's auto-check runs.
-private final class UpdaterState: ObservableObject {
-    @Published var canCheckForUpdates = false
-    let controller: SPUStandardUpdaterController
-    private var observation: NSKeyValueObservation?
-
-    init() {
-        let start: Bool
-        #if DEBUG
-        start = false
-        #else
-        start = true
-        #endif
-        controller = SPUStandardUpdaterController(startingUpdater: start, updaterDelegate: nil, userDriverDelegate: nil)
-        observation = controller.updater.observe(\.canCheckForUpdates, options: [.initial, .new]) { [weak self] updater, _ in
-            DispatchQueue.main.async { self?.canCheckForUpdates = updater.canCheckForUpdates }
-        }
-    }
-}
-
 struct SetShotApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appModel = AppModel()
