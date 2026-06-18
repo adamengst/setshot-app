@@ -13,8 +13,8 @@
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <enclosure
                 url="https://github.com/adamengst/setshot-app/releases/download/v1.0b19/SetShot-1.0b19.zip"
-                sparkle:edSignature="JLbWHSQ0JqTNtFZ6kG0KYnnL5EGLGkiGAoQrzgO/KpO7+ZZzeLpCeMkCw1AvJGsSEogQu2XoXzEinHg6DGKLCw=="
-                length="8613066"
+                sparkle:edSignature="ahuWgzd0Cf9Yam0wnbvw2i83CpDUkD8Rg889nort5mzCFCY9p60vlV/2LPYn3hrTKdobsIYclEnocwZ2F+yyCQ=="
+                length="8613423"
                 type="application/octet-stream"
             />
         </item>
