@@ -120,7 +120,11 @@ struct SettingsView: View {
         requestingMusic = true
         defer { requestingMusic = false }
         _ = await MusicAuthorization.request()
-        musicGranted = MusicAuthorization.currentStatus == .authorized
+        let granted = MusicAuthorization.currentStatus == .authorized
+        musicGranted = granted
+        if granted {
+            UserDefaults.standard.set(true, forKey: "CheckMusicSettings")
+        }
     }
 
     private var schedulerDescription: AttributedString {

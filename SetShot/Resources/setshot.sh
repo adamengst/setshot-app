@@ -1110,7 +1110,7 @@ do_snapshot() {
         -o -name "screentimedx.plist" \
         -o -name "sharing.plist" \
       \) -maxdepth 2 2>/dev/null \
-      | if [ "${SETSHOT_CHECK_MUSIC:-0}" != "1" ]; then grep -vE "/(com\.apple\.Music\.|com\.apple\.iTunes\.)"; else cat; fi \
+      | if [ "${SETSHOT_CHECK_MUSIC:-0}" != "1" ]; then grep -vE "/(com\.apple\.(Music|iTunes|iCloud\.Music)\.|com\.apple\.(AMP[A-Z]|itunes|HomeSharing))"; else cat; fi \
       | sort)
 
     section "PLIST FILES: /Library/Preferences"

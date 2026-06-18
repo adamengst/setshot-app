@@ -36,9 +36,18 @@ struct SnapshotRunner {
         return false
     }
 
-    /// Whether SetShot currently holds the `kTCCServiceMediaLibrary` (Media &
-    /// Apple Music) grant. Uses MusicAuthorization.currentStatus — the public
-    /// API — which returns the current state without triggering a dialog.
+    /// Whether the user has explicitly opted in to Music data capture AND the
+    /// TCC grant is currently active. Checks the opt-in flag first so that
+    /// MusicAuthorization.currentStatus is never called before the user consents
+    /// — on macOS 26 with a .notDetermined TCC entry, even currentStatus can
+    /// trigger the system permission dialog.
+    static func musicEnabled() -> Bool {
+        guard UserDefaults.standard.bool(forKey: "CheckMusicSettings") else { return false }
+        return MusicAuthorization.currentStatus == .authorized
+    }
+
+    /// Raw TCC grant check — only call this when you know the user has opted in
+    /// (e.g. SettingsView after the user clicks Request Access).
     static func musicGranted() -> Bool {
         MusicAuthorization.currentStatus == .authorized
     }
@@ -76,7 +85,7 @@ struct SnapshotRunner {
             env["SETSHOT_BIN"] = bin
         }
         env["SETSHOT_CHECK_TCC"] = Self.canReadSystemTCC() ? "1" : "0"
-        env["SETSHOT_CHECK_MUSIC"] = Self.musicGranted() ? "1" : "0"
+        env["SETSHOT_CHECK_MUSIC"] = Self.musicEnabled() ? "1" : "0"
 
         let exitCode = try await spawnProcess(
             executable: "/bin/bash",
