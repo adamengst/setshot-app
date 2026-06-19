@@ -1037,8 +1037,22 @@ section() {
   echo ""
 }
 
+# Domains whose reads can wake a media daemon and trigger the
+# Media & Apple Music (kTCCServiceMediaLibrary) TCC prompt on macOS 15+.
+# Suppressed on every read surface unless the user has explicitly opted in.
+# Matches (case-insensitively): anything with "media" in the domain name,
+# plus Apple Music/iTunes/AMP-specific domains, TV app, Podcasts, and
+# AppleMediaServices. TV triggers kTCCServiceMediaLibrary just like Music.
+_MUSIC_RE='com\.apple\.(Music|iTunes|iTunesX|iCloud\.Music|amp|AMP[A-Za-z]+|itunes[a-z]*|media[A-Za-z]*|HomeSharing|CloudMusic|AppleMediaServices|PersonalAudio|TV|Podcasts)'
+
+_is_music_path() {
+  [ "${SETSHOT_CHECK_MUSIC:-0}" = "1" ] && return 1
+  echo "$1" | grep -qiE "/${_MUSIC_RE}"
+}
+
 flatten_domain() {
   local domain="$1"
+  _is_music_path "$domain" && return
   defaults export "$domain" - 2>/dev/null \
     | _flatten_plist_stdin \
     | sed "s|^|${domain} :: |"
@@ -1046,6 +1060,7 @@ flatten_domain() {
 
 flatten_plist() {
   local f="$1"
+  _is_music_path "$f" && return
   _flatten_plist_stdin < "$f" \
     | sed "s|^|${f} :: |"
 }
@@ -1053,6 +1068,7 @@ flatten_plist() {
 # Reads a root-owned plist via sudo cat, flattens as current user.
 flatten_plist_sudo() {
   local f="$1"
+  _is_music_path "$f" && return
   sudo cat "$f" 2>/dev/null \
     | _flatten_plist_stdin \
     | sed "s|^|${f} :: |"
@@ -1110,7 +1126,7 @@ do_snapshot() {
         -o -name "screentimedx.plist" \
         -o -name "sharing.plist" \
       \) -maxdepth 2 2>/dev/null \
-      | if [ "${SETSHOT_CHECK_MUSIC:-0}" != "1" ]; then grep -vE "/(com\.apple\.(Music|iTunes|iCloud\.Music)\.|com\.apple\.(AMP[A-Z]|itunes|HomeSharing))"; else cat; fi \
+      | if [ "${SETSHOT_CHECK_MUSIC:-0}" != "1" ]; then grep -viE "/${_MUSIC_RE}"; else cat; fi \
       | sort)
 
     section "PLIST FILES: /Library/Preferences"

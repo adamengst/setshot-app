@@ -1,3 +1,4 @@
+import AppKit
 import MusicKit
 import SwiftUI
 import UserNotifications
@@ -5,10 +6,10 @@ import UserNotifications
 struct SettingsView: View {
     @AppStorage("OldestFirst") private var oldestFirst = false
     @AppStorage("AutoDeleteEmptyScheduledSnapshots") private var autoDeleteEmpty = false
+    @AppStorage("CheckMusicSettings") private var checkMusicSettings = false
     @State private var isEnabled = SchedulerManager.isInstalled
     @State private var fdaGranted: Bool? = nil
-    @State private var musicGranted: Bool? = nil
-    @State private var requestingMusic = false
+    @State private var musicStatus: MusicAuthorization.Status? = nil
     @State private var scheduleUnit: ScheduleUnit = Self.loadedUnit()
     @State private var intervalCount: Int = Self.loadedIntervalCount()
     @State private var scheduleTime: Date = Self.loadedTime()
@@ -62,18 +63,17 @@ struct SettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Media & Apple Music Settings\(musicGranted.map { $0 ? " (Enabled)" : " (Disabled)" } ?? "")")
+                Text("Music & Media Settings\(musicStatus.map { $0 == .authorized ? " (Enabled)" : " (Disabled)" } ?? "")")
                     .font(.system(size: 14))
                     .fontWeight(.medium)
                 Text(musicDescription)
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                if musicGranted == false {
+                if musicStatus == .notDetermined {
                     Button("Request Media & Apple Music Access") {
-                        Task { await requestMusicAccess() }
+                        requestMusicAccess()
                     }
-                    .disabled(requestingMusic)
                 }
             }
 
@@ -98,7 +98,7 @@ struct SettingsView: View {
     }
 
     private var musicDescription: AttributedString {
-        var str = AttributedString("For SetShot to read settings from the Music app, Home Sharing, and related systems, it needs Media & Apple Music access, which can be reviewed and revoked in ")
+        var str = AttributedString("For SetShot to read settings from the Music app, Home Sharing, and related systems, it needs Media & Apple Music access. When you enable this toggle, macOS will ask for permission on the next snapshot. You can review or revoke this in ")
         var link = AttributedString("System Settings \u{2192} Privacy & Security \u{2192} Media & Apple Music.")
         link.link = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Media")!
         str += link
@@ -109,21 +109,25 @@ struct SettingsView: View {
         async let fda = Task.detached(priority: .userInitiated) {
             SnapshotRunner.canReadSystemTCC()
         }.value
-        async let music = Task.detached(priority: .utility) {
-            SnapshotRunner.musicGranted()
+        async let music = Task.detached(priority: .userInitiated) {
+            MusicAuthorization.currentStatus
         }.value
         fdaGranted = await fda
-        musicGranted = await music
+        let status = await music
+        musicStatus = status
+        // Sync UserDefaults with actual TCC state so the snapshot env var stays correct
+        if status == .authorized {
+            checkMusicSettings = true
+        } else if status == .denied || status == .restricted {
+            checkMusicSettings = false
+        }
     }
 
-    private func requestMusicAccess() async {
-        requestingMusic = true
-        defer { requestingMusic = false }
-        _ = await MusicAuthorization.request()
-        let granted = MusicAuthorization.currentStatus == .authorized
-        musicGranted = granted
-        if granted {
-            UserDefaults.standard.set(true, forKey: "CheckMusicSettings")
+    private func requestMusicAccess() {
+        Task {
+            let status = await MusicAuthorization.request()
+            musicStatus = status
+            checkMusicSettings = (status == .authorized)
         }
     }
 

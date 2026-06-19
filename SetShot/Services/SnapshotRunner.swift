@@ -1,6 +1,5 @@
 import Foundation
 import IOKit.ps
-import MusicKit
 
 enum SnapshotError: LocalizedError {
     case scriptNotFound
@@ -36,20 +35,9 @@ struct SnapshotRunner {
         return false
     }
 
-    /// Whether the user has explicitly opted in to Music data capture AND the
-    /// TCC grant is currently active. Checks the opt-in flag first so that
-    /// MusicAuthorization.currentStatus is never called before the user consents
-    /// — on macOS 26 with a .notDetermined TCC entry, even currentStatus can
-    /// trigger the system permission dialog.
+    /// Whether the user has opted in to Music data capture.
     static func musicEnabled() -> Bool {
-        guard UserDefaults.standard.bool(forKey: "CheckMusicSettings") else { return false }
-        return MusicAuthorization.currentStatus == .authorized
-    }
-
-    /// Raw TCC grant check — only call this when you know the user has opted in
-    /// (e.g. SettingsView after the user clicks Request Access).
-    static func musicGranted() -> Bool {
-        MusicAuthorization.currentStatus == .authorized
+        UserDefaults.standard.bool(forKey: "CheckMusicSettings")
     }
 
     /// Whether this Mac has an internal battery. Evaluated once at launch and
