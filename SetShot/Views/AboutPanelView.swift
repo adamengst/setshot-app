@@ -127,6 +127,6 @@ struct AboutPanelView: View {
             .padding(.horizontal, 24)
             .padding(.vertical, 12)
         }
-        .frame(width: 325)
+        .frame(width: 380)
     }
 }

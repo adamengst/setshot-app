@@ -11,12 +11,17 @@ struct JournalView: View {
         guard !searchQuery.isEmpty else { return appModel.journal }
         let q = searchQuery.lowercased()
         return appModel.journal.filter {
-            $0.entryDescription.lowercased().contains(q) ||
-            $0.key.lowercased().contains(q) ||
-            ($0.uiLocation?.lowercased().contains(q) ?? false) ||
-            $0.oldValue.lowercased().contains(q) ||
-            $0.newValue.lowercased().contains(q) ||
-            ($0.userNote?.lowercased().contains(q) ?? false)
+            let valueMap = appModel.kb.entry(forDomain: $0.domain, key: $0.key)?.valueMap
+            let oldFormatted = formatValue($0.oldValue, key: $0.key, valueMap: valueMap)
+            let newFormatted = formatValue($0.newValue, key: $0.key, valueMap: valueMap)
+            return $0.entryDescription.lowercased().contains(q) ||
+                $0.key.lowercased().contains(q) ||
+                ($0.uiLocation?.lowercased().contains(q) ?? false) ||
+                $0.oldValue.lowercased().contains(q) ||
+                $0.newValue.lowercased().contains(q) ||
+                oldFormatted.lowercased().contains(q) ||
+                newFormatted.lowercased().contains(q) ||
+                ($0.userNote?.lowercased().contains(q) ?? false)
         }
     }
 
