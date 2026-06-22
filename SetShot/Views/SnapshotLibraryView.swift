@@ -42,7 +42,9 @@ struct SnapshotLibraryView: View {
             }
         }
         .task {
-            await appModel.loadSnapshots()
+            async let snapshots: Void = appModel.loadSnapshots()
+            async let kb: Void = appModel.loadKB()
+            _ = await (snapshots, kb)
             checkPendingComparison()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in

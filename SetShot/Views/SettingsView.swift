@@ -115,10 +115,12 @@ struct SettingsView: View {
         fdaGranted = await fda
         let status = await music
         musicStatus = status
-        // Sync UserDefaults with actual TCC state so the snapshot env var stays correct
+        // Sync UserDefaults with actual TCC state so the snapshot env var stays correct.
+        // notDetermined also resets the flag — a tccutil reset must not leave
+        // CheckMusicSettings=true while TCC is unsettled.
         if status == .authorized {
             checkMusicSettings = true
-        } else if status == .denied || status == .restricted {
+        } else {
             checkMusicSettings = false
         }
     }

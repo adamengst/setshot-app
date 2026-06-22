@@ -1,3 +1,13 @@
+## 1.0b21
+
+- **Smarter display of Finder new window setting** — Instead of showing cryptic codes like PfCm or PfLo, SetShot now shows your actual Mac name, home folder name, startup volume name, or the name of a custom folder you've chosen.
+- **Current macOS alert sound names** — macOS 15 renamed most of the built-in alert sounds (Submarine → Submerge, Morse → Pong, Funk → Funky, etc.). SetShot now shows the current names rather than the legacy ones.
+- **Journal search improvements** — Searching the journal now looks at setting values and your notes in addition to setting names and locations. The list also scrolls back to the top when you type a new search.
+- **Fixed: Submit Feedback required at least one issue to be checked** — Typing in the notes field alone was enough to enable the Submit button, but clicking it would fail. Now the button stays disabled until you check at least one checkbox.
+- **Fixed: Comparison from a notification could show incomplete results** — In some cases, clicking a SetShot notification to view a comparison would open the results before the knowledge base had finished loading, causing recognized changes to appear as unrecognized. This no longer happens.
+- **Baseline improvement** — The built-in baseline snapshots were captured on a virtual machine and contained VM-specific computer names, which would appear as spurious "before" values in comparisons. These have been replaced with "not set."
+- **Knowledge base updates** — Improved UI location labels throughout, correct Battery / Energy and Lock Screen paths for desktop Macs, and many new noise filters.
+
 ## 1.0b19
 
 - **Check for Updates fix** — "Check for Updates" in the SetShot menu was incorrectly greyed out. Fixed.

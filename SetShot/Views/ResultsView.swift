@@ -261,10 +261,31 @@ func recognizedRowText(description: String, location: String?, old: String, new:
 
 func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil) -> String {
     if let map = valueMap {
+        // Resolve dynamic system values for Finder new window target.
+        if key == "NewWindowTarget" {
+            if raw == "PfHm" {
+                return FileManager.default.homeDirectoryForCurrentUser.lastPathComponent
+            } else if raw == "PfCm" {
+                return Host.current().localizedName ?? map["PfCm"] ?? "My Mac"
+            } else if raw == "PfVo" {
+                let rootURL = URL(fileURLWithPath: "/")
+                let name = (try? rootURL.resourceValues(forKeys: [.volumeLocalizedNameKey]))?.volumeLocalizedName
+                return name ?? map["PfVo"] ?? "Macintosh HD"
+            } else if raw == "PfLo" || raw == "PfOt" {
+                if let pathStr = UserDefaults(suiteName: "com.apple.finder")?.string(forKey: "NewWindowTargetPath"),
+                   let url = URL(string: pathStr) {
+                    return url.lastPathComponent
+                }
+            }
+        }
         // Normalize True/False → 1/0 for value_map lookup since FLATTEN_PY
         // converts integer 0/1 to booleans, but value_map keys use integers.
         let lookupKey = raw == "True" ? "1" : raw == "False" ? "0" : raw
         if let label = map[lookupKey] { return label }
+        // For path values like /System/Library/Sounds/Morse.aiff, also try the filename stem.
+        if raw.hasPrefix("/"),
+           let stem = URL(string: "file://\(raw)")?.deletingPathExtension().lastPathComponent,
+           let label = map[stem] { return label }
     }
     switch raw.lowercased() {
     case "true", "yes", "1": return "On"
@@ -272,6 +293,9 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
     default: break
     }
     if raw.hasPrefix("/"), let url = URL(string: "file://\(raw)") {
+        return url.deletingPathExtension().lastPathComponent
+    }
+    if raw.hasPrefix("file://"), let url = URL(string: raw) {
         return url.deletingPathExtension().lastPathComponent
     }
     if raw.hasPrefix("AppleUSBAudioEngine:") {

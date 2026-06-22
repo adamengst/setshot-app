@@ -13,7 +13,10 @@ struct JournalView: View {
         return appModel.journal.filter {
             $0.entryDescription.lowercased().contains(q) ||
             $0.key.lowercased().contains(q) ||
-            ($0.uiLocation?.lowercased().contains(q) ?? false)
+            ($0.uiLocation?.lowercased().contains(q) ?? false) ||
+            $0.oldValue.lowercased().contains(q) ||
+            $0.newValue.lowercased().contains(q) ||
+            ($0.userNote?.lowercased().contains(q) ?? false)
         }
     }
 
@@ -46,14 +49,20 @@ struct JournalView: View {
             } else if sections.isEmpty {
                 noResults
             } else {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 24) {
-                        ForEach(sections, id: \.snapshotId) { section in
-                            sectionBlock(section)
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: 24) {
+                            Color.clear.frame(height: 0).id("journal-top")
+                            ForEach(sections, id: \.snapshotId) { section in
+                                sectionBlock(section)
+                            }
                         }
+                        .padding(20)
+                        .textSelection(.enabled)
                     }
-                    .padding(20)
-                    .textSelection(.enabled)
+                    .onChange(of: searchQuery) { _ in
+                        proxy.scrollTo("journal-top", anchor: .top)
+                    }
                 }
             }
         }

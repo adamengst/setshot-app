@@ -28,7 +28,7 @@ struct KBFeedbackView: View {
     @State private var errorMessage: String?
 
     private var canSubmit: Bool {
-        !selectedIssues.isEmpty || !notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !selectedIssues.isEmpty
     }
 
     var body: some View {
@@ -70,7 +70,7 @@ struct KBFeedbackView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 10) {
-                Text("What needs improvement?")
+                Text("What needs improvement? (select at least one)")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)

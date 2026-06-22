@@ -1,5 +1,6 @@
 import Foundation
 import IOKit.ps
+import MusicKit
 
 enum SnapshotError: LocalizedError {
     case scriptNotFound
@@ -35,9 +36,14 @@ struct SnapshotRunner {
         return false
     }
 
-    /// Whether the user has opted in to Music data capture.
+    /// Whether Music data capture is both opted in and TCC-authorized.
+    /// Checking currentStatus here (without request()) is non-prompting and
+    /// ensures a tccutil reset can't leave CheckMusicSettings=true while TCC
+    /// is .notDetermined, which would bypass the media file filter and trigger
+    /// a spurious permission dialog.
     static func musicEnabled() -> Bool {
-        UserDefaults.standard.bool(forKey: "CheckMusicSettings")
+        guard UserDefaults.standard.bool(forKey: "CheckMusicSettings") else { return false }
+        return MusicAuthorization.currentStatus == .authorized
     }
 
     /// Whether this Mac has an internal battery. Evaluated once at launch and
