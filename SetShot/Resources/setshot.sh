@@ -1432,7 +1432,7 @@ JSEOF
       /^[^ ]/              { prefix=""; next }
       /^ / {
         line=$0; sub(/^ +/,"",line)
-        sub(/ \([^)]*\)$/,"",line)
+        sub(/ \([^)]*\)?$/,"",line)
         n=split(line,p); if(n<2) next
         v=p[n]; k=line; sub(/ +[^ ]+$/,"",k)
         print "pmset :: " prefix k " = " v
