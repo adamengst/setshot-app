@@ -1418,6 +1418,14 @@ JSEOF
     LDM_VAL=$(launchctl bootenv 2>/dev/null | awk '/LockdownMode/{print $2}')
     echo "LockdownMode :: LockdownMode = ${LDM_VAL:-0}"
     echo ""
+    # NOTE: Keyboard backlight brightness and idle dim time cannot be captured
+    # on Apple Silicon Macs (macOS 13+). They are managed by corebrightnessd
+    # (Mach service com.apple.backlightd) and stored in GUID-namespaced NVRAM
+    # partitions requiring com.apple.private.iokit.system-nvram-allow. On Intel
+    # Macs, these were in com.apple.BezelServices (kDim, kDimTime), but that
+    # mechanism is gone on Apple Silicon. Would require a compiled Swift helper
+    # with private entitlements to query the KeyboardBrightnessClient SPI.
+
     echo "--- pmset ---"
     # Reformat pmset -g output into "pmset :: [section.]key = value" lines so
     # DiffEngine can parse and diff individual energy settings. Section prefixes
