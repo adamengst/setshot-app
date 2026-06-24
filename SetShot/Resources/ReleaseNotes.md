@@ -1,3 +1,17 @@
+## 1.0b22
+
+- **Redesigned snapshot list** — The snapshot library now uses a single list for all snapshots. Each row shows a brief summary of the recognized changes found since the previous snapshot, along with a count. Rows with no recognized changes say so explicitly — either "No recognized changes" or "X unrecognized change(s)" — so you can get a sense of what a comparison found.
+
+- **New selection mechanics** — Click any snapshot to select it (shown with a checkmark). Click a second snapshot to form a Before/After pair — whichever is higher in the list is After, whichever is lower is Before. If you already have two selected and click a third, both are deselected and the new one gets the checkmark so you can build a fresh pair. Command-click to force-select a snapshot as Before, and Shift-click to force-select a snapshot as After.
+
+- **Baseline snapshot improvements** — Built-in baseline snapshots are now labeled "macOS Sequoia 15.7.7 baseline defaults" (and similarly for Tahoe) for clarity, and appear in the same style as your own snapshots.
+
+- **Auto-delete empty scheduled snapshots now defaults to on** — The setting to automatically remove scheduled snapshots with no changes was supposed to default to on, but was defaulting to off due to a missing preference value. Fixed.
+
+- **Selectable text in Submit and Feedback sheets** — The setting summary in the Submit and Submit Feedback sheets can now be selected and copied.
+
+- **Knowledge base updates** — Added energy settings (sleep timers, display sleep, Power Nap, standby delay, and more); added Allow Handoff; improved noise filtering for chronod and power management entries that were previously blanket-suppressed.
+
 ## 1.0b21
 
 - **Smarter display of Finder new window setting** — Instead of showing cryptic codes like PfCm or PfLo, SetShot now shows your actual Mac name, home folder name, startup volume name, or the name of a custom folder you've chosen.
