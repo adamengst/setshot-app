@@ -215,12 +215,20 @@ NOISE_PATTERN='(
   cloud\.quota\.plist ::|
   \.biomesyncd\.plist ::|
   CallHistorySyncHelper\.plist ::|
-  \.chronod\.plist ::|
+  \.chronod\.plist :: NetworkEnabledAfterBootNotification\.|
+  \.chronod\.plist :: extensionsPendingDescriptorRefetch\[|
+  \.chronod\.plist :: hasMigratedRemoteWidgetsEnabledState\s*=|
+  \.chronod\.plist :: hasRemoteWidgets\s*=|
+  \.chronod\.plist :: lastEffectiveSignificantTimeChange\s*=|
+  \.chronod\.plist :: lastKnownTimes\.|
+  \.chronod\.plist :: migrationState\s*=|
+  \.chronod\.plist :: effectiveRemoteWidgetsEnabled\s*=|
   \.cseventlistener\.plist ::|
   AssetMetricsWorker\.plist ::|
   \.tipsd\.plist ::|
   DataDeliveryServices\.plist ::|
-  coreservices\.useractivityd[^/]*::|
+  coreservices\.useractivityd[^/]*:: kLocalPasteboardBlobName\s*=|
+  coreservices\.useractivityd[^/]*:: kRemotePasteboardBlobName\s*=|
   captive\.plist :: WISPrAccounts\.|
   :: SpotlightKnowledgeV2\.|
   :: IDE_CA_Daily_|
@@ -1411,7 +1419,25 @@ JSEOF
     echo "LockdownMode :: LockdownMode = ${LDM_VAL:-0}"
     echo ""
     echo "--- pmset ---"
-    pmset -g 2>/dev/null || echo "(unavailable)"
+    # Reformat pmset -g output into "pmset :: [section.]key = value" lines so
+    # DiffEngine can parse and diff individual energy settings. Section prefixes
+    # ("Battery Power.", "AC Power.") are added for named sections; "Currently
+    # in use" resets to no prefix. The trailing "(sleep prevented by ...)"
+    # parenthetical is stripped so the sleep timer value diffs cleanly.
+    pmset -g 2>/dev/null | awk '
+      BEGIN { prefix="" }
+      /^Battery Power:/    { prefix="Battery Power."; next }
+      /^AC Power:/         { prefix="AC Power."; next }
+      /^Currently in use:/ { prefix=""; next }
+      /^[^ ]/              { prefix=""; next }
+      /^ / {
+        line=$0; sub(/^ +/,"",line)
+        sub(/ \([^)]*\)$/,"",line)
+        n=split(line,p); if(n<2) next
+        v=p[n]; k=line; sub(/ +[^ ]+$/,"",k)
+        print "pmset :: " prefix k " = " v
+      }
+    '
     echo ""
     echo "--- systemsetup ---"
     systemsetup -getnetworktimeserver 2>/dev/null || echo "(unavailable)"

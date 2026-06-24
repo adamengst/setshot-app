@@ -20,6 +20,7 @@ struct SetShotApp: App {
                     .environmentObject(appModel)
                     .background(WindowFrameSaver(name: "SetShotMainWindow"))
                     .task { await appModel.start(); PingService.pingIfNeeded() }
+                    .task { await SettingsPaneIconProvider.shared.prewarm() }
             }
         }
         .defaultSize(width: 750, height: 760)
@@ -264,7 +265,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
                            .filteringHardware(hasBattery: SnapshotRunner.hasBattery) {
                         let r = result.recognized.count
                         let u = result.unrecognized.count
-                        let autoDelete = UserDefaults.standard.bool(forKey: "AutoDeleteEmptyScheduledSnapshots")
+                        let autoDelete = UserDefaults.standard.object(forKey: "AutoDeleteEmptyScheduledSnapshots") as? Bool ?? true
                         if autoDelete && r == 0 && u == 0 {
                             try? await SnapshotStore.shared.delete(stored)
                         } else {

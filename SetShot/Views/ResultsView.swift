@@ -132,7 +132,7 @@ struct ResultsView: View {
             .modifier(NoFocusEffect())
 
             if showFirstTime {
-                Text("These settings were written for the first time between the two snapshots. They may reflect turning on Full Disk Access or macOS initializing defaults rather than a deliberate change, although changing a default manually has the same effect.")
+                Text("These settings were written for the first time between the two snapshots. It should mean that you changed a default manually, but it can also reflect turning on Full Disk Access or macOS initializing defaults rather than a deliberate change.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

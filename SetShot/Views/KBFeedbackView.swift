@@ -66,6 +66,7 @@ struct KBFeedbackView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color.secondary.opacity(0.08))
             .cornerRadius(8)
+            .textSelection(.enabled)
 
             Divider()
 

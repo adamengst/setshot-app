@@ -128,7 +128,7 @@ actor SnapshotStore {
         return try? JSONDecoder().decode(SnapshotMeta.self, from: data)
     }
 
-    // Derives "macOS Sequoia 15.7.7 defaults" from "base_Sequoia_15.7.7.txt.gz"
+    // Derives "macOS Sequoia 15.7.7 baseline defaults" from "base_Sequoia_15.7.7.txt.gz"
     private nonisolated func baseLabel(for filename: String) -> String? {
         var name = filename
         guard name.hasPrefix("base_") else { return nil }
@@ -137,7 +137,7 @@ actor SnapshotStore {
         else if name.hasSuffix(".txt") { name = String(name.dropLast(4)) }
         let parts = name.split(separator: "_", maxSplits: 1)
         guard parts.count == 2 else { return nil }
-        return "macOS \(parts[0]) \(parts[1]) defaults"
+        return "macOS \(parts[0]) \(parts[1]) baseline defaults"
     }
 
     private nonisolated func baseMajorVersion(for filename: String) -> Int? {
@@ -153,7 +153,7 @@ actor SnapshotStore {
 
     private func filename(for date: Date) -> String {
         let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd_HHmm"
+        f.dateFormat = "yyyy-MM-dd_HHmmss"
         return "setshot_\(f.string(from: date)).txt.gz"
     }
 
@@ -164,11 +164,17 @@ actor SnapshotStore {
         guard s.hasPrefix("setshot_") else { return nil }
         let rest = String(s.dropFirst(8))
         guard rest.count >= 15 else { return nil }
-        let dateStr = String(rest.prefix(15))
+        // Position 15 is a digit only in the seconds format (yyyy-MM-dd_HHmmss = 17 chars);
+        // legacy files use minute format (yyyy-MM-dd_HHmm = 15 chars).
+        let idx15 = rest.index(rest.startIndex, offsetBy: 15)
+        let useSeconds = rest.count > 15 && rest[idx15].isNumber
+        let dateLen = useSeconds ? 17 : 15
+        guard rest.count >= dateLen else { return nil }
+        let dateStr = String(rest.prefix(dateLen))
         let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd_HHmm"
+        f.dateFormat = useSeconds ? "yyyy-MM-dd_HHmmss" : "yyyy-MM-dd_HHmm"
         guard let date = f.date(from: dateStr) else { return nil }
-        let suffix = String(rest.dropFirst(15))
+        let suffix = String(rest.dropFirst(dateLen))
         let label = suffix.hasPrefix("_") ? String(suffix.dropFirst()) : nil
         return (date, label.flatMap { $0.isEmpty ? nil : $0 })
     }

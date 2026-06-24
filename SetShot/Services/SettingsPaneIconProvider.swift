@@ -67,6 +67,13 @@ actor SettingsPaneIconProvider {
         "com.apple.settings.AppleIDSettings":             ("person.crop.circle.fill",               0.20, 0.54, 0.90),
     ]
 
+    func prewarm() {
+        ensureBundleMap()
+        for (id, fb) in sfSymbolFallbacks where iconCache[id] == nil {
+            iconCache[id] = renderedSFSymbol(fb.symbol, r: fb.r, g: fb.g, b: fb.b)
+        }
+    }
+
     func icon(forSettingsURL urlString: String?, domain: String, iconBundleID: String? = nil) async -> NSImage? {
         let resolvedID: String?
         if let iconBundleID {
@@ -85,7 +92,7 @@ actor SettingsPaneIconProvider {
                 // macOS 15.7.7 replaced real extension icons with a generic 495 KB placeholder
                 // across Battery, AirDrop, Network, Screen Saver, and others.
                 if let fb = sfSymbolFallbacks[resolvedID] {
-                    let img = await MainActor.run { self.renderedSFSymbol(fb.symbol, r: fb.r, g: fb.g, b: fb.b) }
+                    let img = renderedSFSymbol(fb.symbol, r: fb.r, g: fb.g, b: fb.b)
                     iconCache[resolvedID] = img
                     return img
                 }
@@ -145,35 +152,49 @@ actor SettingsPaneIconProvider {
 
     // Renders an SF Symbol centred on a rounded-rectangle background, matching
     // the System Settings sidebar icon style for panes that have no file icon.
-    // nonisolated so it can be dispatched to the main thread via MainActor.run
-    // (NSImage.lockFocus must be called on the main thread).
+    // Uses NSGraphicsContext(cgContext:) so it can run on any thread — no lockFocus
+    // (and no MainActor hop) needed. NSGraphicsContext.current is per-thread in AppKit.
     nonisolated private func renderedSFSymbol(_ symbol: String, r: CGFloat, g: CGFloat, b: CGFloat) -> NSImage? {
-        let px: CGFloat = 256
-        let color = NSColor(srgbRed: r, green: g, blue: b, alpha: 1)
+        let px = 256
+        let fPx = CGFloat(px)
 
+        guard let ctx = CGContext(
+            data: nil, width: px, height: px,
+            bitsPerComponent: 8, bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+        ) else { return nil }
+
+        // Rounded-rect background
+        ctx.setFillColor(CGColor(red: r, green: g, blue: b, alpha: 1))
+        let bgPath = CGPath(roundedRect: CGRect(x: 0, y: 0, width: fPx, height: fPx),
+                            cornerWidth: fPx * 0.22, cornerHeight: fPx * 0.22, transform: nil)
+        ctx.addPath(bgPath)
+        ctx.fillPath()
+
+        // SF Symbol drawn via NSGraphicsContext wrapper (NSGraphicsContext.current is per-thread)
         guard let sym = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
             .withSymbolConfiguration(
-                NSImage.SymbolConfiguration(pointSize: px * 0.48, weight: .medium)
+                NSImage.SymbolConfiguration(pointSize: fPx * 0.48, weight: .medium)
                     .applying(NSImage.SymbolConfiguration(paletteColors: [.white]))
             )
-        else { return nil }
+        else {
+            guard let cgImage = ctx.makeImage() else { return nil }
+            return NSImage(cgImage: cgImage, size: NSSize(width: px, height: px))
+        }
 
-        let result = NSImage(size: NSSize(width: px, height: px))
-        result.lockFocus()
-
-        let rect = NSRect(x: 0, y: 0, width: px, height: px)
-        let path = NSBezierPath(roundedRect: rect, xRadius: px * 0.22, yRadius: px * 0.22)
-        color.setFill()
-        path.fill()
-
+        let nsCtx = NSGraphicsContext(cgContext: ctx, flipped: false)
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = nsCtx
         let symSize = sym.size
-        let symRect = NSRect(x: (px - symSize.width) / 2, y: (px - symSize.height) / 2,
+        let symRect = NSRect(x: (fPx - symSize.width) / 2, y: (fPx - symSize.height) / 2,
                              width: symSize.width, height: symSize.height)
         sym.draw(in: symRect, from: .zero, operation: .sourceOver, fraction: 1,
-                 respectFlipped: true, hints: nil)
+                 respectFlipped: false, hints: nil)
+        NSGraphicsContext.restoreGraphicsState()
 
-        result.unlockFocus()
-        return result
+        guard let cgImage = ctx.makeImage() else { return nil }
+        return NSImage(cgImage: cgImage, size: NSSize(width: px, height: px))
     }
 
     private func ensureBundleMap() {

@@ -5,7 +5,7 @@ import UserNotifications
 
 struct SettingsView: View {
     @AppStorage("OldestFirst") private var oldestFirst = false
-    @AppStorage("AutoDeleteEmptyScheduledSnapshots") private var autoDeleteEmpty = false
+    @AppStorage("AutoDeleteEmptyScheduledSnapshots") private var autoDeleteEmpty = true
     @AppStorage("CheckMusicSettings") private var checkMusicSettings = false
     @State private var isEnabled = SchedulerManager.isInstalled
     @State private var fdaGranted: Bool? = nil

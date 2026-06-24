@@ -3,8 +3,7 @@ import SwiftUI
 struct SnapshotLibraryView: View {
     @EnvironmentObject var appModel: AppModel
     @Environment(\.openWindow) private var openWindow
-    @State private var selectedBefore: StoredSnapshot?
-    @State private var selectedAfter: StoredSnapshot?
+    @State private var selectedIDs: Set<String> = []
     @State private var isTakingSnapshot = false
     @State private var isComparing = false
     @State private var errorMessage: String?
@@ -14,13 +13,30 @@ struct SnapshotLibraryView: View {
 
     private let currentMacOSMajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
 
-    private var displaySnapshots: [StoredSnapshot] {
-        oldestFirst ? appModel.snapshots.reversed() : appModel.snapshots
+    private var allSnapshots: [StoredSnapshot] {
+        let base = appModel.baseSnapshots.filter { $0.baseMacOSMajor == currentMacOSMajor }
+        return (appModel.snapshots + base)
+            .sorted { oldestFirst ? $0.date < $1.date : $0.date > $1.date }
     }
 
-    private var matchingBaseSnapshots: [StoredSnapshot] {
-        appModel.baseSnapshots.filter { $0.baseMacOSMajor == currentMacOSMajor }
+    private var descriptionsBySnapshotID: [String: [String]] {
+        var result: [String: [String]] = [:]
+        for entry in appModel.journal {
+            var list = result[entry.afterSnapshotId, default: []]
+            if list.count < 3 {
+                list.append(entry.entryDescription)
+                result[entry.afterSnapshotId] = list
+            }
+        }
+        return result
     }
+
+    private var selectedSorted: [StoredSnapshot] {
+        allSnapshots.filter { selectedIDs.contains($0.id) }
+    }
+
+    private var effectiveAfter:  StoredSnapshot? { selectedSorted.first }
+    private var effectiveBefore: StoredSnapshot? { selectedSorted.last }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -28,7 +44,7 @@ struct SnapshotLibraryView: View {
             Divider()
             switch activeTab {
             case .snapshots:
-                if appModel.snapshots.isEmpty && matchingBaseSnapshots.isEmpty { emptyState } else { pickerColumns }
+                if allSnapshots.isEmpty { emptyState } else { snapshotList }
             case .journal:
                 JournalView()
             case .settings:
@@ -105,72 +121,33 @@ struct SnapshotLibraryView: View {
         .padding()
     }
 
-    private var pickerColumns: some View {
-        HStack(spacing: 0) {
-            snapshotColumn(label: "Before", selected: $selectedBefore) { snapshot in
-                guard !snapshot.isBaseSnapshot else { return false }
-                return selectedAfter.map { snapshot.date >= $0.date } ?? false
-            }
-            Divider()
-            snapshotColumn(label: "After", selected: $selectedAfter) { snapshot in
-                guard !snapshot.isBaseSnapshot else { return false }
-                return selectedBefore.map { snapshot.date <= $0.date } ?? false
+    private var snapshotList: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                ForEach(allSnapshots) { snapshot in
+                    SnapshotRow(
+                        snapshot: snapshot,
+                        isSelected: selectedIDs.contains(snapshot.id),
+                        role: roleLabel(for: snapshot),
+                        changeDescriptions: descriptionsBySnapshotID[snapshot.id] ?? []
+                    ) { flags in
+                        toggleSelection(snapshot, modifiers: flags)
+                    } onRename: { newName in
+                        Task { await appModel.renameSnapshot(snapshot, to: newName) }
+                    } onDelete: {
+                        deleteSnapshot(snapshot)
+                    }
+                    Divider()
+                }
             }
         }
     }
 
-    private func snapshotColumn(
-        label: String,
-        selected: Binding<StoredSnapshot?>,
-        isDisabled: @escaping (StoredSnapshot) -> Bool
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(label)
-                .font(.subheadline.bold())
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .frame(maxWidth: .infinity)
-            Divider()
-            ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(displaySnapshots) { snapshot in
-                        let isSelected = selected.wrappedValue?.id == snapshot.id
-                        let isExcluded = isDisabled(snapshot)
-                        SnapshotRow(
-                            snapshot: snapshot,
-                            isSelected: isSelected,
-                            isExcluded: isExcluded
-                        ) {
-                            selected.wrappedValue = isSelected ? nil : snapshot
-                        } onRename: { newName in
-                            Task { await appModel.renameSnapshot(snapshot, to: newName) }
-                        } onDelete: {
-                            deleteSnapshot(snapshot, selected: selected)
-                        }
-                        .id("\(label)-\(snapshot.id)")
-                    }
-                }
-            }
-            if !matchingBaseSnapshots.isEmpty {
-                Divider()
-                Text("Baselines")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity)
-                Divider()
-                ForEach(matchingBaseSnapshots) { snapshot in
-                    let isSelected = selected.wrappedValue?.id == snapshot.id
-                    BaseSnapshotRow(snapshot: snapshot, isSelected: isSelected) {
-                        selected.wrappedValue = isSelected ? nil : snapshot
-                    }
-                    .id("\(label)-\(snapshot.id)")
-                }
-            }
-        }
-        .frame(maxWidth: .infinity)
+    private func roleLabel(for snapshot: StoredSnapshot) -> String? {
+        guard selectedSorted.count >= 2 else { return nil }
+        if snapshot.id == effectiveAfter?.id  { return "After" }
+        if snapshot.id == effectiveBefore?.id { return "Before" }
+        return nil
     }
 
     private var footer: some View {
@@ -185,7 +162,12 @@ struct SnapshotLibraryView: View {
                     .buttonStyle(.borderedProminent)
             }
             Spacer()
-            if let before = selectedBefore, let after = selectedAfter {
+            if selectedIDs.count < 2 {
+                Text("Select snapshots to compare. Command-click explicitly selects Before; Shift-click selects After.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            } else if let before = effectiveBefore, let after = effectiveAfter, before.id != after.id {
                 Text("\(before.displayName)  →  \(after.displayName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -199,7 +181,7 @@ struct SnapshotLibraryView: View {
             } else {
                 Button("Compare") { compare() }
                     .buttonStyle(.borderedProminent)
-                    .disabled(selectedBefore == nil || selectedAfter == nil)
+                    .disabled(selectedSorted.count < 2)
             }
         }
         .padding(.horizontal, 20)
@@ -207,6 +189,28 @@ struct SnapshotLibraryView: View {
     }
 
     // MARK: - Actions
+
+    private func toggleSelection(_ snapshot: StoredSnapshot, modifiers: NSEvent.ModifierFlags = []) {
+        if modifiers.contains(.shift) {
+            // Shift-click: force this snapshot as After, keep current Before
+            var next: Set<String> = [snapshot.id]
+            if let before = effectiveBefore, before.id != snapshot.id { next.insert(before.id) }
+            selectedIDs = next
+        } else if modifiers.contains(.command) {
+            // Command-click: force this snapshot as Before, keep current After
+            var next: Set<String> = [snapshot.id]
+            if let after = effectiveAfter, after.id != snapshot.id { next.insert(after.id) }
+            selectedIDs = next
+        } else if selectedIDs.contains(snapshot.id) {
+            selectedIDs.remove(snapshot.id)
+        } else if selectedIDs.count < 2 {
+            selectedIDs.insert(snapshot.id)
+        } else {
+            // Two already selected: deselect both and start fresh with the clicked one.
+            // The next click will become After (if above) or Before (if below) naturally.
+            selectedIDs = [snapshot.id]
+        }
+    }
 
     private func takeSnapshot() {
         isTakingSnapshot = true
@@ -220,13 +224,13 @@ struct SnapshotLibraryView: View {
         }
     }
 
-    private func deleteSnapshot(_ snapshot: StoredSnapshot, selected: Binding<StoredSnapshot?>) {
-        if selected.wrappedValue?.id == snapshot.id { selected.wrappedValue = nil }
+    private func deleteSnapshot(_ snapshot: StoredSnapshot) {
+        selectedIDs.remove(snapshot.id)
         Task { await appModel.deleteSnapshot(snapshot) }
     }
 
     private func compare() {
-        guard let before = selectedBefore, let after = selectedAfter else { return }
+        guard let before = effectiveBefore, let after = effectiveAfter, before.id != after.id else { return }
         runComparison(before: before, after: after)
     }
 
@@ -241,9 +245,9 @@ struct SnapshotLibraryView: View {
     private func openComparison(beforeID: String, afterID: String) {
         Task {
             await appModel.loadSnapshots()
-            let allSnapshots = appModel.snapshots + appModel.baseSnapshots
-            guard let before = allSnapshots.first(where: { $0.id == beforeID }),
-                  let after = allSnapshots.first(where: { $0.id == afterID }) else { return }
+            let all = appModel.snapshots + appModel.baseSnapshots
+            guard let before = all.first(where: { $0.id == beforeID }),
+                  let after = all.first(where: { $0.id == afterID }) else { return }
             runComparison(before: before, after: after)
         }
     }
@@ -265,13 +269,22 @@ struct SnapshotLibraryView: View {
 private struct SnapshotRow: View {
     let snapshot: StoredSnapshot
     let isSelected: Bool
-    let isExcluded: Bool
-    let onTap: () -> Void
+    let role: String?
+    let changeDescriptions: [String]
+    let onTap: (NSEvent.ModifierFlags) -> Void
     let onRename: (String) -> Void
     let onDelete: () -> Void
 
     @State private var isEditing = false
     @State private var editText = ""
+
+    private var descriptionSummary: String {
+        if !changeDescriptions.isEmpty { return changeDescriptions.joined(separator: " · ") }
+        guard let r = snapshot.recognizedCount else { return "" }
+        if r > 0 { return "" }
+        let u = snapshot.unrecognizedCount ?? 0
+        return u > 0 ? "\(u) unrecognized \(u == 1 ? "change" : "changes")" : "No recognized changes"
+    }
 
     var body: some View {
         HStack {
@@ -281,11 +294,17 @@ private struct SnapshotRow: View {
                     onCommit: commitRename,
                     onCancel: { isEditing = false }
                 )
+                Spacer()
             } else {
                 Text(snapshot.displayName)
-                    .foregroundStyle(isExcluded ? .tertiary : .primary)
+                    .foregroundStyle(.primary)
+                    .font(.body)
+                Text(descriptionSummary)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            Spacer()
             if !isEditing {
                 changeCountLabel
                 Text(snapshot.formattedFileSize)
@@ -293,23 +312,31 @@ private struct SnapshotRow: View {
                     .foregroundStyle(.tertiary)
             }
             if isSelected && !isEditing {
-                Image(systemName: "checkmark")
-                    .foregroundStyle(Color.accentColor)
-                    .font(.caption.bold())
+                if let role {
+                    Text(role)
+                        .font(.caption.bold())
+                        .foregroundStyle(Color.accentColor)
+                } else {
+                    Image(systemName: "checkmark")
+                        .foregroundStyle(Color.accentColor)
+                        .font(.caption.bold())
+                }
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
         .background(isSelected ? Color.accentColor.opacity(0.12) : Color.clear)
         .contentShape(Rectangle())
-        .onTapGesture(count: 1) { if !isExcluded && !isEditing { onTap() } }
+        .onTapGesture(count: 1) { if !isEditing { onTap(NSApp.currentEvent?.modifierFlags ?? []) } }
         .contextMenu {
-            Button("Rename") {
-                editText = snapshot.displayName
-                isEditing = true
+            if !snapshot.isBaseSnapshot {
+                Button("Rename") {
+                    editText = snapshot.displayName
+                    isEditing = true
+                }
+                Divider()
+                Button("Delete", role: .destructive) { onDelete() }
             }
-            Divider()
-            Button("Delete", role: .destructive) { onDelete() }
         }
     }
 
@@ -332,34 +359,6 @@ private struct SnapshotRow: View {
         let trimmed = editText.trimmingCharacters(in: .whitespaces)
         isEditing = false
         onRename(trimmed)
-    }
-}
-
-private struct BaseSnapshotRow: View {
-    let snapshot: StoredSnapshot
-    let isSelected: Bool
-    let onTap: () -> Void
-
-    var body: some View {
-        HStack {
-            Text(snapshot.displayName)
-                .foregroundStyle(.secondary)
-                .font(.subheadline)
-            Spacer()
-            Text(snapshot.formattedFileSize)
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .foregroundStyle(Color.accentColor)
-                    .font(.caption.bold())
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(isSelected ? Color.accentColor.opacity(0.12) : Color.clear)
-        .contentShape(Rectangle())
-        .onTapGesture { onTap() }
     }
 }
 
