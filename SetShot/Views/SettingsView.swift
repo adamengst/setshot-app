@@ -5,6 +5,7 @@ import UserNotifications
 
 struct SettingsView: View {
     @EnvironmentObject private var updaterState: UpdaterState
+    @AppStorage("SUEnableAutomaticChecks") private var autoCheckForUpdates = true
     @AppStorage("OldestFirst") private var oldestFirst = false
     @AppStorage("AutoDeleteEmptyScheduledSnapshots") private var autoDeleteEmpty = true
     @AppStorage("CheckMusicSettings") private var checkMusicSettings = false
@@ -59,10 +60,10 @@ struct SettingsView: View {
 
     private var updatesSection: some View {
         SettingsSection("Software Updates") {
-            Toggle("Check for updates automatically", isOn: Binding(
-                get: { updaterState.controller.updater.automaticallyChecksForUpdates },
-                set: { updaterState.controller.updater.automaticallyChecksForUpdates = $0 }
-            ))
+            Toggle("Check for updates automatically", isOn: $autoCheckForUpdates)
+                .onChange(of: autoCheckForUpdates) { newValue in
+                    updaterState.controller.updater.automaticallyChecksForUpdates = newValue
+                }
             Text("SetShot checks for new versions in the background approximately once per hour. You can also check at any time via the SetShot menu.")
                 .font(.caption)
                 .foregroundStyle(.secondary)

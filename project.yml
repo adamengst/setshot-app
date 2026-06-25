@@ -39,7 +39,7 @@ targets:
         MACOSX_DEPLOYMENT_TARGET: "13.0"
         GENERATE_INFOPLIST_FILE: YES
         MARKETING_VERSION: "1.0b23"
-        CURRENT_PROJECT_VERSION: "24"
+        CURRENT_PROJECT_VERSION: "25"
         INFOPLIST_KEY_CFBundleDisplayName: SetShot
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         INFOPLIST_KEY_NSAppleMusicUsageDescription: "SetShot reads Music, TV, and media settings to detect changes to your media preferences."
