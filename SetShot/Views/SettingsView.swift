@@ -4,6 +4,7 @@ import SwiftUI
 import UserNotifications
 
 struct SettingsView: View {
+    @EnvironmentObject private var updaterState: UpdaterState
     @AppStorage("OldestFirst") private var oldestFirst = false
     @AppStorage("AutoDeleteEmptyScheduledSnapshots") private var autoDeleteEmpty = true
     @AppStorage("CheckMusicSettings") private var checkMusicSettings = false
@@ -36,6 +37,7 @@ struct SettingsView: View {
                 schedulerSection
                 dataSourcesSection
                 displayOrderSection
+                updatesSection
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(40)
@@ -50,6 +52,18 @@ struct SettingsView: View {
         SettingsSection("Display Order") {
             Toggle("Show oldest first", isOn: $oldestFirst)
             Text("Applies to both the Snapshots list and the Journal.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var updatesSection: some View {
+        SettingsSection("Software Updates") {
+            Toggle("Check for updates automatically", isOn: Binding(
+                get: { updaterState.controller.updater.automaticallyChecksForUpdates },
+                set: { updaterState.controller.updater.automaticallyChecksForUpdates = $0 }
+            ))
+            Text("SetShot checks for new versions in the background approximately once per hour. You can also check at any time via the SetShot menu.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

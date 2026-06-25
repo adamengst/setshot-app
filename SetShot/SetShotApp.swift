@@ -18,6 +18,7 @@ struct SetShotApp: App {
             } else {
                 ContentView()
                     .environmentObject(appModel)
+                    .environmentObject(updaterState)
                     .background(WindowFrameSaver(name: "SetShotMainWindow"))
                     .task { await appModel.start(); PingService.pingIfNeeded() }
                     .task { await SettingsPaneIconProvider.shared.prewarm() }
@@ -223,10 +224,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        migrateAutoDeleteDefault()
         if CommandLine.arguments.contains("--background-snapshot") {
             runBackgroundSnapshot()
         } else {
             UNUserNotificationCenter.current().delegate = self
+        }
+    }
+
+    // One-time migration: users who had the scheduler set up before this setting
+    // existed were effectively at false (the old missing-key default). If the key
+    // is still absent on their first post-b22 launch, preserve that by writing
+    // false explicitly so the new default of true doesn't silently change behavior.
+    // New users who enable the scheduler after this migration has run will get true.
+    private func migrateAutoDeleteDefault() {
+        let ud = UserDefaults.standard
+        guard !ud.bool(forKey: "AutoDeleteMigrationDone") else { return }
+        ud.set(true, forKey: "AutoDeleteMigrationDone")
+        if ud.object(forKey: "AutoDeleteEmptyScheduledSnapshots") == nil,
+           SchedulerManager.isInstalled {
+            ud.set(false, forKey: "AutoDeleteEmptyScheduledSnapshots")
         }
     }
 
