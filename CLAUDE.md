@@ -42,7 +42,13 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-submissions` (priv
    gh issue list --repo adamengst/setshot-submissions --label pending
    ```
 
-2. Increment `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml` (e.g. `1.0` → `1.1`, build `1` → `2`).
+2. Check for a newer Sparkle release:
+   ```
+   gh release list --repo sparkle-project/Sparkle --limit 5
+   ```
+   Compare against the version pinned in `SetShot.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved`. Only upgrade if the new release has been out for **at least two to three weeks** — long enough for regression reports to surface. If upgrading, update `Package.resolved` with the new version and commit hash, build and test before proceeding.
+
+3. Increment `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml` (e.g. `1.0` → `1.1`, build `1` → `2`).
 3. Run `xcodegen generate` to update the `.xcodeproj`.
 4. Run the test suite and confirm all tests pass:
    ```
