@@ -1119,6 +1119,10 @@ do_snapshot() {
     fi
     echo "=========================================="
 
+    section "system"
+    echo "system :: macOSVersion = $(sw_vers -productVersion)"
+    echo "system :: macOSBuild = $(sw_vers -buildVersion)"
+
     section "NSGlobalDomain"
     flatten_domain "NSGlobalDomain"
 

@@ -64,9 +64,9 @@ struct SettingsView: View {
                 .onChange(of: autoCheckForUpdates) { newValue in
                     updaterState.controller.updater.automaticallyChecksForUpdates = newValue
                 }
-            Text("SetShot checks for new versions in the background approximately once per hour. You can also check at any time via the SetShot menu.")
+            Text("SetShot checks for new versions in the background once per hour. To check manually, choose SetShot \u{2192} Check for Updates.")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.secondary)    
         }
     }
 
