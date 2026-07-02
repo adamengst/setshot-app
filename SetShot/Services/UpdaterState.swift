@@ -12,6 +12,7 @@ final class UpdaterState: ObservableObject {
     @Published var canCheckForUpdates = false
     let controller: SPUStandardUpdaterController
     private var observation: NSKeyValueObservation?
+    private let userDriverDelegate = UpdaterUserDriverDelegate()
 
     // False in debug/test builds so Sparkle's XPC services aren't invoked without
     // the correct signing identity. True in release builds. Exposed for testing.
@@ -27,7 +28,7 @@ final class UpdaterState: ObservableObject {
         controller = SPUStandardUpdaterController(
             startingUpdater: Self.startsInRelease,
             updaterDelegate: nil,
-            userDriverDelegate: nil
+            userDriverDelegate: userDriverDelegate
         )
         // Never silently install — always show the update dialog so the user
         // can read release notes and choose when to install.
@@ -36,4 +37,11 @@ final class UpdaterState: ObservableObject {
             DispatchQueue.main.async { self?.canCheckForUpdates = updater.canCheckForUpdates }
         }
     }
+}
+
+// Disables Sparkle's "gentle reminder" mode so that a scheduled background
+// check that finds an update shows the full update dialog immediately rather
+// than a subtle notification the user might never see.
+private class UpdaterUserDriverDelegate: NSObject, SPUStandardUserDriverDelegate {
+    func supportsGentleScheduledUpdateReminders() -> Bool { false }
 }
