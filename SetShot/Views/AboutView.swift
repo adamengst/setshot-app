@@ -333,8 +333,10 @@ private struct AboutHelpNSTextView: NSViewRepresentable {
 // MARK: - About view
 
 struct AboutView: View {
+    var openSettings: () -> Void = {}
     @State private var searchQuery = ""
     @State private var matchIndex = 0
+    @FocusState private var searchFocused: Bool
 
     private var matches: [String] {
         guard !searchQuery.isEmpty else { return [] }
@@ -402,6 +404,14 @@ struct AboutView: View {
                 }
             }
         }
+        .overlay {
+            Button("") { searchFocused = true }
+                .keyboardShortcut("f", modifiers: .command)
+                .opacity(0)
+            Button("") { openSettings() }
+                .keyboardShortcut(",", modifiers: .command)
+                .opacity(0)
+        }
     }
 
     private func scroll(to index: Int, proxy: ScrollViewProxy) {
@@ -428,6 +438,7 @@ struct AboutView: View {
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
             TextField("Search", text: $searchQuery)
                 .textFieldStyle(.plain)
+                .focused($searchFocused)
             if !searchQuery.isEmpty {
                 if matches.isEmpty {
                     Text("No results")

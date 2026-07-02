@@ -29,6 +29,9 @@ final class UpdaterState: ObservableObject {
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
+        // Never silently install — always show the update dialog so the user
+        // can read release notes and choose when to install.
+        controller.updater.automaticallyDownloadsUpdates = false
         observation = controller.updater.observe(\.canCheckForUpdates, options: [.initial, .new]) { [weak self] updater, _ in
             DispatchQueue.main.async { self?.canCheckForUpdates = updater.canCheckForUpdates }
         }

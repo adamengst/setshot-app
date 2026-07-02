@@ -2,10 +2,12 @@ import SwiftUI
 import AppKit
 
 struct JournalView: View {
+    var openSettings: () -> Void = {}
     @EnvironmentObject var appModel: AppModel
     @AppStorage("OldestFirst") private var oldestFirst = false
     @State private var searchQuery = ""
     @State private var showingClearConfirm = false
+    @FocusState private var searchFocused: Bool
 
     private var filteredEntries: [JournalEntry] {
         guard !searchQuery.isEmpty else { return appModel.journal }
@@ -71,6 +73,14 @@ struct JournalView: View {
                 }
             }
         }
+        .overlay {
+            Button("") { searchFocused = true }
+                .keyboardShortcut("f", modifiers: .command)
+                .opacity(0)
+            Button("") { openSettings() }
+                .keyboardShortcut(",", modifiers: .command)
+                .opacity(0)
+        }
     }
 
     private var searchField: some View {
@@ -78,6 +88,7 @@ struct JournalView: View {
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
             TextField("Search journal", text: $searchQuery)
                 .textFieldStyle(.plain)
+                .focused($searchFocused)
             if !searchQuery.isEmpty {
                 Button { searchQuery = "" } label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)

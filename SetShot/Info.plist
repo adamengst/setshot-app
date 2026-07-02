@@ -28,6 +28,8 @@
     <string>https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml</string>
     <key>SUPublicEDKey</key>
     <string>7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg=</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
     <key>SUScheduledCheckInterval</key>
     <integer>3600</integer>
 </dict>

@@ -46,11 +46,11 @@ struct SnapshotLibraryView: View {
             case .snapshots:
                 if allSnapshots.isEmpty { emptyState } else { snapshotList }
             case .journal:
-                JournalView()
+                JournalView(openSettings: { activeTab = .settings })
             case .settings:
                 SettingsView()
             case .about:
-                AboutView()
+                AboutView(openSettings: { activeTab = .settings })
             }
             if activeTab == .snapshots {
                 Divider()
@@ -78,6 +78,11 @@ struct SnapshotLibraryView: View {
             if newTab != .about {
                 UserDefaults.standard.set(true, forKey: "HasSeenAbout")
             }
+        }
+        .overlay {
+            Button("") { activeTab = .settings }
+                .keyboardShortcut(",", modifiers: .command)
+                .opacity(0)
         }
         .alert("Error", isPresented: Binding(
             get: { errorMessage != nil },
