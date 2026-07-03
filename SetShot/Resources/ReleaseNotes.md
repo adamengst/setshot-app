@@ -1,14 +1,14 @@
 ## 1.0b23
 
-- **Software Updates setting** — A new Software Updates section in Settings lets you turn automatic update checking on or off at any time. Previously this was only configurable at first launch.
+- **macOS updates now appear as recognized changes** — When macOS is updated between two snapshots, the new version and build number appear as recognized changes in the comparison, so you can tell which update happened.
 
-- **macOS updates now appear as recognized changes** — When macOS is updated between two snapshots, the new version and build number appear as recognized changes in the comparison, so you can tell exactly which update happened.
+- **Software Updates setting** — A new Software Updates section in Settings lets you toggle automatic update checking on or off at any time. Previously, this was only configurable at first launch.
+
+- **Fixed: Automatic updates and "Check for Updates" not working** — The hourly update check interval was not reaching the app, so Sparkle was checking only once a day. Check for Updates also sometimes showed a progress spinner that never completed on macOS 26. Both are fixed. I hope.
 
 - **Fixed: "Delete scheduled snapshots with no changes" preference reset on upgrade** — Users who had previously left that setting unchecked found it turned on after upgrading to 1.0b22. SetShot now detects and preserves your prior preference when upgrading.
 
 - **Fixed: Sleep timer appeared as spurious recognized change** — On systems with many processes preventing sleep, a truncated `pmset` output line could make the sleep timer look like it changed on every scheduled snapshot. Fixed.
-
-- **Fixed: Automatic updates and "Check for Updates" not working** — The hourly update check interval was not reaching the app, so Sparkle was checking only once a day. "Check for Updates" also showed a progress spinner that never completed on macOS 26. Both are fixed.
 
 - **Knowledge base updates** — Suppressed duplicate Bluetooth trackpad gesture entries that were mirroring their built-in counterparts; added four-finger trackpad swipe gestures; added several power management settings (GPU switching, display dimming, standby delay, automatic restart after power failure, and more); improved App Icon Style labeling.
 
