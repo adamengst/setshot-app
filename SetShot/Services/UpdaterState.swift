@@ -25,6 +25,11 @@ final class UpdaterState: ObservableObject {
     }()
 
     init() {
+        // Gate auto-downloads at the allowsAutomaticUpdates level so Sparkle never
+        // silently installs. This also removes the "automatically download" checkbox
+        // from the update dialog. Without this, a prior Sparkle run that wrote
+        // SUAutomaticallyUpdate=true to UserDefaults can override per-launch intent.
+        UserDefaults.standard.set(false, forKey: "SUAllowsAutomaticUpdates")
         controller = SPUStandardUpdaterController(
             startingUpdater: Self.startsInRelease,
             updaterDelegate: nil,
