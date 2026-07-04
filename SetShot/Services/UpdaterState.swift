@@ -12,7 +12,6 @@ final class UpdaterState: ObservableObject {
     @Published var canCheckForUpdates = false
     let controller: SPUStandardUpdaterController
     private var observation: NSKeyValueObservation?
-    private let userDriverDelegate = UpdaterUserDriverDelegate()
 
     // False in debug/test builds so Sparkle's XPC services aren't invoked without
     // the correct signing identity. True in release builds. Exposed for testing.
@@ -33,17 +32,23 @@ final class UpdaterState: ObservableObject {
         controller = SPUStandardUpdaterController(
             startingUpdater: Self.startsInRelease,
             updaterDelegate: nil,
-            userDriverDelegate: userDriverDelegate
+            userDriverDelegate: nil
         )
         observation = controller.updater.observe(\.canCheckForUpdates, options: [.initial, .new]) { [weak self] updater, _ in
             DispatchQueue.main.async { self?.canCheckForUpdates = updater.canCheckForUpdates }
         }
+        // Force a background check on every launch so a pending update re-shows
+        // immediately. Without this, Sparkle gates checks against SULastCheckTime +
+        // SUScheduledCheckInterval and won't check (or show any dialog) until the
+        // timer fires. Using checkForUpdatesInBackground (not checkForUpdates) keeps
+        // it silent when there is no update. The async dispatch ensures this runs
+        // after Sparkle's own deferred startUpdateCycle, avoiding a session collision,
+        // and within the 3-second appNearUpdaterInitialization window that makes
+        // Sparkle show the dialog immediately with focus.
+        if Self.startsInRelease {
+            DispatchQueue.main.async { [controller] in
+                controller.updater.checkForUpdatesInBackground()
+            }
+        }
     }
-}
-
-// Disables Sparkle's "gentle reminder" mode so that a scheduled background
-// check that finds an update shows the full update dialog immediately rather
-// than a subtle notification the user might never see.
-private class UpdaterUserDriverDelegate: NSObject, SPUStandardUserDriverDelegate {
-    func supportsGentleScheduledUpdateReminders() -> Bool { false }
 }
