@@ -45,7 +45,7 @@ struct DiffEngine {
         if beforeLimited && afterLimited {
             warning = "Both snapshots were taken without Full Disk Access for SetShot \u{2014} privacy permission data and some app preferences are missing from both."
         } else if beforeLimited {
-            warning = "The before snapshot was taken without Full Disk Access for SetShot. Settings from some apps (Music, TV, Messages, etc.) and privacy permissions are absent, which may cause false first-time changes in the results. Grant SetShot Full Disk Access in System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access, then retake the snapshot."
+            warning = "The before snapshot was taken without Full Disk Access for SetShot. Settings from some apps (Music, TV, Messages, etc.) and privacy permissions are absent, which may cause false added changes in the results. Grant SetShot Full Disk Access in System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access, then retake the snapshot."
         } else if afterLimited {
             warning = "The after snapshot was taken without Full Disk Access for SetShot. Settings from some apps (Music, TV, Messages, etc.) and privacy permissions are absent, which may cause false deleted changes in the results. Grant SetShot Full Disk Access in System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access, then retake the snapshot."
         } else {
@@ -143,8 +143,7 @@ struct DiffEngine {
                     beforeValue: effectiveBefore,
                     afterValue: after,
                     macOSVersion: macOSVersion,
-                    rawLine: "\(p.rawDomain) :: \(p.key)",
-                    isFirstTime: before.isEmpty && entry.implicitDefault == nil
+                    rawLine: "\(p.rawDomain) :: \(p.key)"
                 )
                 if entry.noise {
                     noise.append((entry, diffLine))
@@ -159,8 +158,7 @@ struct DiffEngine {
                     beforeValue: before,
                     afterValue: after,
                     macOSVersion: macOSVersion,
-                    rawLine: "\(p.rawDomain) :: \(p.key)",
-                    isFirstTime: before.isEmpty
+                    rawLine: "\(p.rawDomain) :: \(p.key)"
                 )
                 unrecognized.append(diffLine)
             }
@@ -177,6 +175,27 @@ struct DiffEngine {
         }
 
         return DiffResult(recognized: recognized, unrecognized: unrecognized, noise: noise, unrecognizedOverflow: overflow, limitedAccessWarning: nil)
+    }
+
+    // True when every domain::key change in `ab` (the diff that justified keeping the
+    // middle snapshot) is exactly undone in `bc` (the diff from that snapshot to the next
+    // one) — i.e. the middle snapshot was a transient spike with no lasting effect. Extra
+    // keys in `bc` beyond what `ab` touched are fine (they may be real, unrelated changes);
+    // a key present in `ab` but missing or only partially reversed in `bc` fails the check.
+    static func isFullReversal(of bc: DiffResult, reversing ab: DiffResult) -> Bool {
+        func keyed(_ result: DiffResult) -> [String: DiffLine] {
+            var map: [String: DiffLine] = [:]
+            for item in result.recognized { map["\(item.diff.domain)::\(item.diff.key)"] = item.diff }
+            for diffLine in result.unrecognized { map["\(diffLine.domain)::\(diffLine.key)"] = diffLine }
+            return map
+        }
+        let abMap = keyed(ab)
+        guard !abMap.isEmpty else { return false }
+        let bcMap = keyed(bc)
+        return abMap.allSatisfy { key, abDiff in
+            guard let bcDiff = bcMap[key] else { return false }
+            return bcDiff.afterValue == abDiff.beforeValue
+        }
     }
 
     private func normalizeDomain(_ raw: String) -> String {

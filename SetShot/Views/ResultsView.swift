@@ -10,14 +10,6 @@ struct ResultsView: View {
     @State private var showSubmitAllPreview = false
     @State private var submitError: String? = nil
     @State private var contentHeight: CGFloat = 0
-    @State private var showFirstTime = false
-
-    private var valueChanges: [(entry: KBEntry, diff: DiffLine)] {
-        diff.recognized.filter { !$0.diff.isFirstTime }
-    }
-    private var firstTimeChanges: [(entry: KBEntry, diff: DiffLine)] {
-        diff.recognized.filter { $0.diff.isFirstTime }
-    }
 
     var body: some View {
         ScrollView {
@@ -94,49 +86,12 @@ struct ResultsView: View {
 
     private var recognizedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader("Recognized Changes", count: valueChanges.count)
-            if valueChanges.isEmpty && firstTimeChanges.isEmpty {
+            SectionHeader("Recognized Changes", count: diff.recognized.count)
+            if diff.recognized.isEmpty {
                 Text("No recognized changes.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(valueChanges, id: \.diff.id) { item in
-                    RecognizedRow(entry: item.entry, diff: item.diff,
-                                  feedbackSubmittedIDs: feedbackSubmittedIDs,
-                                  onMarkFeedbackSubmitted: { feedbackSubmittedIDs.insert($0) })
-                }
-            }
-            if !firstTimeChanges.isEmpty {
-                firstTimeDisclosure
-            }
-        }
-    }
-
-    private var firstTimeDisclosure: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.15)) { showFirstTime.toggle() }
-            } label: {
-                HStack(spacing: 5) {
-                    Image(systemName: showFirstTime ? "chevron.down" : "chevron.right")
-                        .font(.caption2)
-                        .frame(width: 10)
-                    let n = firstTimeChanges.count
-                    Text(showFirstTime
-                         ? "Hide \(n) first-time setting\(n == 1 ? "" : "s")"
-                         : "Show \(n) first-time setting\(n == 1 ? "" : "s")")
-                        .font(.callout)
-                }
-                .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .modifier(NoFocusEffect())
-
-            if showFirstTime {
-                Text("These settings were written for the first time between the two snapshots. It should mean that you changed a default manually, but it can also reflect turning on Full Disk Access or macOS initializing defaults rather than a deliberate change.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                ForEach(firstTimeChanges, id: \.diff.id) { item in
+                ForEach(diff.recognized, id: \.diff.id) { item in
                     RecognizedRow(entry: item.entry, diff: item.diff,
                                   feedbackSubmittedIDs: feedbackSubmittedIDs,
                                   onMarkFeedbackSubmitted: { feedbackSubmittedIDs.insert($0) })
@@ -554,16 +509,6 @@ private struct UnrecognizedRow: View {
         .cornerRadius(8)
         .sheet(isPresented: $showSheet) {
             SubmitView(diff: diff, isPresented: $showSheet, onSubmitted: onMarkSubmitted)
-        }
-    }
-}
-
-private struct NoFocusEffect: ViewModifier {
-    func body(content: Content) -> some View {
-        if #available(macOS 14.0, *) {
-            content.focusEffectDisabled()
-        } else {
-            content
         }
     }
 }

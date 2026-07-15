@@ -83,6 +83,7 @@ private enum HelpContent {
     case bullet(String)
     case callout(label: String, content: String)
     case screenshot(String)
+    case indentedScreenshot(String)
 }
 
 /// The entire help document, in order. The non-search path renders this as a
@@ -104,21 +105,21 @@ private let aboutHelpContent: [HelpContent] = [
     .paragraph("SetShot's core function is to take and compare snapshots. To that end, it scans nearly 500 settings files across more than a dozen system data sources. It currently recognizes over 670 settings and knows to ignore over 700 additional changes that are just macOS noise."),
     .paragraph("To take a snapshot of the current state of your Mac's settings, click **Take Snapshot** at the bottom of the Snapshots view. SetShot saves the result to the snapshot library with the date and time. Snapshots are stored in `~/Library/Application Support/SetShot/snapshots` as gzipped files that occupy little space. Capturing typically takes less than a minute."),
     .paragraph("Each snapshot line shows when the snapshot was taken, a brief summary of the first few recognized changes from the previous snapshot, the number of recognized changes from the previous snapshot, and the size of the snapshot file."),
+    .screenshot("ScreenshotSnapshotsContext"),
     .paragraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labelling snapshots with context \u{2014} for example, \u{2018}Before macOS 26.6\u{2019} or \u{2018}After Accessibility testing.\u{2019}"),
     .paragraph("To remove an unnecessary snapshot, Control-click it and choose **Delete**."),
 
     .section("Comparing Snapshots"),
     .paragraph("Once you've taken at least two snapshots, you can use SetShot to compare them."),
     .paragraph("The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always **After** and the bottommost is always **Before**. Clicking a third snapshot replaces one of the current selections based on position. Click a selected snapshot to deselect it. Command-click to force-select a snapshot as **Before**; Shift-click to force-select it to **After**."),
+    .screenshot("ScreenshotSnapshotsReady"),
     .paragraph("Once you have selected both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side."),
     .paragraph("SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch."),
 
     .section("Understanding Results"),
     .paragraph("Results are divided into two sections:"),
-    .callout(label: "Recognized Changes",
-             content: "Settings already in SetShot\u{2019}s knowledge base. Each entry shows a plain-English description, the path to find it in System Settings, and \u{2014} where possible \u{2014} an **Open in Settings** button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue. A **Submit Feedback** button lets you flag issues with the description, path, icon, or value formatting to help improve SetShot for everyone. You may also see an expansable **Show X first-time changes** control that, when clicked, reveals changes made to default settings. These are hidden by default because they can result from turning on Full Disk Access or macOS reinitializing defaults rather than a deliberate change."),
-    .callout(label: "Unrecognized Changes",
-             content: "Changes that are either noise or legitimate settings changes that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone."),
+    .bullet("**Recognized Changes:** Settings already in SetShot\u{2019}s knowledge base. Each entry shows a plain-English description, the path to find it in System Settings, and \u{2014} where possible \u{2014} an **Open in Settings** button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue. A **Submit Feedback** button lets you flag issues with the description, path, icon, or value formatting to help improve SetShot for everyone."),
+    .bullet("**Unrecognized Changes:** Changes that are either noise or legitimate settings changes that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone."),
     .paragraph("Values are displayed in a readable form where possible: toggles show On or Off, volume settings show a percentage, file paths show just the filename, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number."),
     .screenshot("ScreenshotResults"),
 
@@ -133,10 +134,8 @@ private let aboutHelpContent: [HelpContent] = [
     .section("Submitting Unrecognized Changes"),
     .paragraph("When you find an unrecognized change that is either noise or that you think should be included in the knowledge base, click **Submit** on that row. A confirmation sheet shows exactly what data will be sent \u{2014} the internal setting name, its old and new values, and your macOS version \u{2014} and nothing else."),
     .paragraph("The sheet also offers an optional feedback section. If you have a sense of what the change represents, select one of the two categories:"),
-    .callout(label: "Expected settings change",
-             content: "The change reflects something real \u{2014} a preference you set, a feature you turned on, or a setting macOS adjusted as a result of something you did."),
-    .callout(label: "Likely macOS noise",
-             content: "The change appears to be an internal macOS value that fluctuates on its own, unrelated to any setting you'd want to track."),
+    .bullet("**Expected settings change:** The change reflects something real \u{2014} a preference you set, a feature you turned on, or a setting macOS adjusted as a result of something you did."),
+    .bullet("**Likely macOS noise:** The change appears to be an internal macOS value that fluctuates on its own, unrelated to any setting you'd want to track."),
     .paragraph("You can also add a short note with any context that might help with review. Both fields are entirely optional, but adding context may help categorize the change more accurately."),
     .screenshot("ScreenshotSubmitUnrecognized"),
     .paragraph("If you have several unrecognized changes, click **Submit All** to review and send them all at once. Submitted changes are reviewed, added to the knowledge base, and loaded on the next launch, making SetShot more useful for everyone."),
@@ -157,14 +156,11 @@ private let aboutHelpContent: [HelpContent] = [
 
     .section("Optional Permissions"),
     .paragraph("By default, SetShot takes snapshots without requesting any special permissions. Two optional data sources in **Settings \u{2192} Optional Data Sources** expand what SetShot captures:"),
-    .callout(label: "Music App Settings",
-             content: "When enabled, SetShot reads Music, Home Sharing, and related preferences. macOS will display a **Media & Apple Music** permission dialog the first time a snapshot runs \u{2014} click **Allow**. This permission is remembered permanently."),
-    .screenshot("PermissionMusicAccess"),
-    .callout(label: "App Privacy Permissions",
-             content: "When enabled, SetShot reads the system privacy database to detect which apps have been granted access to the microphone, camera, contacts, and similar resources. This requires **Full Disk Access** \u{2014} grant it in **System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access**, or use the button in Settings \u{2192} Optional Data Sources."),
+    .bullet("**Music App Settings:** When enabled, SetShot reads Music, Home Sharing, and related preferences. macOS will display a **Media & Apple Music** permission dialog the first time a snapshot runs \u{2014} click **Allow**. This permission is remembered permanently."),
+    .indentedScreenshot("PermissionMusicAccess"),
+    .bullet("**App Privacy Permissions:** When enabled, SetShot reads the system privacy database to detect which apps have been granted access to the microphone, camera, contacts, and similar resources. This requires **Full Disk Access** \u{2014} grant it in **System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access**, or use the button in Settings \u{2192} Optional Data Sources."),
     .paragraph("One more permission is used when automatic snapshots are enabled:"),
-    .callout(label: "Notifications",
-             content: "When you enable automatic snapshots in Settings, macOS will ask for Notifications permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison."),
+    .bullet("**Notifications:** When you enable automatic snapshots in Settings, macOS will ask for Notifications permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison."),
 
     .section("Privacy"),
     .paragraph("The data SetShot works with is inherently non-sensitive \u{2014} it's system settings like toggles, sliders, and preferences, not passwords, documents, photos, or personal content. That said, SetShot is designed to keep your data private."),
@@ -309,21 +305,32 @@ private struct AboutHelpNSTextView: NSViewRepresentable {
                        paragraph: paragraphStyle(spacingBefore: 0, spacingAfter: 12))
 
             case .screenshot(let name):
-                if let img = NSImage(named: name) {
-                    newlineIfNeeded()
-                    let attachment = NSTextAttachment()
-                    let scaled = NSSize(width: img.size.width / 2, height: img.size.height / 2)
-                    attachment.image = img
-                    attachment.bounds = CGRect(origin: .zero, size: scaled)
-                    let imgStr = NSMutableAttributedString(attachment: attachment)
-                    let p = NSMutableParagraphStyle()
-                    p.paragraphSpacingBefore = 4
-                    p.paragraphSpacing = 12
-                    imgStr.addAttribute(.paragraphStyle,
-                                        value: p,
-                                        range: NSRange(location: 0, length: imgStr.length))
-                    result.append(imgStr)
+                appendScreenshot(name, indented: false)
+
+            case .indentedScreenshot(let name):
+                appendScreenshot(name, indented: true)
+            }
+        }
+
+        func appendScreenshot(_ name: String, indented: Bool) {
+            if let img = NSImage(named: name) {
+                newlineIfNeeded()
+                let attachment = NSTextAttachment()
+                let scaled = NSSize(width: img.size.width / 2, height: img.size.height / 2)
+                attachment.image = img
+                attachment.bounds = CGRect(origin: .zero, size: scaled)
+                let imgStr = NSMutableAttributedString(attachment: attachment)
+                let p = NSMutableParagraphStyle()
+                p.paragraphSpacingBefore = 4
+                p.paragraphSpacing = 12
+                if indented {
+                    p.headIndent = 16
+                    p.firstLineHeadIndent = 16
                 }
+                imgStr.addAttribute(.paragraphStyle,
+                                    value: p,
+                                    range: NSRange(location: 0, length: imgStr.length))
+                result.append(imgStr)
             }
         }
         return result
@@ -508,6 +515,7 @@ struct AboutView: View {
                           id: "n-taking-1")
             HelpParagraph("Each snapshot line shows the number of recognized changes from the previous snapshot and the size of the snapshot file.",
                           id: "n-taking-2")
+            screenshot("ScreenshotSnapshotsContext")
             HelpParagraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labelling snapshots with context \u{2014} for example, \u{2018}Before macOS 26.6\u{2019} or \u{2018}After Accessibility testing.\u{2019}",
                           id: "n-taking-3")
             HelpParagraph("To remove an unnecessary snapshot, Control-click it and choose **Delete**.",
@@ -521,6 +529,7 @@ struct AboutView: View {
                           id: "n-comparing-0")
             HelpParagraph("The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always **After** and the bottommost is always **Before**. Clicking a third snapshot replaces one of the current selections based on position. Command-click to force a snapshot to **Before**; Shift-click to force it to **After**.",
                           id: "n-comparing-1")
+            screenshot("ScreenshotSnapshotsReady")
             HelpParagraph("Once you have selected both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side.",
                           id: "n-comparing-2")
             HelpParagraph("SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch.",
@@ -532,11 +541,9 @@ struct AboutView: View {
         HelpSection("Understanding Results", id: "about-results") {
             HelpParagraph("Results are divided into two sections:",
                           id: "n-results-0")
-            HelpCallout("Recognized Changes",
-                content: "Settings already in SetShot\u{2019}s knowledge base. Each entry shows a plain-English description, the path to find it in System Settings, and \u{2014} where possible \u{2014} an **Open in Settings** button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue. A **Submit Feedback** button lets you flag issues with the description, path, icon, or value formatting to help improve SetShot for everyone.",
+            HelpBullet("**Recognized Changes:** Settings already in SetShot\u{2019}s knowledge base. Each entry shows a plain-English description, the path to find it in System Settings, and \u{2014} where possible \u{2014} an **Open in Settings** button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue. A **Submit Feedback** button lets you flag issues with the description, path, icon, or value formatting to help improve SetShot for everyone.",
                 id: "n-results-c0")
-            HelpCallout("Unrecognized Changes",
-                content: "Changes that are either noise or legitimate settings changes that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone.",
+            HelpBullet("**Unrecognized Changes:** Changes that are either noise or legitimate settings changes that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone.",
                 id: "n-results-c1")
             HelpParagraph("Values are displayed in a readable form where possible: toggles show On or Off, volume settings show a percentage, file paths show just the filename, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number.",
                           id: "n-results-1")
@@ -566,11 +573,9 @@ struct AboutView: View {
                           id: "n-submitting-0")
             HelpParagraph("The sheet also offers an optional feedback section. If you have a sense of what the change represents, select one of the two categories:",
                           id: "n-submitting-1")
-            HelpCallout("Expected settings change",
-                content: "The change reflects something real \u{2014} a preference you set, a feature you turned on, or a setting macOS adjusted as a result of something you did.",
+            HelpBullet("**Expected settings change:** The change reflects something real \u{2014} a preference you set, a feature you turned on, or a setting macOS adjusted as a result of something you did.",
                 id: "n-submitting-c0")
-            HelpCallout("Likely macOS noise",
-                content: "The change appears to be an internal macOS value that fluctuates on its own, unrelated to any setting you'd want to track.",
+            HelpBullet("**Likely macOS noise:** The change appears to be an internal macOS value that fluctuates on its own, unrelated to any setting you'd want to track.",
                 id: "n-submitting-c1")
             HelpParagraph("You can also add a short note with any context that might help with review. Both fields are entirely optional, but adding context may help categorize the change more accurately.",
                           id: "n-submitting-2")
@@ -612,17 +617,14 @@ struct AboutView: View {
         HelpSection("Optional Permissions", id: "about-permissions") {
             HelpParagraph("By default, SetShot takes snapshots without requesting any special permissions. Two optional data sources in **Settings \u{2192} Optional Data Sources** expand what SetShot captures:",
                           id: "n-permissions-0")
-            HelpCallout("Music App Settings",
-                content: "When enabled, SetShot reads Music, Home Sharing, and related preferences. macOS will display a **Media & Apple Music** permission dialog the first time a snapshot runs \u{2014} click **Allow**. This permission is remembered permanently.",
+            HelpBullet("**Music App Settings:** When enabled, SetShot reads Music, Home Sharing, and related preferences. macOS will display a **Media & Apple Music** permission dialog the first time a snapshot runs \u{2014} click **Allow**. This permission is remembered permanently.",
                 id: "n-permissions-c0")
-            screenshot("PermissionMusicAccess")
-            HelpCallout("App Privacy Permissions",
-                content: "When enabled, SetShot reads the system privacy database to detect which apps have been granted access to the microphone, camera, contacts, and similar resources. This requires **Full Disk Access** \u{2014} grant it in **System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access**, or use the button in Settings \u{2192} Optional Data Sources.",
+            screenshot("PermissionMusicAccess", indented: true)
+            HelpBullet("**App Privacy Permissions:** When enabled, SetShot reads the system privacy database to detect which apps have been granted access to the microphone, camera, contacts, and similar resources. This requires **Full Disk Access** \u{2014} grant it in **System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access**, or use the button in Settings \u{2192} Optional Data Sources.",
                 id: "n-permissions-c1")
             HelpParagraph("One more permission is used when automatic snapshots are enabled:",
                           id: "n-permissions-1")
-            HelpCallout("Notifications",
-                content: "When you enable automatic snapshots in Settings, macOS will ask for Notifications permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison.",
+            HelpBullet("**Notifications:** When you enable automatic snapshots in Settings, macOS will ask for Notifications permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison.",
                 id: "n-permissions-c2")
         }
     }
@@ -641,13 +643,14 @@ struct AboutView: View {
     }
 
     @ViewBuilder
-    private func screenshot(_ name: String) -> some View {
+    private func screenshot(_ name: String, indented: Bool = false) -> some View {
         if let nsImage = NSImage(named: name) {
             Image(nsImage: nsImage)
                 .resizable()
                 .frame(width: nsImage.size.width / 2, height: nsImage.size.height / 2)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .shadow(color: .black.opacity(0.12), radius: 6, y: 2)
+                .padding(.leading, indented ? 16 : 0)
         }
     }
 
@@ -681,8 +684,8 @@ struct AboutView: View {
         // Understanding Results
         ("about-results", "Understanding Results"),
         ("n-results-0",   "Results are divided into two sections:"),
-        ("n-results-c0",  "Recognized Changes Settings already in SetShot's knowledge base. Each entry shows a plain-English description, the path to find it in System Settings, and \u{2014} where possible \u{2014} an Open in Settings button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue. A Submit Feedback button lets you flag issues with the description, path, icon, or value formatting to help improve SetShot for everyone."),
-        ("n-results-c1",  "Unrecognized Changes Changes that are either noise or legitimate settings changes that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone."),
+        ("n-results-c0",  "Recognized Changes: Settings already in SetShot's knowledge base. Each entry shows a plain-English description, the path to find it in System Settings, and \u{2014} where possible \u{2014} an Open in Settings button that takes you directly to the relevant pane. The old value appears in orange and the new value in blue. A Submit Feedback button lets you flag issues with the description, path, icon, or value formatting to help improve SetShot for everyone."),
+        ("n-results-c1",  "Unrecognized Changes: Changes that are either noise or legitimate settings changes that aren't yet in the knowledge base. The raw technical name of the setting is shown along with its old and new values. You can submit these to help improve SetShot for everyone."),
         ("n-results-1",   "Values are displayed in a readable form where possible: toggles show On or Off, volume settings show a percentage, file paths show just the filename, and settings with a fixed list of options (like Hot Corner actions) show the option name rather than a raw number."),
         // The Journal
         ("about-journal", "The Journal"),
@@ -695,8 +698,8 @@ struct AboutView: View {
         ("about-submitting", "Submitting Unrecognized Changes"),
         ("n-submitting-0",   "When you find an unrecognized change that is either noise or that you think should be included in the knowledge base, click Submit on that row. A confirmation sheet shows exactly what data will be sent \u{2014} the internal setting name, its old and new values, and your macOS version \u{2014} and nothing else."),
         ("n-submitting-1",   "The sheet also offers an optional feedback section. If you have a sense of what the change represents, select one of the two categories:"),
-        ("n-submitting-c0",  "Expected settings change The change reflects something real \u{2014} a preference you set, a feature you turned on, or a setting macOS adjusted as a result of something you did."),
-        ("n-submitting-c1",  "Likely macOS noise The change appears to be an internal macOS value that fluctuates on its own, unrelated to any setting you'd want to track."),
+        ("n-submitting-c0",  "Expected settings change: The change reflects something real \u{2014} a preference you set, a feature you turned on, or a setting macOS adjusted as a result of something you did."),
+        ("n-submitting-c1",  "Likely macOS noise: The change appears to be an internal macOS value that fluctuates on its own, unrelated to any setting you'd want to track."),
         ("n-submitting-2",   "You can also add a short note with any context that might help with review. Both fields are entirely optional, but adding context may help categorize the change more accurately."),
         ("n-submitting-3",   "If you have several unrecognized changes, click Submit All to review and send them all at once. Submitted changes are reviewed, added to the knowledge base, and loaded on the next launch, making SetShot more useful for everyone."),
         ("n-submitting-4",   "Already-submitted rows are marked with a checkmark for the duration of the session."),
@@ -714,10 +717,10 @@ struct AboutView: View {
         // Optional Permissions
         ("about-permissions", "Optional Permissions"),
         ("n-permissions-0",   "By default, SetShot takes snapshots without requesting any special permissions. Two optional data sources in Settings \u{2192} Optional Data Sources expand what SetShot captures:"),
-        ("n-permissions-c0",  "Music App Settings When enabled, SetShot reads Music, Home Sharing, and related preferences. macOS will display a Media & Apple Music permission dialog the first time a snapshot runs \u{2014} click Allow. This permission is remembered permanently."),
-        ("n-permissions-c1",  "App Privacy Permissions When enabled, SetShot reads the system privacy database to detect which apps have been granted access to the microphone, camera, contacts, and similar resources. This requires Full Disk Access \u{2014} grant it in System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access, or use the button in Settings \u{2192} Optional Data Sources."),
+        ("n-permissions-c0",  "Music App Settings: When enabled, SetShot reads Music, Home Sharing, and related preferences. macOS will display a Media & Apple Music permission dialog the first time a snapshot runs \u{2014} click Allow. This permission is remembered permanently."),
+        ("n-permissions-c1",  "App Privacy Permissions: When enabled, SetShot reads the system privacy database to detect which apps have been granted access to the microphone, camera, contacts, and similar resources. This requires Full Disk Access \u{2014} grant it in System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access, or use the button in Settings \u{2192} Optional Data Sources."),
         ("n-permissions-1",   "One more permission is used when automatic snapshots are enabled:"),
-        ("n-permissions-c2",  "Notifications When you enable automatic snapshots in Settings, macOS will ask for Notifications permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison."),
+        ("n-permissions-c2",  "Notifications: When you enable automatic snapshots in Settings, macOS will ask for Notifications permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison."),
         // Privacy
         ("about-privacy", "Privacy"),
         ("n-privacy-0",   "The data SetShot works with is inherently non-sensitive \u{2014} it's system settings like toggles, sliders, and preferences, not passwords, documents, photos, or personal content. That said, SetShot is designed to keep your data private."),

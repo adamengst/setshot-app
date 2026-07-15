@@ -9,7 +9,6 @@ struct DiffLine: Identifiable {
     let afterValue: String
     let macOSVersion: String
     let rawLine: String
-    let isFirstTime: Bool
 }
 
 struct DiffResult {

@@ -206,8 +206,7 @@ private struct JournalRow: View {
         DiffLine(domain: entry.domain, key: entry.key, source: "defaults",
                  beforeValue: entry.oldValue, afterValue: entry.newValue,
                  macOSVersion: Self.macOSVersion,
-                 rawLine: "\(entry.domain) :: \(entry.key)",
-                 isFirstTime: entry.oldValue.isEmpty)
+                 rawLine: "\(entry.domain) :: \(entry.key)")
     }
 
     var body: some View {

@@ -93,4 +93,63 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.noise.count, 1)
         XCTAssertEqual(result.unrecognized.count, 1)
     }
+
+    // MARK: - isFullReversal
+
+    func testIsFullReversalTrueWithExtraRealChange() {
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
+        let ab = engine().parse(diffOutput: """
+            -com.apple.dock :: key1 = 1
+            +com.apple.dock :: key1 = 2
+            -com.apple.dock :: key2 = A
+            +com.apple.dock :: key2 = B
+            """, kb: kb)
+        let bc = engine().parse(diffOutput: """
+            -com.apple.dock :: key1 = 2
+            +com.apple.dock :: key1 = 1
+            -com.apple.dock :: key2 = B
+            +com.apple.dock :: key2 = A
+            -com.apple.dock :: key3 = X
+            +com.apple.dock :: key3 = Y
+            """, kb: kb)
+        XCTAssertTrue(DiffEngine.isFullReversal(of: bc, reversing: ab))
+    }
+
+    func testIsFullReversalFalseWhenPartial() {
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
+        let ab = engine().parse(diffOutput: """
+            -com.apple.dock :: key1 = 1
+            +com.apple.dock :: key1 = 2
+            -com.apple.dock :: key2 = A
+            +com.apple.dock :: key2 = B
+            """, kb: kb)
+        let bc = engine().parse(diffOutput: """
+            -com.apple.dock :: key1 = 2
+            +com.apple.dock :: key1 = 1
+            """, kb: kb)
+        XCTAssertFalse(DiffEngine.isFullReversal(of: bc, reversing: ab))
+    }
+
+    func testIsFullReversalFalseWhenAbEmpty() {
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
+        let ab = engine().parse(diffOutput: "", kb: kb)
+        let bc = engine().parse(diffOutput: """
+            -com.apple.dock :: key1 = 1
+            +com.apple.dock :: key1 = 2
+            """, kb: kb)
+        XCTAssertFalse(DiffEngine.isFullReversal(of: bc, reversing: ab))
+    }
+
+    func testIsFullReversalFalseWhenKeyLandsOnDifferentValue() {
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
+        let ab = engine().parse(diffOutput: """
+            -com.apple.dock :: key1 = 1
+            +com.apple.dock :: key1 = 2
+            """, kb: kb)
+        let bc = engine().parse(diffOutput: """
+            -com.apple.dock :: key1 = 2
+            +com.apple.dock :: key1 = 3
+            """, kb: kb)
+        XCTAssertFalse(DiffEngine.isFullReversal(of: bc, reversing: ab))
+    }
 }

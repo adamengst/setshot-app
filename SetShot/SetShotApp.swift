@@ -268,18 +268,48 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         Task {
             do {
                 let existing = (try? await SnapshotStore.shared.list()) ?? []
-                let previous = existing.sorted { $0.date < $1.date }.last
+                let sorted = existing.sorted { $0.date < $1.date }
+                let previous = sorted.last
+                let beforePrevious = sorted.dropLast().last
                 let snapshot = try await SnapshotRunner().run()
                 let stored = try await SnapshotStore.shared.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
                 if let previous {
                     let (kb, _) = await KBFetcher.shared.fetchIfNeeded()
-                    if let b = try? await SnapshotStore.shared.load(previous),
-                       let a = try? await SnapshotStore.shared.load(stored),
-                       let result = try? await DiffEngine().diff(
-                           before: Snapshot(takenAt: previous.date, rawOutput: b),
-                           after: Snapshot(takenAt: stored.date, rawOutput: a),
+                    if let previousRaw = try? await SnapshotStore.shared.load(previous),
+                       let storedRaw = try? await SnapshotStore.shared.load(stored),
+                       var result = try? await DiffEngine().diff(
+                           before: Snapshot(takenAt: previous.date, rawOutput: previousRaw),
+                           after: Snapshot(takenAt: stored.date, rawOutput: storedRaw),
                            kb: kb)
                            .filteringHardware(hasBattery: SnapshotRunner.hasBattery) {
+
+                        var effectivePrevious = previous
+
+                        // If `previous` only existed because of a transient spike (e.g. macOS
+                        // briefly resetting a preference domain) and this snapshot undoes every
+                        // one of those changes, discard `previous` as noise and recompute against
+                        // whatever came before it — surfacing any real change left over.
+                        if result.recognized.count + result.unrecognized.count > 0,
+                           let beforePrevious,
+                           let beforePreviousRaw = try? await SnapshotStore.shared.load(beforePrevious),
+                           let justifyingResult = try? await DiffEngine().diff(
+                               before: Snapshot(takenAt: beforePrevious.date, rawOutput: beforePreviousRaw),
+                               after: Snapshot(takenAt: previous.date, rawOutput: previousRaw),
+                               kb: kb)
+                               .filteringHardware(hasBattery: SnapshotRunner.hasBattery),
+                           DiffEngine.isFullReversal(of: result, reversing: justifyingResult) {
+                            try? await SnapshotStore.shared.delete(previous)
+                            _ = await JournalStore.shared.delete(afterSnapshotId: previous.id)
+                            if let recomputed = try? await DiffEngine().diff(
+                                before: Snapshot(takenAt: beforePrevious.date, rawOutput: beforePreviousRaw),
+                                after: Snapshot(takenAt: stored.date, rawOutput: storedRaw),
+                                kb: kb)
+                                .filteringHardware(hasBattery: SnapshotRunner.hasBattery) {
+                                result = recomputed
+                                effectivePrevious = beforePrevious
+                            }
+                        }
+
                         let r = result.recognized.count
                         let u = result.unrecognized.count
                         let autoDelete = UserDefaults.standard.object(forKey: "AutoDeleteEmptyScheduledSnapshots") as? Bool ?? true
@@ -289,7 +319,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
                             try? await SnapshotStore.shared.saveMeta(for: stored, recognized: r, unrecognized: u, scheduled: true)
                             _ = await JournalStore.shared.add(recognized: result.recognized, afterSnapshot: stored)
                             if r > 0 || u > 0 {
-                                await postSnapshotNotification(result: result, previous: previous, stored: stored)
+                                await postSnapshotNotification(result: result, previous: effectivePrevious, stored: stored)
                             }
                         }
                     }

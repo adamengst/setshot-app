@@ -1,3 +1,9 @@
+## 1.0b24
+
+- **Recognized changes are no longer hidden** — Settings that appeared "for the first time" between two snapshots used to be tucked into a collapsible section, hidden by default, on the theory they usually indicated false positives (a Full Disk Access grant, macOS reinitializing defaults). That guess was wrong too often — it obscured real changes and had no way to tell an actual first-time change from a setting whose "off" state just isn't recorded. Every recognized change now shows up directly.
+
+- **Automatic cleanup of transient scheduled-snapshot noise** — Scheduled background snapshots occasionally caught macOS in the middle of some sort of reset, showing a batch of changes that flipped right back on the next check. SetShot now detects these round-trips, removes the spurious in-between snapshot and its journal entries, and keeps any user-initiated change that landed in the same window.
+
 ## 1.0b23
 
 - **macOS updates now appear as recognized changes** — When macOS is updated between two snapshots, the new version and build number appear as recognized changes in the comparison, so you can tell which update happened.
