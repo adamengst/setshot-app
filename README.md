@@ -46,9 +46,12 @@ The first time you enable automatic snapshots, macOS will ask for **Notification
 
 ## Permissions
 
-On your first snapshot, macOS will ask for **Media & Apple Music** access — click Allow. SetShot needs it to read music-related settings such as Home Sharing and library configuration.
+By default, SetShot takes snapshots without requesting any special permissions. Two optional data sources, available in **Settings → Optional Data Sources**, expand what SetShot captures if you turn them on:
 
-Optionally, granting **Full Disk Access** (in System Settings → Privacy & Security) lets SetShot detect changes to app permission settings, such as an app gaining microphone or camera access, and also eliminates the Media & Apple Music dialog. Without it, SetShot simply skips that one data source.
+* **Music App Settings** — reads Music, Home Sharing, and related preferences. macOS will show a **Media & Apple Music** permission dialog the first time a snapshot runs after you enable it; click Allow. The permission is remembered permanently.
+* **App Privacy Permissions** — detects which apps have been granted access to the microphone, camera, contacts, and similar resources. This requires **Full Disk Access**, which you can grant from the same Settings pane or in System Settings → Privacy & Security → Full Disk Access.
+
+Neither is required — without them, SetShot simply captures fewer settings, and everything else works normally.
 
 ---
 
