@@ -10,6 +10,8 @@ SetShot captures a comprehensive snapshot of your Mac's settings, then lets you 
 
 Tested with macOS 15 Sequoia and macOS 26 Tahoe. Your mileage may vary with other versions.
 
+SetShot is undoubtedly not perfect. Treat surprising reports as an excuse to research further, and remember: SetShot never changes any settings. If something changes unexpectedly, that's macOS at work. The only files SetShot writes are its snapshots, journal, and anything you export. 
+
 ---
 
 ## How SetShot works
@@ -63,7 +65,7 @@ The data SetShot works with is inherently non-sensitive—it's system settings l
 * **Submissions** are the one exception. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record.
 * **Full Disk Access:** SetShot appears in the Full Disk Access list in System Settings, but it must be turned on manually. Granting Full Disk Access allows SetShot to query the system privacy database to detect changes to app permission settings (for example, if you grant an app microphone access). Full Disk Access is not required—without it, SetShot simply skips that one data source, and everything else works normally.
 
-SetShot is open source. If you want to verify exactly what data the app collects and how it is handled, the full source code is available here.
+SetShot is open source. If you want to verify exactly what data the app collects and how it is handled, the full source code is available here. Use it at your own risk.
 
 ---
 
