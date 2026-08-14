@@ -8,7 +8,7 @@ SetShot captures a comprehensive snapshot of your Mac's settings, then lets you 
 
 **[Download the latest release](https://github.com/adamengst/setshot-app/releases/latest)**
 
-Tested with macOS 15 Sequoia and macOS 26 Tahoe. Your mileage may vary with other versions.
+Requires macOS 13 Ventura or later, and runs natively on both Apple Silicon and Intel Macs. Tested with macOS 15 Sequoia and macOS 26 Tahoe — your mileage may vary with earlier versions.
 
 SetShot is undoubtedly not perfect. Treat surprising reports as an excuse to research further, and remember: SetShot never changes any settings. If something changes unexpectedly, that's macOS at work. The only files SetShot writes are its snapshots, journal, and anything you export. 
 

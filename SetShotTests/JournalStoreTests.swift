@@ -162,6 +162,27 @@ final class JournalStoreTests: XCTestCase {
         XCTAssertTrue(entries.isEmpty, "∅→X→∅ round-trip should cancel both entries")
     }
 
+    func testReloadPicksUpChangesWrittenByAnotherInstance() async {
+        // Scheduled snapshots run as a separate `--background-snapshot` process,
+        // so a long-running foreground app's JournalStore instance sees stale
+        // data via load() until it calls reload().
+        let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))
+        let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))
+
+        _ = await store.add(recognized: [(entry: makeKBEntry(key: "KeyA"), diff: makeDiffLine(key: "KeyA"))], afterSnapshot: snap1)
+        _ = await store.load()
+
+        let otherProcess = JournalStore(fileURL: tempURL)
+        _ = await otherProcess.add(recognized: [(entry: makeKBEntry(key: "KeyB"), diff: makeDiffLine(key: "KeyB"))], afterSnapshot: snap2)
+
+        let stale = await store.load()
+        XCTAssertEqual(stale.count, 1, "load() should return the cached value, not re-read disk")
+
+        let fresh = await store.reload()
+        XCTAssertEqual(fresh.count, 2, "reload() should re-read disk and see entries added by another process")
+        XCTAssertTrue(fresh.contains { $0.key == "KeyB" })
+    }
+
     func testNonEmptyRoundTripNotCancelled() async {
         // A → B → A with no empty values must NOT cancel (could be a deliberate toggle)
         let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))

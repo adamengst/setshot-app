@@ -1,14 +1,20 @@
+## 1.0b25
+
+- **Fixed: Scheduled snapshot summaries sometimes missing** — Scheduled snapshots run as a separate background process, so if SetShot's window was already open, the snapshot list wouldn't show the new comparison's summary until you manually compared that pair — just the bare change count. The list now refreshes summaries whenever the app comes to the foreground.
+
+- **Knowledge base updates** — Fixed the Sound Effects output device and "Allow notifications when the display is sleeping" settings, which were displaying values that didn't match System Settings; noted that the default Finder window view can change just from browsing a folder in a different view, not only from deliberately setting a new default; suppressed noise from an internal MDM poll-timer value and a hidden QUIC/HTTP-3 network preference.
+
 ## 1.0b24
 
 - **Recognized changes are no longer hidden** — Settings that appeared "for the first time" between two snapshots used to be tucked into a collapsible section, hidden by default, on the theory they usually indicated false positives (a Full Disk Access grant, macOS reinitializing defaults). That guess was wrong too often — it obscured real changes and had no way to tell an actual first-time change from a setting whose "off" state just isn't recorded. Every recognized change now shows up directly.
 
-- **Automatic cleanup of transient scheduled-snapshot noise** — Scheduled background snapshots occasionally caught macOS in the middle of some sort of reset, showing a batch of changes that flipped right back on the next check. SetShot now detects these round-trips, removes the spurious in-between snapshot and its journal entries, and keeps any user-initiated change that landed in the same window.
+- **Automatic cleanup of transient scheduled-snapshot noise** — Scheduled background snapshots occasionally caught macOS in the middle of some sort of reset, showing a batch of changes that flipped back on the next check. SetShot now detects these round-trips, removes the spurious in-between snapshot and its journal entries, and keeps any user-initiated change that landed in the same window.
 
 ## 1.0b23
 
 - **macOS updates now appear as recognized changes** — When macOS is updated between two snapshots, the new version and build number appear as recognized changes in the comparison, so you can tell which update happened.
 
-- **Software Updates setting** — A new Software Updates section in Settings lets you toggle automatic update checking on or off at any time. Previously, this was only configurable at first launch.
+- **Software Updates setting** — A new Software Updates section in SetShot's Settings screen lets you toggle automatic update checking on or off at any time. Previously, this was only configurable at first launch.
 
 - **Fixed: Automatic updates and "Check for Updates" not working** — The hourly update check interval was not reaching the app, so Sparkle was checking only once a day. Check for Updates also sometimes showed a progress spinner that never completed on macOS 26. Both are fixed. I hope.
 

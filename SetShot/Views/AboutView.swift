@@ -106,14 +106,14 @@ private let aboutHelpContent: [HelpContent] = [
     .paragraph("To take a snapshot of the current state of your Mac's settings, click **Take Snapshot** at the bottom of the Snapshots view. SetShot saves the result to the snapshot library with the date and time. Snapshots are stored in `~/Library/Application Support/SetShot/snapshots` as gzipped files that occupy little space. Capturing typically takes less than a minute."),
     .paragraph("Each snapshot line shows when the snapshot was taken, a brief summary of the first few recognized changes from the previous snapshot, the number of recognized changes from the previous snapshot, and the size of the snapshot file."),
     .screenshot("ScreenshotSnapshotsContext"),
-    .paragraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labelling snapshots with context \u{2014} for example, \u{2018}Before macOS 26.6\u{2019} or \u{2018}After Accessibility testing.\u{2019}"),
-    .paragraph("To remove an unnecessary snapshot, Control-click it and choose **Delete**."),
+    .paragraph("Although it's not necessary, you can rename a snapshot. Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labeling snapshots with context \u{2014} for example, \u{2018}Before macOS 26.6\u{2019} or \u{2018}After Accessibility testing.\u{2019}"),
+    .paragraph("If a snapshot is superfluous — perhaps because it shows no changes — you can delete it. Control-click it and choose **Delete**."),
 
     .section("Comparing Snapshots"),
-    .paragraph("Once you've taken at least two snapshots, you can use SetShot to compare them."),
+    .paragraph("Once you've taken at least two snapshots, SetShot can compare them."),
     .paragraph("The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always **After** and the bottommost is always **Before**. Clicking a third snapshot replaces one of the current selections based on position. Click a selected snapshot to deselect it. Command-click to force-select a snapshot as **Before**; Shift-click to force-select it to **After**."),
     .screenshot("ScreenshotSnapshotsReady"),
-    .paragraph("Once you have selected both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side."),
+    .paragraph("After selecting both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side."),
     .paragraph("SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch."),
 
     .section("Understanding Results"),
@@ -125,9 +125,9 @@ private let aboutHelpContent: [HelpContent] = [
 
     .section("The Journal"),
     .paragraph("The journal keeps a cumulative record of every recognized change found across all your comparisons. Switch to it by clicking **Journal** in the segmented control at the top of the SetShot window."),
-    .paragraph("Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before and after values. An **Open in Settings** button appears when possible."),
+    .paragraph("Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before-and-after values. An **Open in Settings** button appears when possible."),
     .paragraph("To add a personal note to any entry, click **Add note…** at the bottom of the row and type. Your note is saved automatically when you click away."),
-    .paragraph("Use the search field at the top to filter entries by description, setting name, location, or note. To delete an entry Control-click it and choose Delete. You can also Control-click a section header and choose Delete to remove all entries from that comparison at once. Click **Export HTML…** to save the entire journal as an HTML file, or **Clear All** to permanently delete all entries (you'll be asked to confirm)."),
+    .paragraph("Use the search field at the top to filter entries by description, setting name, location, or note. To delete an entry, Control-click it and choose Delete. You can also Control-click a section header and choose Delete to remove all entries from that comparison at once. Click **Export HTML** to save the entire journal as an HTML file, or **Clear All** to permanently delete all entries (you'll be asked to confirm)."),
     .paragraph("The journal automatically eliminates redundant entries: if the same change appears more than once \u{2014} for instance, if you run the same comparison twice \u{2014} only the earliest occurrence is kept."),
     .screenshot("ScreenshotJournal"),
 
@@ -145,13 +145,13 @@ private let aboutHelpContent: [HelpContent] = [
     .paragraph("Even recognized changes can have room for improvement: an icon may be missing, a description may be unclear, a System Settings path may be wrong, or values may show as raw numbers instead of readable labels."),
     .paragraph("Click **Submit Feedback** on any recognized change row to open a feedback sheet. Check the issues that apply, add any notes that might help, and click **Submit**. The sheet shows a summary of the current description and location so you can refer to them while writing."),
     .screenshot("ScreenshotSubmitRecognized"),
-    .paragraph("Feedback is reviewed by the developer and incorporated into future knowledge base updates, making SetShot more accurate for everyone."),
+    .paragraph("Feedback is reviewed and incorporated into future knowledge base updates, making SetShot more accurate for everyone."),
 
     .section("Automatic Snapshots"),
     .paragraph("SetShot can take snapshots automatically on a schedule. Click **Settings** in the segmented control at the top, then select **Take automatic snapshots** and choose how often: every N minutes, every N hours, once a day, once a week, or once a month. For day, week, and month intervals, you can also set the time of day."),
-    .paragraph("Automatic snapshots are taken silently in the background without SetShot's window appearing. This lets you build up a history of your Mac's settings over time without having to remember to capture manually."),
+    .paragraph("Automatic snapshots are taken silently in the background without SetShot's window appearing (though you may see it appear and disappear from the dock). This lets you build up a history of your Mac's settings over time without having to remember to capture manually."),
     .paragraph("When you enable automatic snapshots, macOS will ask for **Notifications** permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison in SetShot."),
-    .paragraph("Enable **Delete scheduled snapshots with no changes** to automatically remove snapshots taken by the scheduler that found no changes, keeping your library uncluttered."),
+    .paragraph("It would be smart to keep **Delete scheduled snapshots with no changes** enabled to automatically remove snapshots taken by the scheduler that found no changes, keeping your library uncluttered."),
     .screenshot("ScreenshotSettings"),
 
     .section("Optional Permissions"),
@@ -516,21 +516,21 @@ struct AboutView: View {
             HelpParagraph("Each snapshot line shows the number of recognized changes from the previous snapshot and the size of the snapshot file.",
                           id: "n-taking-2")
             screenshot("ScreenshotSnapshotsContext")
-            HelpParagraph("To rename a snapshot, Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labelling snapshots with context \u{2014} for example, \u{2018}Before macOS 26.6\u{2019} or \u{2018}After Accessibility testing.\u{2019}",
+            HelpParagraph("Although it's not necessary, you can rename a snapshot. Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labeling snapshots with context \u{2014} for example, \u{2018}Before macOS 26.6\u{2019} or \u{2018}After Accessibility testing.\u{2019}",
                           id: "n-taking-3")
-            HelpParagraph("To remove an unnecessary snapshot, Control-click it and choose **Delete**.",
+            HelpParagraph("If a snapshot is superfluous — perhaps because it shows no changes — you can delete it. Control-click it and choose **Delete**.",
                           id: "n-taking-4")
         }
     }
 
     private var comparingSnapshots: some View {
         HelpSection("Comparing Snapshots", id: "about-comparing") {
-            HelpParagraph("Once you've taken at least two snapshots, you can use SetShot to compare them.",
+            HelpParagraph("Once you've taken at least two snapshots, SetShot can compare them.",
                           id: "n-comparing-0")
             HelpParagraph("The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always **After** and the bottommost is always **Before**. Clicking a third snapshot replaces one of the current selections based on position. Command-click to force a snapshot to **Before**; Shift-click to force it to **After**.",
                           id: "n-comparing-1")
             screenshot("ScreenshotSnapshotsReady")
-            HelpParagraph("Once you have selected both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side.",
+            HelpParagraph("After selecting both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side.",
                           id: "n-comparing-2")
             HelpParagraph("SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch.",
                           id: "n-comparing-3")
@@ -555,11 +555,11 @@ struct AboutView: View {
         HelpSection("The Journal", id: "about-journal") {
             HelpParagraph("The journal keeps a cumulative record of every recognized change found across all your comparisons. Switch to it by clicking **Journal** in the segmented control at the top of the SetShot window.",
                           id: "n-journal-0")
-            HelpParagraph("Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before and after values. An **Open in Settings** button appears when possible.",
+            HelpParagraph("Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before-and-after values. An **Open in Settings** button appears when possible.",
                           id: "n-journal-1")
             HelpParagraph("To add a personal note to any entry, click **Add note\u{2026}** at the bottom of the row and type. Your note is saved automatically when you click away.",
                           id: "n-journal-2")
-            HelpParagraph("Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once. Click **Export HTML\u{2026}** to save the entire journal as an HTML file, or **Clear All** to permanently delete all entries (you\u{2019}ll be asked to confirm).",
+            HelpParagraph("Use the search field at the top to filter entries by description, setting name, location, or note. To delete an entry, Control-click it and choose Delete. You can also Control-click a section header and choose Delete to remove all entries from that comparison at once. Click **Export HTML** to save the entire journal as an HTML file, or **Clear All** to permanently delete all entries (you\u{2019}ll be asked to confirm).",
                           id: "n-journal-3")
             HelpParagraph("The journal automatically eliminates redundant entries: if the same change appears more than once \u{2014} for instance, if you run the same comparison twice \u{2014} only the earliest occurrence is kept.",
                           id: "n-journal-4")
@@ -594,7 +594,7 @@ struct AboutView: View {
             HelpParagraph("Click **Submit Feedback** on any recognized change row to open a feedback sheet. Check the issues that apply, add any notes that might help, and click **Submit**. The sheet shows a summary of the current description and location so you can refer to them while writing.",
                           id: "n-improving-1")
             screenshot("ScreenshotSubmitRecognized")
-            HelpParagraph("Feedback is reviewed by the developer and incorporated into future knowledge base updates, making SetShot more accurate for everyone.",
+            HelpParagraph("Feedback is reviewed and incorporated into future knowledge base updates, making SetShot more accurate for everyone.",
                           id: "n-improving-2")
         }
     }
@@ -603,11 +603,11 @@ struct AboutView: View {
         HelpSection("Automatic Snapshots", id: "about-automatic") {
             HelpParagraph("SetShot can take snapshots automatically on a schedule. Click **Settings** in the segmented control at the top, then select **Take automatic snapshots** and choose how often: every N minutes, every N hours, once a day, once a week, or once a month. For day, week, and month intervals, you can also set the time of day.",
                           id: "n-automatic-0")
-            HelpParagraph("Automatic snapshots are taken silently in the background without SetShot's window appearing. This lets you build up a history of your Mac's settings over time without having to remember to capture manually.",
+            HelpParagraph("Automatic snapshots are taken silently in the background without SetShot's window appearing (though you may see it appear and disappear from the dock). This lets you build up a history of your Mac's settings over time without having to remember to capture manually.",
                           id: "n-automatic-1")
             HelpParagraph("When you enable automatic snapshots, macOS will ask for **Notifications** permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison in SetShot.",
                           id: "n-automatic-2")
-            HelpParagraph("Enable **Delete scheduled snapshots with no changes** to automatically remove snapshots taken by the scheduler that found no changes, keeping your library uncluttered.",
+            HelpParagraph("It would be smart to keep **Delete scheduled snapshots with no changes** enabled to automatically remove snapshots taken by the scheduler that found no changes, keeping your library uncluttered.",
                           id: "n-automatic-3")
             screenshot("ScreenshotSettings")
         }
@@ -673,13 +673,13 @@ struct AboutView: View {
         ("n-taking-0",    "SetShot's core function is to take and compare snapshots. To that end, it scans nearly 500 settings files across more than a dozen system data sources. It currently recognizes over 670 settings and knows to ignore over 700 additional changes that are just macOS noise."),
         ("n-taking-1",    "To take a snapshot of the current state of your Mac's settings, click Take Snapshot at the bottom of the Snapshots view. SetShot saves the result to the snapshot library with the date and time. Snapshots are stored in ~/Library/Application Support/SetShot/snapshots as gzipped files that occupy little space. Capturing typically takes less than a minute."),
         ("n-taking-2",    "Each snapshot line shows the number of recognized changes from the previous snapshot and the size of the snapshot file."),
-        ("n-taking-3",    "To rename a snapshot, Control-click it and choose Rename, then type a new name. Renaming can be useful for labelling snapshots with context \u{2014} for example, \u{2018}Before macOS 26.6\u{2019} or \u{2018}After Accessibility testing.\u{2019}"),
-        ("n-taking-4",    "To remove an unnecessary snapshot, Control-click it and choose Delete."),
+        ("n-taking-3",    "Although it's not necessary, you can rename a snapshot. Control-click it and choose Rename, then type a new name. Renaming can be useful for labeling snapshots with context \u{2014} for example, \u{2018}Before macOS 26.6\u{2019} or \u{2018}After Accessibility testing.\u{2019}"),
+        ("n-taking-4",    "If a snapshot is superfluous — perhaps because it shows no changes — you can delete it. Control-click it and choose Delete."),
         // Comparing Snapshots
         ("about-comparing", "Comparing Snapshots"),
-        ("n-comparing-0",   "Once you've taken at least two snapshots, you can use SetShot to compare them."),
+        ("n-comparing-0",   "Once you've taken at least two snapshots, SetShot can compare them."),
         ("n-comparing-1",   "The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always After and the bottommost is always Before. Clicking a third snapshot replaces one of the current selections based on position. Command-click to force a snapshot to Before; Shift-click to force it to After."),
-        ("n-comparing-2",   "Once you have selected both snapshots, click Compare to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side."),
+        ("n-comparing-2",   "After selecting both snapshots, click Compare to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side."),
         ("n-comparing-3",   "SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch."),
         // Understanding Results
         ("about-results", "Understanding Results"),
@@ -690,9 +690,9 @@ struct AboutView: View {
         // The Journal
         ("about-journal", "The Journal"),
         ("n-journal-0",   "The journal keeps a cumulative record of every recognized change found across all your comparisons. Switch to it by clicking Journal in the segmented control at the top of the SetShot window."),
-        ("n-journal-1",   "Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before and after values. An Open in Settings button appears when possible."),
+        ("n-journal-1",   "Journal entries are grouped by comparison, with a header showing the date and time of the comparison and how many recognized changes it found. Each entry shows the setting description, its location in System Settings, and the before-and-after values. An Open in Settings button appears when possible."),
         ("n-journal-2",   "To add a personal note to any entry, click Add note\u{2026} at the bottom of the row and type. Your note is saved automatically when you click away."),
-        ("n-journal-3",   "Use the search field at the top to filter entries by description, setting name, or location. Control-click an entry to delete it, or Control-click a section header to remove all entries from that comparison at once. Click Export HTML\u{2026} to save the entire journal as an HTML file, or Clear All to permanently delete all entries."),
+        ("n-journal-3",   "Use the search field at the top to filter entries by description, setting name, location, or note. To delete an entry, Control-click it and choose Delete. You can also Control-click a section header and choose Delete to remove all entries from that comparison at once. Click Export HTML to save the entire journal as an HTML file, or Clear All to permanently delete all entries (you'll be asked to confirm)."),
         ("n-journal-4",   "The journal automatically eliminates redundant entries: if the same change appears more than once \u{2014} for instance, if you run the same comparison twice \u{2014} only the earliest occurrence is kept."),
         // Submitting Unrecognized Changes
         ("about-submitting", "Submitting Unrecognized Changes"),
@@ -707,13 +707,13 @@ struct AboutView: View {
         ("about-improving", "Improving Recognized Changes"),
         ("n-improving-0",   "Even recognized changes can have room for improvement: an icon may be missing, a description may be unclear, a System Settings path may be wrong, or values may show as raw numbers instead of readable labels."),
         ("n-improving-1",   "Click Submit Feedback on any recognized change row to open a feedback sheet. Check the issues that apply, add any notes that might help, and click Submit. The sheet shows a summary of the current description and location so you can refer to them while writing."),
-        ("n-improving-2",   "Feedback is reviewed by the developer and incorporated into future knowledge base updates, making SetShot more accurate for everyone."),
+        ("n-improving-2",   "Feedback is reviewed and incorporated into future knowledge base updates, making SetShot more accurate for everyone."),
         // Automatic Snapshots
         ("about-automatic", "Automatic Snapshots"),
         ("n-automatic-0",   "SetShot can take snapshots automatically on a schedule. Click Settings in the segmented control at the top, then select Take automatic snapshots and choose how often: every N minutes, every N hours, once a day, once a week, or once a month. For day, week, and month intervals, you can also set the time of day."),
-        ("n-automatic-1",   "Automatic snapshots are taken silently in the background without SetShot's window appearing. This lets you build up a history of your Mac's settings over time without having to remember to capture manually."),
+        ("n-automatic-1",   "Automatic snapshots are taken silently in the background without SetShot's window appearing (though you may see it appear and disappear from the dock). This lets you build up a history of your Mac's settings over time without having to remember to capture manually."),
         ("n-automatic-2",   "When you enable automatic snapshots, macOS will ask for Notifications permission. If granted, a notification appears whenever a scheduled snapshot finds recognized changes; clicking it opens the comparison in SetShot."),
-        ("n-automatic-3",   "Enable Delete scheduled snapshots with no changes to automatically remove snapshots taken by the scheduler that found no changes, keeping your library uncluttered."),
+        ("n-automatic-3",   "It would be smart to keep Delete scheduled snapshots with no changes enabled to automatically remove snapshots taken by the scheduler that found no changes, keeping your library uncluttered."),
         // Optional Permissions
         ("about-permissions", "Optional Permissions"),
         ("n-permissions-0",   "By default, SetShot takes snapshots without requesting any special permissions. Two optional data sources in Settings \u{2192} Optional Data Sources expand what SetShot captures:"),

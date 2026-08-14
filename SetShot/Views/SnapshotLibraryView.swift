@@ -60,11 +60,16 @@ struct SnapshotLibraryView: View {
         .task {
             async let snapshots: Void = appModel.loadSnapshots()
             async let kb: Void = appModel.loadKB()
-            _ = await (snapshots, kb)
+            async let journal: Void = appModel.refreshJournal()
+            _ = await (snapshots, kb, journal)
             checkPendingComparison()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-            Task { await appModel.loadSnapshots() }
+            Task {
+                async let snapshots: Void = appModel.loadSnapshots()
+                async let journal: Void = appModel.refreshJournal()
+                _ = await (snapshots, journal)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .setshotOpenComparison)) { notification in
             guard let info = notification.userInfo,

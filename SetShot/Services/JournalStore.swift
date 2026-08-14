@@ -22,6 +22,15 @@ actor JournalStore {
 
     func load() -> [JournalEntry] {
         if let c = cache { return c }
+        return reload()
+    }
+
+    // Bypasses the in-process cache to pick up entries written by another
+    // process — scheduled snapshots run as a separate `--background-snapshot`
+    // launch, so a long-running foreground app's cache goes stale as soon as
+    // one completes.
+    @discardableResult
+    func reload() -> [JournalEntry] {
         guard let data = try? Data(contentsOf: fileURL) else {
             cache = []
             return []

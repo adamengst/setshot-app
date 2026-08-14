@@ -54,6 +54,13 @@ class AppModel: ObservableObject {
         journal = await journalStore.load()
     }
 
+    // Re-reads journal.json from disk, bypassing JournalStore's in-process
+    // cache, so entries written by a separate scheduled-snapshot process
+    // (which runs headless and exits) become visible without relaunching.
+    func refreshJournal() async {
+        journal = await journalStore.reload()
+    }
+
     func setJournalNote(entryID: UUID, note: String?) async {
         journal = await journalStore.updateNote(for: entryID, note: note)
     }
