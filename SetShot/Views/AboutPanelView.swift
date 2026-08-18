@@ -85,7 +85,7 @@ struct AboutPanelView: View {
                     "Programmed by Claude Code",
                     "Icon by ChatGPT Images",
                     "Published by TidBITS Publishing",
-                    "Copyright © 2025–2026 TidBITS Publishing Inc.",
+                    "Copyright © 2026 TidBITS Publishing Inc.",
                     "Released under the MIT License"
                 ],
                 fontSize: 12,
