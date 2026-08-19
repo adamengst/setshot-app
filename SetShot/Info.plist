@@ -31,7 +31,7 @@
     <key>SUEnableAutomaticChecks</key>
     <true/>
     <key>SUScheduledCheckInterval</key>
-    <integer>3600</integer>
+    <integer>315360000</integer>
     <key>SUAllowsAutomaticUpdates</key>
     <false/>
 </dict>

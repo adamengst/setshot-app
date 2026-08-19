@@ -638,7 +638,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml";
 				INFOPLIST_KEY_SUPublicEDKey = "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg=";
-				INFOPLIST_KEY_SUScheduledCheckInterval = 3600;
+				INFOPLIST_KEY_SUScheduledCheckInterval = 315360000;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -671,7 +671,7 @@
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_SUFeedURL = "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml";
 				INFOPLIST_KEY_SUPublicEDKey = "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg=";
-				INFOPLIST_KEY_SUScheduledCheckInterval = 3600;
+				INFOPLIST_KEY_SUScheduledCheckInterval = 315360000;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

@@ -1,8 +1,18 @@
+## 1.0b26
+
+- **Update checking now happens only at launch** — Previously, SetShot checked at launch plus on a recurring hourly timer; now it's launch only, since the app is normally opened and closed rather than left running in the background.
+
+- **Updated Sparkle to 2.9.5** — Includes the latest stability and security improvements to the update framework.
+
+- **Fixed: Before/After didn't follow "Show oldest first"** — With that setting enabled, the topmost and bottommost selected snapshots kept the default newest-first roles, so the topmost selection could end up mislabeled After instead of Before. Before/After now correctly flips along with the display order.
+
+- **Knowledge base updates** — Extended the "can look changed just from switching power sources" caveat to nine more Battery → Options settings (computer sleep, display sleep, wake for network access, and others) beyond the one originally reported; suppressed noise from AppKit's automatic menu-item-disabled state, rotating Find My push-notification tokens, and internal on-device speech recognition asset allocation.
+
 ## 1.0b25
 
 - **Fixed: Scheduled snapshot summaries sometimes missing** — Scheduled snapshots run as a separate background process, so if SetShot's window was already open, the snapshot list wouldn't show the new comparison's summary until you manually compared that pair — just the bare change count. The list now refreshes summaries whenever the app comes to the foreground.
 
-- **Knowledge base updates** — Fixed the Sound Effects output device and "Allow notifications when the display is sleeping" settings, which were displaying values that didn't match System Settings; noted that the default Finder window view can change just from browsing a folder in a different view, not only from deliberately setting a new default; suppressed noise from an internal MDM poll-timer value and a hidden QUIC/HTTP-3 network preference.
+- **Knowledge base updates** — Fixed the Sound Effects output device and "Allow notifications when the display is sleeping" settings, which were displaying values that didn't match System Settings; added human-readable values for the Zoom scroll-wheel modifier key and suppressed its trackpad-domain duplicate; noted that Battery → Options settings (like hard disk sleep) can look changed just from switching between battery and being plugged in; noted that the default Finder window view can change just from browsing a folder in a different view, not only from deliberately setting a new default; suppressed noise from an internal MDM poll-timer value, a hidden QUIC/HTTP-3 network preference, and an Accessibility key-repeat timing value.
 
 ## 1.0b24
 

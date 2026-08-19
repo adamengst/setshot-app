@@ -35,8 +35,11 @@ struct SnapshotLibraryView: View {
         allSnapshots.filter { selectedIDs.contains($0.id) }
     }
 
-    private var effectiveAfter:  StoredSnapshot? { selectedSorted.first }
-    private var effectiveBefore: StoredSnapshot? { selectedSorted.last }
+    // Role follows on-screen position (topmost/bottommost), so it flips
+    // with the display order: newest-first keeps topmost = After, but
+    // "Show oldest first" reverses the list, so topmost becomes Before.
+    private var effectiveAfter:  StoredSnapshot? { oldestFirst ? selectedSorted.last  : selectedSorted.first }
+    private var effectiveBefore: StoredSnapshot? { oldestFirst ? selectedSorted.first : selectedSorted.last  }
 
     var body: some View {
         VStack(spacing: 0) {

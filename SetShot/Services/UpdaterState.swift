@@ -45,7 +45,15 @@ final class UpdaterState: ObservableObject {
         // after Sparkle's own deferred startUpdateCycle, avoiding a session collision,
         // and within the 3-second appNearUpdaterInitialization window that makes
         // Sparkle show the dialog immediately with focus.
-        if Self.startsInRelease {
+        //
+        // This is effectively the *only* check SetShot performs: SUScheduledCheckInterval
+        // (project.yml) is set to 10 years, so Sparkle's own recurring timer never
+        // meaningfully re-fires within a session — SetShot isn't a persistent
+        // background resident, so a per-launch check covers real usage.
+        //
+        // Gated on automaticallyChecksForUpdates (SUEnableAutomaticChecks) so
+        // turning off "Check for updates automatically" in Settings stops this too.
+        if Self.startsInRelease && controller.updater.automaticallyChecksForUpdates {
             DispatchQueue.main.async { [controller] in
                 controller.updater.checkForUpdatesInBackground()
             }

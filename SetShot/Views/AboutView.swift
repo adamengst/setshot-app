@@ -111,7 +111,7 @@ private let aboutHelpContent: [HelpContent] = [
 
     .section("Comparing Snapshots"),
     .paragraph("Once you've taken at least two snapshots, SetShot can compare them."),
-    .paragraph("The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always **After** and the bottommost is always **Before**. Clicking a third snapshot replaces one of the current selections based on position. Click a selected snapshot to deselect it. Command-click to force-select a snapshot as **Before**; Shift-click to force-select it to **After**."),
+    .paragraph("The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always **After** and the bottommost is always **Before** (reversed if you've turned on **Show oldest first** in Settings). Clicking a third snapshot replaces one of the current selections based on position. Click a selected snapshot to deselect it. Command-click to force-select a snapshot as **Before**; Shift-click to force-select it to **After**."),
     .screenshot("ScreenshotSnapshotsReady"),
     .paragraph("After selecting both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side."),
     .paragraph("SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch."),
@@ -527,7 +527,7 @@ struct AboutView: View {
         HelpSection("Comparing Snapshots", id: "about-comparing") {
             HelpParagraph("Once you've taken at least two snapshots, SetShot can compare them.",
                           id: "n-comparing-0")
-            HelpParagraph("The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always **After** and the bottommost is always **Before**. Clicking a third snapshot replaces one of the current selections based on position. Command-click to force a snapshot to **Before**; Shift-click to force it to **After**.",
+            HelpParagraph("The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always **After** and the bottommost is always **Before** (reversed if you've turned on **Show oldest first** in Settings). Clicking a third snapshot replaces one of the current selections based on position. Command-click to force a snapshot to **Before**; Shift-click to force it to **After**.",
                           id: "n-comparing-1")
             screenshot("ScreenshotSnapshotsReady")
             HelpParagraph("After selecting both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side.",
@@ -678,7 +678,7 @@ struct AboutView: View {
         // Comparing Snapshots
         ("about-comparing", "Comparing Snapshots"),
         ("n-comparing-0",   "Once you've taken at least two snapshots, SetShot can compare them."),
-        ("n-comparing-1",   "The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always After and the bottommost is always Before. Clicking a third snapshot replaces one of the current selections based on position. Command-click to force a snapshot to Before; Shift-click to force it to After."),
+        ("n-comparing-1",   "The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them \u{2014} the topmost selected is always After and the bottommost is always Before (reversed if you've turned on Show oldest first in Settings). Clicking a third snapshot replaces one of the current selections based on position. Command-click to force a snapshot to Before; Shift-click to force it to After."),
         ("n-comparing-2",   "After selecting both snapshots, click Compare to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side."),
         ("n-comparing-3",   "SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch."),
         // Understanding Results

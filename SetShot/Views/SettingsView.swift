@@ -64,7 +64,7 @@ struct SettingsView: View {
                 .onChange(of: autoCheckForUpdates) { newValue in
                     updaterState.controller.updater.automaticallyChecksForUpdates = newValue
                 }
-            Text("SetShot checks for new versions in the background once per hour. To check manually, choose SetShot \u{2192} Check for Updates.")
+            Text("SetShot checks for new versions each time it launches. To check manually, choose SetShot \u{2192} Check for Updates.")
                 .font(.caption)
                 .foregroundStyle(.secondary)    
         }
@@ -150,7 +150,7 @@ struct SettingsView: View {
 
     private var schedulerDescription: AttributedString {
         var str = AttributedString("SetShot installs a macOS LaunchAgent that runs on the chosen schedule, saving a snapshot without opening the app. If recognized changes are found, a notification appears that you can click to see the comparison. For notifications that stay on screen until clicked or dismissed, set SetShot's Alert Style to Persistent in ")
-        var link = AttributedString("System Settings \u{2192} Notifications.")
+        var link = AttributedString("System Settings \u{2192} Notifications \u{2192} SetShot.")
         link.link = URL(string: "x-apple.systempreferences:com.apple.preference.notifications?com.tidbits.SetShot")!
         str += link
         return str
