@@ -1319,44 +1319,50 @@ JSEOF
     fi
 
     section "APPLICATION HANDLERS (default browser / mail client)"
-    LS_PLIST="$HOME/Library/Application Support/com.apple.LaunchServices/com.apple.launchservices.secure.plist"
+    # This file lives in ~/Library/Preferences, not ~/Library/Application Support.
+    # It was read from the wrong path, so this section emitted "(not found)" on every
+    # Mac and the awk summary below had never once run. The general ~/Library/
+    # Preferences scan does pick the file up, but LSHandlers[…] is noise-filtered,
+    # so the default browser and mail client were invisible through both paths.
+    LS_PLIST="$HOME/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist"
     if [ -f "$LS_PLIST" ]; then
-      flatten_plist "$LS_PLIST"
-      # Emit explicit summary lines for the most important URL-scheme handlers.
-      # These produce stable "default-browser :: handler = ..." lines that the
-      # explain engine can translate to friendly names even when the LSHandlers
-      # array index shifts (which raw flatten output cannot do reliably).
-      # Uses plutil to convert the binary plist to XML, then awk to parse it.
-      plutil -convert xml1 -o - "$LS_PLIST" 2>/dev/null | awk '
-      BEGIN {
-        SCHEMES["http"]    = "default-browser"
-        SCHEMES["https"]   = "default-browser-https"
-        SCHEMES["mailto"]  = "default-mail-client"
-        SCHEMES["webcal"]  = "default-calendar-app"
-        SCHEMES["feed"]    = "default-rss-reader"
-        in_h = 0; scheme = ""; role = ""; next_is = ""
-      }
-      /^[[:space:]]*<dict>[[:space:]]*$/ { in_h = 1; scheme = ""; role = ""; next_is = ""; next }
-      /^[[:space:]]*<\/dict>[[:space:]]*$/ {
-        if (in_h && scheme != "" && role != "") handlers[scheme] = role
-        in_h = 0; next
-      }
-      in_h && /LSHandlerURLScheme/ { next_is = "scheme"; next }
-      in_h && /LSHandlerRoleAll/   { next_is = "role";   next }
-      in_h && /LSHandlerRoleViewer/ && role == "" { next_is = "role"; next }
-      next_is != "" && /<string>/ {
-        s = $0; sub(/.*<string>/, "", s); sub(/<\/string>.*/, "", s)
-        if (next_is == "scheme") scheme = s
-        else if (next_is == "role")   role   = s
-        next_is = ""
-      }
-      END {
-        for (s in SCHEMES)
-          if (s in handlers) print SCHEMES[s] " :: handler = " handlers[s]
-      }
+      # Emit stable "default-browser :: handler = ..." lines alongside the raw dump:
+      # the LSHandlers array index shifts whenever a handler is added, so the raw
+      # output cannot report a default reliably (and is noise-filtered for that
+      # reason). Derived from the flattened output rather than re-parsed from XML —
+      # the previous XML pass reset its state on the nested LSHandlerPreferredVersions
+      # dict and so never emitted anything, even once pointed at the right file.
+      _ls_flat=$(flatten_plist "$LS_PLIST")
+      echo "$_ls_flat"
+      echo "$_ls_flat" | awk '
+        BEGIN {
+          NAME["http"]   = "default-browser"
+          NAME["https"]  = "default-browser-https"
+          NAME["mailto"] = "default-mail-client"
+          NAME["webcal"] = "default-calendar-app"
+          NAME["feed"]   = "default-rss-reader"
+        }
+        # LSHandlerPreferredVersions holds a nested LSHandlerRoleAll whose value is
+        # a version marker, not a bundle ID.
+        /LSHandlerPreferredVersions/ { next }
+        match($0, /LSHandlers\[[0-9]+\]/) {
+          idx = substr($0, RSTART, RLENGTH)
+          val = $0; sub(/.* = /, "", val)
+          if ($0 ~ /\.LSHandlerURLScheme = /)   scheme[idx] = val
+          else if ($0 ~ /\.LSHandlerRoleAll = /)    role[idx] = val
+          else if ($0 ~ /\.LSHandlerRoleViewer = /) viewer[idx] = val
+        }
+        END {
+          for (i in scheme) {
+            s = scheme[i]
+            if (!(s in NAME)) continue
+            r = (i in role) ? role[i] : viewer[i]
+            if (r != "") print NAME[s] " :: handler = " r
+          }
+        }
       '
     else
-      echo "${LS_PLIST} :: (not found)"
+      echo "default-browser :: (not found)"
     fi
 
     section "SYSTEM CONFIGURATION"
@@ -1365,26 +1371,76 @@ JSEOF
     echo "scutil :: HostName      = $(scutil --get HostName      2>/dev/null || echo '(not set)')"
     echo ""
     echo "# --- scutil: DNS ---"
-    scutil --dns   2>/dev/null || echo "(unavailable)"
+    # scutil --dns prints a paragraph per resolver, none of it parseable, so a DNS
+    # server change went unreported. Resolver #1 is the default one; the rest are
+    # domain-scoped (mDNS, link-local) and the scoped-queries block repeats them.
+    # if_index, flags and reach are runtime state rather than settings.
+    scutil --dns 2>/dev/null | awk '
+      /^DNS configuration \(for scoped queries\)/ { exit }
+      /^resolver #/ { n = $2; sub(/#/, "", n); next }
+      n == 1 && /^[[:space:]]*(nameserver\[[0-9]+\]|search domain\[[0-9]+\]|domain)[[:space:]]*:/ {
+        k = $0; sub(/[[:space:]]*:.*/, "", k); gsub(/^[[:space:]]+/, "", k); gsub(/ /, "", k)
+        v = $0; sub(/^[^:]*:[[:space:]]*/, "", v)
+        print "dns :: " k " = " v
+      }
+    '
     echo ""
     echo "# --- scutil: proxy ---"
-    scutil --proxy 2>/dev/null || echo "(unavailable)"
+    # Flatten the dictionary scutil prints; nested arrays become Key[N].
+    scutil --proxy 2>/dev/null | awk '
+      /^[[:space:]]*[A-Za-z]+[[:space:]]*:[[:space:]]*<array>/ { arr = $1; next }
+      /^[[:space:]]*}/ { arr = ""; next }
+      /^[[:space:]]*[A-Za-z0-9]+[[:space:]]*:/ {
+        k = $0; sub(/[[:space:]]*:.*/, "", k); gsub(/^[[:space:]]+/, "", k)
+        v = $0; sub(/^[^:]*:[[:space:]]*/, "", v)
+        if (v == "") next
+        if (arr != "") print "proxy :: " arr "[" k "] = " v
+        else print "proxy :: " k " = " v
+      }
+    '
     echo ""
     echo "# --- networksetup: services ---"
-    networksetup -listallnetworkservices 2>/dev/null || echo "(unavailable)"
+    # A leading asterisk marks a disabled service.
+    networksetup -listallnetworkservices 2>/dev/null | awk '
+      NR == 1 && /asterisk/ { next }
+      NF {
+        s = $0; st = "enabled"
+        if (substr(s, 1, 1) == "*") { s = substr(s, 2); st = "disabled" }
+        print "networkservices :: " s " = " st
+      }
+    '
 
     section "CONFIGURATION PROFILES"
-    profiles list -all 2>/dev/null || echo "(none, or permission denied)"
+    # `profiles list -all` needs root, and prints its refusal to stdout — where both
+    # 2>/dev/null and the || fallback miss it, so the error text landed in every
+    # snapshot. `profiles show` covers the user scope without root, and
+    # /Library/Managed Preferences is world-readable and reveals which preference
+    # domains an MDM is currently controlling.
+    profiles show 2>/dev/null | awk '
+      /^profileIdentifier:/ {
+        id = $0; sub(/^profileIdentifier:[[:space:]]*/, "", id)
+        if (id != "") print "profiles :: " id " = installed"
+      }
+    '
+    if ! profiles show 2>/dev/null | grep -q profileIdentifier; then
+      echo "profiles :: (no profiles installed for this user)"
+    fi
+    ls /Library/Managed\ Preferences 2>/dev/null | while IFS= read -r f; do
+      echo "managedpreferences :: ${f} = present"
+    done
 
     section "LAUNCH AGENTS & DAEMONS"
-    for dir in \
-        "$HOME/Library/LaunchAgents" \
-        "/Library/LaunchAgents" \
-        "/Library/LaunchDaemons"; do
-      ls "$dir" 2>/dev/null | while IFS= read -r f; do
-        echo "${dir} :: ${f}"
+    # Emitted as "<dir> :: <filename>" with no `=`, so an installed launch agent or
+    # daemon was captured and then dropped by the diff parser. Each item is now a
+    # key with a constant value, so adding or removing one shows as a change.
+    _emit_launch_items() {
+      ls "$1" 2>/dev/null | while IFS= read -r f; do
+        echo "$2 :: ${f} = installed"
       done
-    done
+    }
+    _emit_launch_items "$HOME/Library/LaunchAgents" "LaunchAgents-user"
+    _emit_launch_items "/Library/LaunchAgents"      "LaunchAgents-system"
+    _emit_launch_items "/Library/LaunchDaemons"     "LaunchDaemons"
 
     section "TCC PRIVACY DATABASE"
     # Privacy permissions — Full Disk Access, Media & Apple Music, camera, microphone
@@ -1530,9 +1586,25 @@ JSEOF
     fi
 
     section "TIME MACHINE"
-    tmutil destinationinfo 2>/dev/null || echo "(no destinations configured)"
-    echo ""
-    tmutil status 2>/dev/null || echo "(unavailable)"
+    # tmutil prints a banner-separated block per destination, which the diff parser
+    # could not read at all. Normalise to "timemachine :: destination[N].field = …".
+    # `tmutil status` is deliberately not captured: it reports whether a backup is
+    # running right now, which is state rather than a setting and would differ
+    # between any two snapshots taken at different moments.
+    tmutil destinationinfo 2>/dev/null | awk '
+      BEGIN { n = -1 }
+      /^=+$/ { n++; next }
+      /:/ {
+        key = $0; sub(/[[:space:]]*:.*/, "", key); gsub(/[[:space:]]/, "", key)
+        val = $0; sub(/^[^:]*:[[:space:]]*/, "", val)
+        if (n < 0) n = 0
+        if (key != "" && val != "")
+          print "timemachine :: destination[" n "]." key " = " val
+      }
+    '
+    if ! tmutil destinationinfo >/dev/null 2>&1; then
+      echo "timemachine :: (no destinations configured)"
+    fi
 
     section "PRINTERS & FAXES"
     # CUPS printer/fax queues — stable attributes only (state-change timestamps excluded).
@@ -1568,43 +1640,31 @@ JSEOF
     fi
 
     section "SYSTEM EXTENSIONS"
-    systemextensionsctl list 2>/dev/null || echo "(unavailable)"
+    # systemextensionsctl prints a header line, a category line per extension type and
+    # a tab-separated row per extension — none of it parseable. Emit one line per
+    # extension as "systemextensions :: <bundleID> = <state>". Row layout is
+    # enabled, active, teamID, bundleID (version), name, [state].
+    _sysext=$(systemextensionsctl list 2>/dev/null | awk -F'\t' '
+      $1 == "enabled" && $2 == "active" { next }   # column header row
+      NF >= 5 && $4 ~ /\(/ {
+        bundle = $4; sub(/[[:space:]]*\(.*/, "", bundle)
+        state = $NF; gsub(/^[[:space:]]*\[|\][[:space:]]*$/, "", state)
+        if (bundle != "") print "systemextensions :: " bundle " = " state
+      }
+    ')
+    if [ -n "$_sysext" ]; then
+      echo "$_sysext"
+    else
+      echo "systemextensions :: (none installed)"
+    fi
 
     section "BACKGROUND TASK MANAGEMENT (Login Items & Background)"
-    # sfltool dumpbackgroundtaskmanagement lists all BTM-registered items:
-    # login items (Open at Login) and background helpers (Allow in Background).
-    # Output is normalized to "BTM :: <identifier> :: <key> = <value>" lines.
-    if command -v sfltool >/dev/null 2>&1; then
-      sfltool dumpbackgroundtaskmanagement 2>/dev/null \
-      | awk '
-        # App or Helper line with inline Bundle ID
-        /App:|Helper/ && /Bundle ID:/ {
-          idx = index($0, "Bundle ID:")
-          if (idx > 0) {
-            rest = substr($0, idx + 10)
-            gsub(/^[[:space:]]+|[[:space:]]+$/, "", rest)
-            identifier = rest
-          }
-          next
-        }
-        # Explicit Identifier line (overrides bundle-id from above for sub-items)
-        /^[[:space:]]+Identifier:/ {
-          sub(/^[[:space:]]+Identifier:[[:space:]]+/, "")
-          identifier = $0
-          next
-        }
-        # Disposition — the field that changes when user toggles allow/deny
-        identifier != "" && /^[[:space:]]+Disposition:/ {
-          sub(/^[[:space:]]+Disposition:[[:space:]]+/, "")
-          print "BTM :: " identifier " :: disposition = " $0
-          identifier = ""
-        }
-      ' \
-      | sort \
-      || echo "BTM :: (sfltool query failed)"
-    else
-      echo "BTM :: (sfltool not available)"
-    fi
+    # `sfltool dumpbackgroundtaskmanagement` needs root, so from the app it produced
+    # nothing at all — silently, because 2>/dev/null swallowed the refusal and there
+    # was no fallback. There is no root-free source for the BTM database, so say so
+    # rather than emit an empty section. The launchd half of what BTM reports is
+    # captured by LAUNCH AGENTS & DAEMONS above.
+    echo "BTM :: (requires root; run the setshot.sh CLI with --sudo to capture)"
 
     # ── Sudo-elevated captures ────────────────────────────────────────────────
     if [ "$use_sudo" = true ]; then

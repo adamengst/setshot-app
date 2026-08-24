@@ -14,27 +14,7 @@ enum KnownIssues {
     /// because the line has no `::` or no `=`.
     ///
     /// Keys are section-name prefixes (section titles embed paths that change).
-    static let sectionsWithUnparseableLines: [String: String] = [
-        "SYSTEM CONFIGURATION":
-            "`scutil --dns`, `scutil --proxy`, `networksetup -listallnetworkservices` and "
-            + "`pmset` blocks are dumped verbatim instead of being normalised to "
-            + "`domain :: key = value`.",
-
-        "CONFIGURATION PROFILES":
-            "`profiles list -all` needs root and writes `this command requires root "
-            + "privileges` to stdout, so neither `2>/dev/null` nor the `||` fallback "
-            + "catches it and the error text lands in the snapshot.",
-
-        "LAUNCH AGENTS & DAEMONS":
-            "Emitted as `<dir> :: <filename>` with no `=`, so an installed launch agent "
-            + "or daemon never appears in a comparison.",
-
-        "TIME MACHINE":
-            "`tmutil destinationinfo` and `tmutil status` output is passed through raw.",
-
-        "SYSTEM EXTENSIONS":
-            "`systemextensionsctl list` output is passed through raw.",
-    ]
+    static let sectionsWithUnparseableLines: [String: String] = [:]
 
     /// Sections whose emit format changed after the base snapshots were captured.
     /// The fixtures are frozen VM captures kept for users to compare against, not
@@ -49,35 +29,50 @@ enum KnownIssues {
         "WALLPAPER":
             "Fixtures predate relabelling these lines from the Index.plist path to the "
             + "`wallpaper` domain, so the old blanket noise pattern still removes them.",
+
+        "APPLICATION HANDLERS":
+            "Fixtures were captured while this section read the wrong path, so they "
+            + "contain only its `(not found)` sentinel.",
+
+        "LAUNCH AGENTS & DAEMONS":
+            "Fixtures predate giving each item a value, so their lines have no `=`.",
+
+        "TIME MACHINE":
+            "Fixtures predate normalising tmutil's banner output to `destination[N].field`.",
+
+        "SYSTEM EXTENSIONS":
+            "Fixtures predate normalising systemextensionsctl output, so they contain its "
+            + "raw \"0 extension(s)\" header.",
+
+        "SYSTEM CONFIGURATION":
+            "Fixtures predate normalising the scutil DNS and proxy blocks and the "
+            + "networksetup service list.",
+
+        "CONFIGURATION PROFILES":
+            "Fixtures were captured while this section ran `profiles list -all`, so they "
+            + "contain its root-privileges refusal as a data line.",
+    ]
+
+    /// Sources that genuinely need root, so the app — which never elevates — cannot
+    /// read them. These are limitations rather than bugs: each now emits a sentinel
+    /// saying so, instead of an empty section or a captured error message.
+    ///
+    /// - BACKGROUND TASK MANAGEMENT: `sfltool dumpbackgroundtaskmanagement` has no
+    ///   root-free equivalent. The launchd half of what it reports is covered by
+    ///   LAUNCH AGENTS & DAEMONS.
+    /// - CONFIGURATION PROFILES: system-scope profiles need root. User-scope profiles
+    ///   come from `profiles show`, and MDM-controlled domains from
+    ///   /Library/Managed Preferences, both without root.
+    static let rootOnlySources: Set<String> = [
+        "BACKGROUND TASK MANAGEMENT",
+        "CONFIGURATION PROFILES",
     ]
 
     // MARK: - Section visibility
 
     /// Sections where every captured line is either unparseable or removed by the
     /// shell noise filter, so the section can never contribute to a comparison.
-    static let sectionsWithNoVisibleData: [String: String] = [
-        "APPLICATION HANDLERS":
-            "Reads ~/Library/Application Support/com.apple.LaunchServices/, but the file "
-            + "lives in ~/Library/Preferences/com.apple.LaunchServices/. The awk block "
-            + "that emits `default-browser :: handler = …` has never run. The general "
-            + "plist scan does pick the file up, but `LaunchServices.*:: LSHandlers\\[` "
-            + "removes those lines, so default browser and mail client are invisible "
-            + "through both paths.",
-
-        "CONFIGURATION PROFILES": "Needs root; the app never elevates.",
-
-        "LAUNCH AGENTS & DAEMONS": "See sectionsWithUnparseableLines.",
-
-        "TIME MACHINE": "See sectionsWithUnparseableLines.",
-
-        "SYSTEM EXTENSIONS": "See sectionsWithUnparseableLines.",
-
-        "BACKGROUND TASK MANAGEMENT":
-            "`sfltool dumpbackgroundtaskmanagement` needs root. Output is discarded by "
-            + "`2>/dev/null` with no fallback, so Login Items & Extensions is captured as "
-            + "nothing at all — silently. The awk normaliser written for it never runs.",
-
-    ]
+    static let sectionsWithNoVisibleData: [String: String] = [:]
 
     /// Sections that should produce settings data on any Mac. A section here that
     /// yields only an empty-state sentinel means its source could not be read.
@@ -94,10 +89,7 @@ enum KnownIssues {
 
     /// Sections from `sectionsThatMustHaveData` that currently produce only a
     /// sentinel, because the source path is wrong or unreadable.
-    static let sectionsMissingTheirSource: [String: String] = [
-        "APPLICATION HANDLERS":
-            "Wrong path — see sectionsWithNoVisibleData. Emits `(not found)` on every Mac.",
-    ]
+    static let sectionsMissingTheirSource: [String: String] = [:]
 
     // MARK: - Knowledge base
 
@@ -119,9 +111,9 @@ enum KnownIssues {
 
     // MARK: - Lookup
 
-    /// Failure modes that only appear in a live capture, because the checked-in
-    /// base snapshots happened to take a different code path. Staleness checks skip
-    /// these unless SETSHOT_LIVE_SNAPSHOT=1.
+    /// Failure modes that only appear in a live capture, because the checked-in base
+    /// snapshots happened to take a different code path through the same section.
+    /// Staleness checks skip these when the live snapshot is not being taken.
     static let requiresLiveSnapshot: Set<String> = []
 
     static func reason(for section: String, in list: [String: String]) -> String? {

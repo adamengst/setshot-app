@@ -165,6 +165,10 @@ final class SnapshotContractTests: XCTestCase {
                 if KnownIssues.reason(for: section.name, in: KnownIssues.sectionsMissingTheirSource) != nil {
                     continue
                 }
+                if !analysis.isLive,
+                   KnownIssues.reason(for: section.name, in: KnownIssues.legacyFixtureSections) != nil {
+                    continue
+                }
                 let sentinel = section.sentinelLines.first ?? "(section entirely empty)"
                 failures.append("""
                     [\(analysis.name)] \(section.name) produced no data, only: \(sentinel)
