@@ -28,6 +28,7 @@ final class SnapshotContractTests: XCTestCase {
 
     private struct Analysis {
         let name: String
+        let raw: String
         /// True for a snapshot taken by the current script, false for the frozen
         /// base snapshots, which were captured by earlier versions of it.
         let isLive: Bool
@@ -52,7 +53,7 @@ final class SnapshotContractTests: XCTestCase {
         for line in diff.components(separatedBy: "\n") where line.hasPrefix("-") {
             surviving.insert(String(line.dropFirst()))
         }
-        return Analysis(name: name, isLive: isLive,
+        return Analysis(name: name, raw: snapshot, isLive: isLive,
                         sections: TestSupport.sections(of: snapshot), surviving: surviving)
     }
 
@@ -183,6 +184,67 @@ final class SnapshotContractTests: XCTestCase {
 
             \(failures.joined(separator: "\n\n"))
             """)
+    }
+
+    // MARK: - Permission dialogs
+
+    /// Reading a Music, TV or Apple Media Services preference domain wakes a media
+    /// daemon and makes macOS put up the Media & Apple Music consent dialog. Those
+    /// reads are gated behind an explicit opt-in, and a snapshot taken without it
+    /// must not touch any of them — an unexpected consent dialog is alarming, and
+    /// it is the user's decision whether SetShot ever asks.
+    ///
+    /// Full Disk Access has no equivalent risk: it cannot be requested, only granted
+    /// by hand, so a denied read fails silently with no dialog. What is checked here
+    /// is that a snapshot without it captures no privacy data rather than partial data.
+    private static let musicDomainPattern = try! NSRegularExpression(
+        pattern: #"/com\.apple\.(Music|iTunes|iTunesX|iCloud\.Music|amp|AMP[A-Za-z]+"#
+              + #"|itunes[a-z]*|media[A-Za-z]*|HomeSharing|CloudMusic|AppleMediaServices"#
+              + #"|TV|Podcasts)"#,
+        options: .caseInsensitive
+    )
+
+    func testNoMusicDomainIsReadWithoutOptIn() throws {
+        // takeLiveSnapshot inherits this process's environment, which does not set
+        // SETSHOT_CHECK_MUSIC — the same state as a user who has not opted in.
+        XCTAssertNil(ProcessInfo.processInfo.environment["SETSHOT_CHECK_MUSIC"],
+                     "This test is only meaningful without the opt-in set")
+
+        // Only the live snapshot, taken by this process with a known environment. The
+        // base fixtures were captured with media access deliberately enabled, so they
+        // contain those domains by design.
+        for analysis in try allAnalyses() where analysis.isLive {
+            for section in analysis.sections {
+                for line in section.dataLines {
+                    // Only the part before "::" is a path the script opened; a music
+                    // bundle ID appearing as a value is another file's content.
+                    guard let sep = line.range(of: " :: ") else { continue }
+                    let source = String(line[line.startIndex..<sep.lowerBound])
+                    let ns = source as NSString
+                    XCTAssertNil(
+                        Self.musicDomainPattern.firstMatch(
+                            in: source, range: NSRange(location: 0, length: ns.length)),
+                        """
+                        [\(analysis.name)] \(section.name) read a media domain without \
+                        the opt-in, which can trigger the Media & Apple Music dialog:
+                        \(source)
+                        """
+                    )
+                }
+            }
+        }
+    }
+
+    func testNoPrivacyDataIsCapturedWithoutFullDiskAccess() throws {
+        for analysis in try allAnalyses() where analysis.raw.contains("TCC :: available = 0") {
+            let leaked = analysis.raw
+                .components(separatedBy: "\n")
+                .filter { $0.hasPrefix("TCC-user ::") || $0.hasPrefix("TCC-system ::") }
+            XCTAssertTrue(leaked.isEmpty, """
+                [\(analysis.name)] reports the privacy databases as unreadable but still \
+                captured \(leaked.count) row(s) from them.
+                """)
+        }
     }
 
     // MARK: - Allowlist hygiene

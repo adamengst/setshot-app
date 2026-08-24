@@ -17,15 +17,25 @@ enum SnapshotError: LocalizedError {
 }
 
 struct SnapshotRunner {
-    /// Whether the system TCC database is readable, meaning SetShot can detect
-    /// which apps have been granted privacy permissions. On macOS 15+, the db
-    /// moved to /Library/Application Support/com.apple.TCC/TCC.db and became
-    /// world-readable. On older macOS, /var/db/TCC/TCC.db requires Full Disk
-    /// Access.
+    /// Whether the privacy permission databases are readable, meaning SetShot can
+    /// detect which apps have been granted privacy permissions. Both require Full
+    /// Disk Access.
+    ///
+    /// The system database carries world-readable POSIX permissions, which is
+    /// misleading: TCC denies access(2) on it regardless of mode, so checking the
+    /// bits says nothing and the read has to be attempted. It also moved to
+    /// /Library/Application Support/com.apple.TCC/TCC.db on macOS 15; older
+    /// versions keep it at /var/db/TCC/TCC.db. Opening any of these without Full
+    /// Disk Access fails silently — no dialog is shown, because Full Disk Access
+    /// cannot be requested, only granted by hand in System Settings.
+    ///
+    /// Used for the Settings pane's permission state. setshot.sh tests the same
+    /// paths itself when deciding what to capture.
     static func canReadSystemTCC() -> Bool {
         let paths = [
             "/Library/Application Support/com.apple.TCC/TCC.db",
             "/var/db/TCC/TCC.db",
+            NSHomeDirectory() + "/Library/Application Support/com.apple.TCC/TCC.db",
         ]
         for path in paths {
             if let fh = FileHandle(forReadingAtPath: path) {
@@ -78,7 +88,6 @@ struct SnapshotRunner {
         if let bin = Bundle.main.executableURL?.path {
             env["SETSHOT_BIN"] = bin
         }
-        env["SETSHOT_CHECK_TCC"] = Self.canReadSystemTCC() ? "1" : "0"
         env["SETSHOT_CHECK_MUSIC"] = Self.musicEnabled() ? "1" : "0"
 
         let exitCode = try await spawnProcess(
