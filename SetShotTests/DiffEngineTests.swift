@@ -47,6 +47,71 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.unrecognized.count, 0)
     }
 
+    // MARK: - Privacy permissions
+    //
+    // Reading the TCC databases needs Full Disk Access, so the snapshot carries
+    // `TCC :: available` to separate "a permission changed" from "SetShot can
+    // suddenly see all of them".
+
+    private func tccKB() -> KnowledgeBase {
+        KnowledgeBase(entries: [
+            makeEntry(domain: "TCC", key: "available"),
+            makeEntry(domain: "TCC-user", keyPrefix: "kTCCServiceMediaLibrary/"),
+            makeEntry(domain: "TCC-system", keyPrefix: "kTCCServiceSystemPolicyAllFiles/"),
+        ], version: 1, updatedAt: nil)
+    }
+
+    func testMediaAndMusicGrantIsReported() {
+        let result = engine().parse(diffOutput: """
+            -TCC-user :: kTCCServiceMediaLibrary/com.tidbits.SetShot = 0
+            +TCC-user :: kTCCServiceMediaLibrary/com.tidbits.SetShot = 2
+            """, kb: tccKB())
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertEqual(result.recognized.first?.diff.key, "kTCCServiceMediaLibrary/com.tidbits.SetShot")
+        XCTAssertEqual(result.recognized.first?.diff.afterValue, "2")
+    }
+
+    func testFullDiskAccessGrantToAnotherAppIsReported() {
+        let result = engine().parse(diffOutput: """
+            -TCC-system :: kTCCServiceSystemPolicyAllFiles/com.example.tool = 0
+            +TCC-system :: kTCCServiceSystemPolicyAllFiles/com.example.tool = 2
+            """, kb: tccKB())
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertEqual(result.recognized.first?.diff.key,
+                       "kTCCServiceSystemPolicyAllFiles/com.example.tool")
+    }
+
+    func testGainingFullDiskAccessSuppressesTheFloodOfPermissions() {
+        // Every grant on the Mac becomes visible at once. Report the capability
+        // change, not two hundred spurious additions.
+        let result = engine().parse(diffOutput: """
+            -TCC :: available = 0
+            +TCC :: available = 1
+            +TCC-user :: kTCCServiceMediaLibrary/com.apple.Music = 2
+            +TCC-user :: kTCCServiceCamera/us.zoom.xos = 2
+            +TCC-system :: kTCCServiceSystemPolicyAllFiles/com.tidbits.SetShot = 2
+            """, kb: tccKB())
+
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertEqual(result.recognized.first?.diff.key, "available")
+        XCTAssertTrue(result.unrecognized.isEmpty, "Permission rows should be withheld")
+        XCTAssertTrue(result.limitedAccessWarning?.contains("granted Full Disk Access") == true,
+                      "Expected an explanation, got: \(result.limitedAccessWarning ?? "nil")")
+    }
+
+    func testLosingFullDiskAccessSuppressesTheFloodOfPermissions() {
+        let result = engine().parse(diffOutput: """
+            -TCC :: available = 1
+            +TCC :: available = 0
+            -TCC-user :: kTCCServiceMediaLibrary/com.apple.Music = 2
+            -TCC-system :: kTCCServiceSystemPolicyAllFiles/com.tidbits.SetShot = 2
+            """, kb: tccKB())
+
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertTrue(result.unrecognized.isEmpty)
+        XCTAssertTrue(result.limitedAccessWarning?.contains("lost Full Disk Access") == true)
+    }
+
     func testSemanticDuplicatesSkipped() {
         // "1" and "true" are semantically equal — should not appear in results
         let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)

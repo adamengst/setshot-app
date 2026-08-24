@@ -42,6 +42,34 @@ final class KnowledgeBaseTests: XCTestCase {
         XCTAssertNotNil(kb.entry(forDomain: "com.apple.FolderActionsDispatcher", key: "folderActions.$objects[100]"))
     }
 
+    // MARK: - Match precedence
+    //
+    // key_prefix "" is how the KB says "this whole domain is noise", so it overlaps
+    // every described setting in that domain. Resolution must not depend on which
+    // entry happens to appear first in settings-kb.json.
+
+    func testExactKeyBeatsEarlierDomainWideRule() {
+        let domainRule = makeEntry(id: "domain-noise", domain: "com.apple.dock", keyPrefix: "", noise: true)
+        let setting = makeEntry(id: "dock.autohide", domain: "com.apple.dock", key: "autohide")
+        let kb = KnowledgeBase(entries: [domainRule, setting], version: 1, updatedAt: nil)
+        XCTAssertEqual(kb.entry(forDomain: "com.apple.dock", key: "autohide")?.id, "dock.autohide")
+    }
+
+    func testDomainWideRuleStillCoversUnlistedKeys() {
+        let domainRule = makeEntry(id: "domain-noise", domain: "com.apple.dock", keyPrefix: "", noise: true)
+        let setting = makeEntry(id: "dock.autohide", domain: "com.apple.dock", key: "autohide")
+        let kb = KnowledgeBase(entries: [domainRule, setting], version: 1, updatedAt: nil)
+        XCTAssertEqual(kb.entry(forDomain: "com.apple.dock", key: "some-other-key")?.id, "domain-noise")
+    }
+
+    func testLongestPrefixWins() {
+        let broad = makeEntry(id: "broad", domain: "com.apple.finder", keyPrefix: "View", noise: true)
+        let narrow = makeEntry(id: "narrow", domain: "com.apple.finder", keyPrefix: "ViewSettings.")
+        let kb = KnowledgeBase(entries: [broad, narrow], version: 1, updatedAt: nil)
+        XCTAssertEqual(kb.entry(forDomain: "com.apple.finder", key: "ViewSettings.icon")?.id, "narrow")
+        XCTAssertEqual(kb.entry(forDomain: "com.apple.finder", key: "ViewOptions")?.id, "broad")
+    }
+
     func testKeyPrefixNoMatchOnWrongPrefix() {
         let entry = makeEntry(domain: "com.apple.FolderActionsDispatcher", keyPrefix: "folderActions.$objects[", noise: true)
         let kb = KnowledgeBase(entries: [entry], version: 1, updatedAt: nil)

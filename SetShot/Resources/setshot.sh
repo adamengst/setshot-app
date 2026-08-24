@@ -385,8 +385,6 @@ NOISE_PATTERN='(
   tipsnext[^:]*::|
   ScreenCaptureApprovals[^:]*::|
   messages\.pinning[^:]*::|
-  TCC-user ::|
-  TCC-system ::|
   com\.apple\.MobileSMS[^:]*::|
   TimeMachine.*:: Destinations\[|
   TimeMachine.*:: BackupAlias|
@@ -732,13 +730,12 @@ NOISE_PATTERN='(
   screentimedx :: needsToSetPasscode\s*=|
   screentimedx :: communicationPolicies\.communicationSafetyNotification\s*=|
 
-  wallpaper.*Index.*::|
+  wallpaper :: .*\.(LastSet|LastUse)\s*=|
   CacheDelete.*::|
   facetime.*:: lastFetchedContactHistoryToken\.|
   thebrowser.*:: .*[Uu]pdate.*[Ss]ince\s*=|
   thebrowser.*:: automaticUpdateWillRelaunchApp\s*=|
   thebrowser.*:: softwareUpdater[Ww]ill[Rr]elaunch|
-  nvram.*:: StartupMute\s*=|
   VirtualBuddy.*:: window-|
   VirtualBuddy.*:: defaultDirectory|
   VirtualBuddy.*:: config\..*\.collapsed\s*=|
@@ -1300,16 +1297,25 @@ JSEOF
     fi
 
     section "SOUND (NVRAM)"
-    # Play sound on startup is stored in NVRAM, not a plist
-    nvram StartupMute 2>/dev/null || echo "nvram :: StartupMute = (not set)"
+    # Play sound on startup is stored in NVRAM, not a plist. nvram prints
+    # "StartupMute<TAB>%01", which has neither `::` nor `=`, so the value was
+    # captured and then dropped by the diff parser — while the `||` fallback below
+    # emitted the right shape and was itself removed by a noise pattern. Both paths
+    # lost, which is why the KB entry for this setting never fired.
+    nvram StartupMute 2>/dev/null | awk -F'\t' '{print "nvram :: " $1 " = " $2}' \
+      || echo "nvram :: StartupMute = (not set)"
 
     section "WALLPAPER (~/Library/Application Support/com.apple.wallpaper)"
-    # Wallpaper selection stored here — not in ~/Library/Preferences
+    # Wallpaper selection stored here — not in ~/Library/Preferences.
+    #
+    # Relabelled from the file path to "wallpaper" so the domain is meaningful:
+    # DiffEngine reduces a path to its basename minus .plist, which would make every
+    # one of these settings live in a domain called "Index".
     WP_INDEX="$HOME/Library/Application Support/com.apple.wallpaper/Store/Index.plist"
     if [ -f "$WP_INDEX" ]; then
-      flatten_plist "$WP_INDEX"
+      flatten_plist "$WP_INDEX" | sed "s|^${WP_INDEX} :: |wallpaper :: |"
     else
-      echo "${WP_INDEX} :: (not found)"
+      echo "wallpaper :: (not found)"
     fi
 
     section "APPLICATION HANDLERS (default browser / mail client)"
@@ -1358,13 +1364,13 @@ JSEOF
     echo "scutil :: LocalHostName = $(scutil --get LocalHostName 2>/dev/null || echo '(not set)')"
     echo "scutil :: HostName      = $(scutil --get HostName      2>/dev/null || echo '(not set)')"
     echo ""
-    echo "--- scutil: DNS ---"
+    echo "# --- scutil: DNS ---"
     scutil --dns   2>/dev/null || echo "(unavailable)"
     echo ""
-    echo "--- scutil: proxy ---"
+    echo "# --- scutil: proxy ---"
     scutil --proxy 2>/dev/null || echo "(unavailable)"
     echo ""
-    echo "--- networksetup: services ---"
+    echo "# --- networksetup: services ---"
     networksetup -listallnetworkservices 2>/dev/null || echo "(unavailable)"
 
     section "CONFIGURATION PROFILES"
@@ -1380,45 +1386,64 @@ JSEOF
       done
     done
 
-    if [ "${SETSHOT_CHECK_TCC:-0}" = "1" ]; then
     section "TCC PRIVACY DATABASE"
-    echo "# Format: service | client | client_type | auth_value | auth_reason | modified"
-    echo "# auth_value: 0=denied  2=allowed"
-    echo ""
+    # Privacy permissions — Full Disk Access, Media & Apple Music, camera, microphone
+    # and the rest — live in two SQLite databases, both gated by Full Disk Access:
+    # per-user grants in ~/Library/Application Support, system-wide grants in
+    # /Library/Application Support. The system database is world-readable by POSIX
+    # mode but TCC still denies access(2) on it, so Full Disk Access is required for
+    # both regardless of what `ls -l` suggests.
+    #
+    # `available` is emitted whether or not the databases can be read, so a
+    # comparison can tell "this permission changed" apart from "SetShot was granted
+    # Full Disk Access and can suddenly see all of them".
+    #
+    # One row per grant, as `service/client = auth_value`. client_type, auth_reason
+    # and last_modified are deliberately left out: the timestamp changes whenever
+    # macOS revalidates a grant, which would make every row diff on its own.
+    echo "# auth_value: 0 = denied, 1 = unknown, 2 = allowed, 3 = limited"
 
     USER_TCC="$HOME/Library/Application Support/com.apple.TCC/TCC.db"
+    SYS_TCC="/Library/Application Support/com.apple.TCC/TCC.db"
+
+    if [ -r "$SYS_TCC" ] || [ -r "$USER_TCC" ]; then
+      echo "TCC :: available = 1"
+    else
+      echo "TCC :: available = 0"
+    fi
+
     if [ -r "$USER_TCC" ]; then
       sqlite3 "$USER_TCC" \
-        "SELECT 'TCC-user :: ' || service || ' | ' || client || ' | ' || client_type
-              || ' | ' || auth_value || ' | ' || COALESCE(auth_reason,'') || ' | '
-              || datetime(last_modified,'unixepoch','localtime')
+        "SELECT 'TCC-user :: ' || service || '/' || client || ' = ' || auth_value
          FROM access ORDER BY service, client;" 2>/dev/null \
         || echo "TCC-user :: (query failed)"
-    else
-      echo "TCC-user :: (not readable — grant Full Disk Access to SetShot)"
     fi
 
-    SYS_TCC="/Library/Application Support/com.apple.TCC/TCC.db"
     if [ -r "$SYS_TCC" ]; then
       sqlite3 "$SYS_TCC" \
-        "SELECT 'TCC-system :: ' || service || ' | ' || client || ' | ' || client_type
-              || ' | ' || auth_value || ' | ' || COALESCE(auth_reason,'') || ' | '
-              || datetime(last_modified,'unixepoch','localtime')
+        "SELECT 'TCC-system :: ' || service || '/' || client || ' = ' || auth_value
          FROM access ORDER BY service, client;" 2>/dev/null \
         || echo "TCC-system :: (query failed)"
-    else
-      echo "TCC-system :: (not readable — grant Full Disk Access to SetShot)"
     fi
-    fi  # SETSHOT_CHECK_TCC
 
     section "SYSTEM STATE"
-    echo "SIP         :: $(csrutil status       2>/dev/null || echo '(unavailable)')"
-    echo "Gatekeeper  :: $(spctl --status        2>/dev/null || echo '(unavailable)')"
-    echo "FileVault   :: $(fdesetup status       2>/dev/null || echo '(unavailable)')"
-    echo "Firewall    :: $(/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate 2>/dev/null || echo '(unavailable)')"
+    # csrutil, spctl, fdesetup and socketfilterfw print prose, not key/value pairs.
+    # Their raw output has no `=` (the firewall's sits inside the sentence), so
+    # DiffEngine dropped every one of these lines: SIP, Gatekeeper and FileVault
+    # could be turned off without a comparison saying anything. Normalise each to
+    # `domain :: key = value` and let the KB explain the values.
+    _sip=$(csrutil status 2>/dev/null | sed -n 's/.*status: *//p' | sed 's/\.$//')
+    echo "SIP :: status = ${_sip:-(unavailable)}"
+    _gatekeeper=$(spctl --status 2>/dev/null | sed -n 's/^assessments *//p')
+    echo "Gatekeeper :: status = ${_gatekeeper:-(unavailable)}"
+    _filevault=$(fdesetup status 2>/dev/null | sed -n 's/^FileVault is *//p' | sed 's/\.$//')
+    echo "FileVault :: status = ${_filevault:-(unavailable)}"
+    _firewall=$(/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate 2>/dev/null \
+      | sed -n 's/.*(State = *\([0-9]*\)).*/\1/p')
+    echo "Firewall :: state = ${_firewall:-(unavailable)}"
     _adm_timeout=$(security authorizationdb read system.preferences 2>/dev/null \
       | plutil -extract timeout raw -o - - 2>/dev/null)
-    echo "AdminPassword :: timeout=${_adm_timeout:-(unavailable)}"
+    echo "AdminPassword :: timeout = ${_adm_timeout:-(unavailable)}"
     LDM_VAL=$(launchctl bootenv 2>/dev/null | awk '/LockdownMode/{print $2}')
     echo "LockdownMode :: LockdownMode = ${LDM_VAL:-0}"
     echo ""
@@ -1430,7 +1455,7 @@ JSEOF
     # mechanism is gone on Apple Silicon. Would require a compiled Swift helper
     # with private entitlements to query the KeyboardBrightnessClient SPI.
 
-    echo "--- pmset ---"
+    echo "# --- pmset ---"
     # Reformat pmset -g output into "pmset :: [section.]key = value" lines so
     # DiffEngine can parse and diff individual energy settings. Section prefixes
     # ("Battery Power.", "AC Power.") are added for named sections; "Currently
@@ -1451,12 +1476,17 @@ JSEOF
       }
     '
     echo ""
-    echo "--- systemsetup ---"
-    systemsetup -getnetworktimeserver 2>/dev/null || echo "(unavailable)"
-    systemsetup -getusingnetworktime  2>/dev/null || echo "(unavailable)"
-    systemsetup -gettimezone          2>/dev/null || echo "(unavailable)"
-    systemsetup -getremotelogin       2>/dev/null || echo "(unavailable)"
-    systemsetup -getremoteappleevents 2>/dev/null || echo "(unavailable)"
+    echo "# --- time settings ---"
+    # systemsetup needs root, so from the app every one of these calls printed
+    # "You need administrator access to run this tool" to stdout — where 2>/dev/null
+    # and the || fallback both miss it. Read the same values from their root-free
+    # sources instead. Remote login and remote Apple events are already reported by
+    # SHARING SERVICES (com.openssh.sshd, com.apple.AEServer); "using network time"
+    # has no root-free source and is omitted rather than faked.
+    _tz=$(readlink /etc/localtime 2>/dev/null | sed 's|.*/zoneinfo/||')
+    echo "systemsetup :: timeZone = ${_tz:-(unavailable)}"
+    _nts=$(awk '/^server/{print $2; exit}' /etc/ntp.conf 2>/dev/null)
+    echo "systemsetup :: networkTimeServer = ${_nts:-(unavailable)}"
 
     section "SHARING SERVICES"
     # Reports enabled/disabled for each service by reading the system-domain

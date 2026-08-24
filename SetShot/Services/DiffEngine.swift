@@ -39,10 +39,15 @@ struct DiffEngine {
 
         let parsed = parse(diffOutput: diffOutput, kb: kb)
 
-        let beforeLimited = before.rawOutput.contains("grant Full Disk Access to SetShot")
-        let afterLimited = after.rawOutput.contains("grant Full Disk Access to SetShot")
+        // `TCC :: available = 0` marks a snapshot taken without Full Disk Access. The
+        // previous check looked for a "grant Full Disk Access to SetShot" string that
+        // the script only wrote when it already had access, so it never fired.
+        let beforeLimited = before.rawOutput.contains("TCC :: available = 0")
+        let afterLimited = after.rawOutput.contains("TCC :: available = 0")
         let warning: String?
-        if beforeLimited && afterLimited {
+        if let visibilityChange = parsed.limitedAccessWarning {
+            warning = visibilityChange
+        } else if beforeLimited && afterLimited {
             warning = "Both snapshots were taken without Full Disk Access for SetShot \u{2014} privacy permission data and some app preferences are missing from both."
         } else if beforeLimited {
             warning = "The before snapshot was taken without Full Disk Access for SetShot. Settings from some apps (Music, TV, Messages, etc.) and privacy permissions are absent, which may cause false added changes in the results. Grant SetShot Full Disk Access in System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access, then retake the snapshot."
@@ -123,6 +128,27 @@ struct DiffEngine {
         var unrecognized: [DiffLine] = []
         var noise: [(entry: KBEntry, diff: DiffLine)] = []
 
+        // Reading the privacy databases requires Full Disk Access, so granting or
+        // revoking it changes what SetShot can see rather than what is set. Every
+        // grant on the Mac would otherwise appear as added or deleted at once,
+        // burying whatever actually changed. Report the capability change instead.
+        var tccVisibilityWarning: String?
+        if let availability = pairs.first(where: { $0.domain == "TCC" && $0.key == "available" }),
+           let before = availability.before, let after = availability.after,
+           before != after {
+            let gained = after == "1"
+            tccVisibilityWarning = gained
+                ? "SetShot was granted Full Disk Access between these snapshots, so privacy "
+                  + "permissions are visible in the later one and absent from the earlier one. "
+                  + "Individual permissions are left out of these results because every one of "
+                  + "them would show as newly added. Compare two snapshots taken with Full Disk "
+                  + "Access to see permission changes."
+                : "SetShot lost Full Disk Access between these snapshots, so privacy permissions "
+                  + "are missing from the later one. Individual permissions are left out of these "
+                  + "results because every one of them would show as deleted."
+            pairs.removeAll { $0.domain.hasPrefix("TCC-") }
+        }
+
         for p in pairs {
             let before = p.before ?? ""
             let after = p.after ?? ""
@@ -174,7 +200,8 @@ struct DiffEngine {
             return (lhs.entry.description ?? "") < (rhs.entry.description ?? "")
         }
 
-        return DiffResult(recognized: recognized, unrecognized: unrecognized, noise: noise, unrecognizedOverflow: overflow, limitedAccessWarning: nil)
+        return DiffResult(recognized: recognized, unrecognized: unrecognized, noise: noise,
+                          unrecognizedOverflow: overflow, limitedAccessWarning: tccVisibilityWarning)
     }
 
     // True when every domain::key change in `ab` (the diff that justified keeping the

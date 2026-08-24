@@ -14,7 +14,7 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-submissions` (priv
 
 2. View each issue. For `pending`, decide: **noise** (suppress silently), **KB entry** (add with description/location), or **needs more info**. For `kb-feedback`, apply the reported correction to the existing entry.
 
-3. Edit `settings-kb.json` in `/Users/adam/Documents/GitHub/setshot-kb/`:
+3. Edit `settings-kb.json` in `/Users/adam/GitHub/setshot-kb/`:
    - Noise entry: `"noise": true`, `"noise_reason": "..."`, leave `description`/`ui_location`/`settings_url` null.
    - If the key contains array indices (`[0]`) or UUIDs, use `"key": ""` and `"key_prefix": "..."` instead of an exact key.
    - Known entry: fill `description`, `ui_location`, `settings_url` (x-apple.systempreferences: URL if applicable), `value_map` if the values need human labels.
@@ -89,7 +89,7 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-submissions` (priv
 
 7. Generate the EdDSA signature:
    ```
-   ~/Library/Developer/Xcode/DerivedData/SetShot-dudffzkhimmftwbvygszwmzrzgpd/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update /tmp/SetShot-X.Y.zip
+   "$(ls -t ~/Library/Developer/Xcode/DerivedData/SetShot-*/SourcePackages/artifacts/sparkle/Sparkle/bin/sign_update | head -1)" /tmp/SetShot-X.Y.zip
    ```
    Note the `sparkle:edSignature` and `length` values.
 
