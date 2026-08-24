@@ -216,7 +216,15 @@ func recognizedRowText(description: String, location: String?, old: String, new:
 
 func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil) -> String {
     if let map = valueMap {
-        // Resolve dynamic system values for Finder new window target.
+        // Resolve dynamic system values for Finder new window target. These read the
+        // machine's own identity, which the snapshot does not record.
+        //
+        // PfLo/PfOt (a custom folder) deliberately does not resolve a name here. The
+        // folder is a setting in its own right, held in NewWindowTargetPath, and
+        // reading it from live UserDefaults showed today's folder for both sides of a
+        // comparison — including for snapshots taken before it changed. The value_map
+        // labels these "Custom folder", and NewWindowTargetPath is reported as its own
+        // row carrying the before and after paths the snapshots actually hold.
         if key == "NewWindowTarget" {
             if raw == "PfHm" {
                 return FileManager.default.homeDirectoryForCurrentUser.lastPathComponent
@@ -226,11 +234,6 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
                 let rootURL = URL(fileURLWithPath: "/")
                 let name = (try? rootURL.resourceValues(forKeys: [.volumeLocalizedNameKey]))?.volumeLocalizedName
                 return name ?? map["PfVo"] ?? "Macintosh HD"
-            } else if raw == "PfLo" || raw == "PfOt" {
-                if let pathStr = UserDefaults(suiteName: "com.apple.finder")?.string(forKey: "NewWindowTargetPath"),
-                   let url = URL(string: pathStr) {
-                    return url.lastPathComponent
-                }
             }
         }
         // Normalize True/False → 1/0 for value_map lookup since FLATTEN_PY
