@@ -99,6 +99,24 @@ final class DiffEngineTests: XCTestCase {
                       "Expected an explanation, got: \(result.limitedAccessWarning ?? "nil")")
     }
 
+    func testOlderSnapshotWithNoTCCDataIsTreatedAsNotReadable() {
+        // Snapshots taken before SetShot captured privacy permissions have no
+        // `TCC :: available` line at all — the key is absent rather than 0. Comparing
+        // one of those against a snapshot taken with Full Disk Access is exactly the
+        // flood this suppression exists for, so an absent value has to count.
+        let result = engine().parse(diffOutput: """
+            +TCC :: available = 1
+            +TCC-user :: kTCCServiceCamera/us.zoom.xos = 2
+            +TCC-user :: kTCCServiceMicrophone/com.example.a = 2
+            +TCC-system :: kTCCServiceSystemPolicyAllFiles/com.example.b = 2
+            """, kb: tccKB())
+
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertEqual(result.recognized.first?.diff.key, "available")
+        XCTAssertTrue(result.unrecognized.isEmpty, "Permission rows should be withheld")
+        XCTAssertTrue(result.limitedAccessWarning?.contains("granted Full Disk Access") == true)
+    }
+
     func testLosingFullDiskAccessSuppressesTheFloodOfPermissions() {
         let result = engine().parse(diffOutput: """
             -TCC :: available = 1

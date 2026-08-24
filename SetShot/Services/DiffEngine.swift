@@ -133,9 +133,15 @@ struct DiffEngine {
         // grant on the Mac would otherwise appear as added or deleted at once,
         // burying whatever actually changed. Report the capability change instead.
         var tccVisibilityWarning: String?
-        if let availability = pairs.first(where: { $0.domain == "TCC" && $0.key == "available" }),
-           let before = availability.before, let after = availability.after,
-           before != after {
+        // An absent value means the snapshot predates TCC capture entirely, which is
+        // the same situation as not being able to read the databases — so treat it as
+        // "not readable" rather than skipping the check. Without this, comparing any
+        // older snapshot against a new one with Full Disk Access floods the results
+        // with every grant on the Mac, which is the case this exists to prevent.
+        if let availability = pairs.first(where: { $0.domain == "TCC" && $0.key == "available" }) {
+            let before = availability.before ?? "0"
+            let after = availability.after ?? "0"
+            if before != after {
             let gained = after == "1"
             tccVisibilityWarning = gained
                 ? "SetShot was granted Full Disk Access between these snapshots, so privacy "
@@ -147,6 +153,7 @@ struct DiffEngine {
                   + "are missing from the later one. Individual permissions are left out of these "
                   + "results because every one of them would show as deleted."
             pairs.removeAll { $0.domain.hasPrefix("TCC-") }
+            }
         }
 
         for p in pairs {
