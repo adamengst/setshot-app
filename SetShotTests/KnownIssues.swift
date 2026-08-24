@@ -94,20 +94,10 @@ enum KnownIssues {
     // MARK: - Knowledge base
 
     /// Non-noise KB entries the shell noise filter removes before DiffEngine ever
-    /// sees them. Each is a described, located setting that can never be reported.
-    static let kbEntriesShadowedByNoiseFilter: [String: String] = [
-        "finder.NewWindowTargetPath":
-            "Killed by `finder.*:: NewWindowTargetPath\\s*=`. The filter says noise, the "
-            + "KB says setting — one of the two is wrong.",
-
-        "universalaccess.closeViewZoomFollowsFocus":
-            "Collateral damage from `universalaccess.*:: closeViewZoom`, which was aimed "
-            + "at closeViewZoomFactor / closeViewZoomedIn / closeViewZoomDisplayID churn.",
-
-        "xpc-activity2-product-build-version":
-            "Killed by the domain-wide `xpc\\.activity2\\.plist ::`. Harmless in practice "
-            + "— `system :: macOSBuild` already reports the build number.",
-    ]
+    /// sees them. Each would be a described, located setting that can never be
+    /// reported — the KB calling something a setting while a `grep -vE` pattern
+    /// deletes its line means one of the two is wrong.
+    static let kbEntriesShadowedByNoiseFilter: [String: String] = [:]
 
     // MARK: - Lookup
 

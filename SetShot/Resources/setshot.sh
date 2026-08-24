@@ -457,7 +457,6 @@ NOISE_PATTERN='(
   pbs[^:]*:: FinderActive\.|
   bird[^:]*::|
   finder.*:: TagsCloudSerialNumber\s*=|
-  finder.*:: NewWindowTargetPath\s*=|
   finder.*:: [A-Za-z]+ViewSettings\.|
   finder.*:: FXRecentFolders\[|
   finder.*:: FXInfoPanesExpanded\.|
@@ -478,7 +477,7 @@ NOISE_PATTERN='(
   universalaccess.*:: hoverTypingFontStyle\s*=|
   universalaccess.*:: History\.MouseKeys\[|
   :: VoiceOverTouchLanguageRotor\[|
-  universalaccess.*:: closeViewZoom|
+  universalaccess.*:: closeViewZoomDisplayID\s*=|
   universalaccess.*:: FontSizeCategory\.|
   universalaccess.*:: sessionChange\s*=|
   universalaccess.*:: login\s*=|
