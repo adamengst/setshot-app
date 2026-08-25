@@ -730,7 +730,8 @@ NOISE_PATTERN='(
   screentimedx :: communicationPolicies\.communicationSafetyNotification\s*=|
 
   wallpaper :: .*\.(LastSet|LastUse)\s*=|
-  wallpaper :: (Spaces|Displays)\.|
+  wallpaper :: Spaces\.|
+  wallpaper :: .*\.Configuration\.backgroundColor\.|
   CacheDelete.*::|
   facetime.*:: lastFetchedContactHistoryToken\.|
   thebrowser.*:: .*[Uu]pdate.*[Ss]ince\s*=|
