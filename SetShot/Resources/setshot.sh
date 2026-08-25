@@ -730,7 +730,8 @@ NOISE_PATTERN='(
   screentimedx :: communicationPolicies\.communicationSafetyNotification\s*=|
 
   wallpaper :: .*\.(LastSet|LastUse)\s*=|
-  wallpaper :: Spaces\.|
+  wallpaper :: Spaces\.[0-9A-F-]*\.Default\.|
+  wallpaper :: Displays\.|
   wallpaper :: .*\.Configuration\.backgroundColor\.|
   wallpaper :: .*\s=\s\$null$|
   wallpaper :: .*\.Configuration\s*=\s*<binary|
@@ -1312,6 +1313,12 @@ JSEOF
 
     section "WALLPAPER (~/Library/Application Support/com.apple.wallpaper)"
     # Wallpaper selection stored here — not in ~/Library/Preferences.
+    #
+    # Of the three places macOS records a display's wallpaper, only
+    # Spaces.<space>.Displays.<display> is kept current — the top-level Displays.
+    # copy goes stale (placement changes never reach it) and Spaces.<space>.Default
+    # duplicates the per-display entries. Keeping one of the three means a change
+    # reports once, and reports the value that is actually in effect.
     #
     # Relabelled from the file path to "wallpaper" so the domain is meaningful:
     # DiffEngine reduces a path to its basename minus .plist, which would make every

@@ -161,28 +161,41 @@ final class FormatValueTests: XCTestCase {
     // therefore composed, not looked up — and it has to be one line, since SetShot
     // has no second description line.
 
-    private func wallpaperEntry() -> KBEntry { prefixEntry("Displays.", domain: "wallpaper") }
+    private func wallpaperEntry() -> KBEntry { prefixEntry("Spaces.", domain: "wallpaper") }
+
+    private let space = "BFB56979-0EB6-42AE-AB77-D4018A70DD04"
+    private let display = "00000000-0000-0000-0000-000000000000"
 
     func testPerDisplayWallpaperDescriptionNamesTheDisplay() {
-        let uuid = "00000000-0000-0000-0000-000000000000"
+        // The reported key is Spaces.<space>.Displays.<display>… — the display is the
+        // second UUID, and naming the first one would name a Space.
         XCTAssertEqual(
             rowDescription(entry: wallpaperEntry(),
-                           key: "Displays.\(uuid).Desktop.Content.Choices[0].Files[0].relative"),
-            "Wallpaper for \(uuid), set when \u{201C}Show on all Spaces\u{201D} is turned off."
+                           key: "Spaces.\(space).Displays.\(display).Desktop.Content.Choices[0].Files[0].relative"),
+            "Wallpaper on \(display)."
         )
     }
 
     func testWallpaperDescriptionDistinguishesItsAspects() {
-        let uuid = "00000000-0000-0000-0000-000000000000"
         let e = wallpaperEntry()
-        XCTAssertTrue(rowDescription(entry: e,
-            key: "Displays.\(uuid).Desktop.Content.Choices[0].Configuration.placement")
-            .hasPrefix("Wallpaper placement for"))
-        XCTAssertTrue(rowDescription(entry: e,
-            key: "Displays.\(uuid).Idle.Content.Choices[0].Configuration.module.relative")
-            .hasPrefix("Screen saver for"))
-        XCTAssertEqual(rowDescription(entry: e, key: "Displays.\(uuid).Type"),
-                       "Whether every display and Space shares one wallpaper.")
+        let base = "Spaces.\(space).Displays.\(display)"
+        XCTAssertEqual(
+            rowDescription(entry: e, key: "\(base).Desktop.Content.Choices[0].Configuration.placement"),
+            "Wallpaper placement on \(display)."
+        )
+        XCTAssertEqual(
+            rowDescription(entry: e, key: "\(base).Idle.Content.Choices[0].Configuration.module.relative"),
+            "Screen saver on \(display)."
+        )
+        // "Show as screen saver" collapses the two into one Linked entry.
+        XCTAssertEqual(
+            rowDescription(entry: e, key: "\(base).Linked.Content.Choices[0].Configuration.assetID"),
+            "Wallpaper on \(display), also shown as its screen saver."
+        )
+        XCTAssertEqual(
+            rowDescription(entry: e, key: "\(base).Type"),
+            "Whether \(display) shows the same image as wallpaper and screen saver."
+        )
     }
 
     func testWholeMachineWallpaperScopesReadPlainly() {
@@ -190,13 +203,13 @@ final class FormatValueTests: XCTestCase {
             rowDescription(entry: prefixEntry("AllSpacesAndDisplays.Desktop.Content.Choices",
                                               domain: "wallpaper"),
                            key: "AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative"),
-            "Wallpaper for all displays."
+            "Wallpaper on all displays."
         )
         XCTAssertEqual(
             rowDescription(entry: prefixEntry("SystemDefault.Desktop.Content.Choices",
                                               domain: "wallpaper"),
                            key: "SystemDefault.Desktop.Content.Choices[0].Files[0].relative"),
-            "Wallpaper for the system default."
+            "Wallpaper on new displays and Spaces."
         )
     }
 

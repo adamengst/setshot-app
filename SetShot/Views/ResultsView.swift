@@ -220,43 +220,60 @@ enum AerialCatalogue {
 /// sits in the middle of the key and a key_prefix cannot skip it. So the specifics —
 /// which display, and which aspect of its wallpaper — are composed here.
 private func wallpaperDescription(key: String) -> String? {
+    let uuidPattern = #"[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}"#
     var rest = key
     let scope: String
 
-    if rest.hasPrefix("Displays.") {
-        rest = String(rest.dropFirst("Displays.".count))
-        let uuid = String(rest.prefix(36))
-        scope = displayName(forUUID: uuid) ?? uuid
-        rest = String(rest.dropFirst(min(37, rest.count)))
+    func takeDisplay(from text: String) -> (String, String)? {
+        guard let r = text.range(of: uuidPattern, options: [.regularExpression, .caseInsensitive])
+        else { return nil }
+        let uuid = String(text[r])
+        var remainder = String(text[r.upperBound...])
+        if remainder.hasPrefix(".") { remainder.removeFirst() }
+        return (displayName(forUUID: uuid) ?? uuid, remainder)
+    }
+
+    if rest.hasPrefix("Spaces.") {
+        // Spaces.<space>.Displays.<display>.… — the display is the second UUID.
+        guard let afterSpace = takeDisplay(from: String(rest.dropFirst("Spaces.".count)))
+        else { return nil }
+        rest = afterSpace.1
+        guard rest.hasPrefix("Displays."), let d = takeDisplay(from: String(rest.dropFirst("Displays.".count)))
+        else { return nil }
+        scope = d.0
+        rest = d.1
+    } else if rest.hasPrefix("Displays.") {
+        guard let d = takeDisplay(from: String(rest.dropFirst("Displays.".count))) else { return nil }
+        scope = d.0
+        rest = d.1
     } else if rest.hasPrefix("AllSpacesAndDisplays.") {
         rest = String(rest.dropFirst("AllSpacesAndDisplays.".count))
         scope = "all displays"
     } else if rest.hasPrefix("SystemDefault.") {
         rest = String(rest.dropFirst("SystemDefault.".count))
-        scope = "the system default"
+        scope = "new displays and Spaces"
     } else {
         return nil
     }
 
-    let perDisplay = key.hasPrefix("Displays.")
-    let qualifier = perDisplay ? ", set when “Show on all Spaces” is turned off" : ""
-
     if rest == "Type" {
-        return "Whether every display and Space shares one wallpaper."
+        return "Whether \(scope) shows the same image as wallpaper and screen saver."
     }
-    let isIdle = rest.hasPrefix("Idle.")
+
+    // Desktop, Idle and Linked share one nested shape. Linked means the wallpaper
+    // image is also the screen saver, which is the "Show as screen saver" option.
+    let mode = rest.prefix(while: { $0 != "." })
     let leaf = rest
-        .replacingOccurrences(of: #"^(Desktop|Idle)\."#, with: "", options: .regularExpression)
+        .replacingOccurrences(of: #"^(Desktop|Idle|Linked)\."#, with: "", options: .regularExpression)
         .replacingOccurrences(of: #"\[\d+\]"#, with: "", options: .regularExpression)
 
-    if isIdle {
-        return "Screen saver for \(scope)\(qualifier)."
+    if leaf == "Content.Choices.Configuration.placement" {
+        return "Wallpaper placement on \(scope)."
     }
-    switch leaf {
-    case "Content.Choices.Configuration.placement":
-        return "Wallpaper placement for \(scope)\(qualifier)."
-    default:
-        return "Wallpaper for \(scope)\(qualifier)."
+    switch mode {
+    case "Idle":   return "Screen saver on \(scope)."
+    case "Linked": return "Wallpaper on \(scope), also shown as its screen saver."
+    default:       return "Wallpaper on \(scope)."
     }
 }
 
