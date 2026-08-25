@@ -100,14 +100,22 @@ struct SettingsView: View {
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                Button("Open Full Disk Access Settings") {
+                    NSWorkspace.shared.open(Self.fullDiskAccessSettingsURL)
+                }
             }
         }
     }
 
+    /// Full Disk Access cannot be requested programmatically — macOS only lets it be
+    /// granted by hand — so the most SetShot can do is open the pane.
+    static let fullDiskAccessSettingsURL = URL(
+        string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!
+
     private var fdaDescription: AttributedString {
         var str = AttributedString("For SetShot to detect which apps have been granted access to the microphone, camera, contacts, and similar resources, it needs Full Disk Access, which must be turned on manually. You can do so in ")
         var link = AttributedString("System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access.")
-        link.link = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!
+        link.link = Self.fullDiskAccessSettingsURL
         str += link
         return str
     }
