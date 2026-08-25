@@ -730,6 +730,7 @@ NOISE_PATTERN='(
   screentimedx :: communicationPolicies\.communicationSafetyNotification\s*=|
 
   wallpaper :: .*\.(LastSet|LastUse)\s*=|
+  wallpaper :: (Spaces|Displays)\.|
   CacheDelete.*::|
   facetime.*:: lastFetchedContactHistoryToken\.|
   thebrowser.*:: .*[Uu]pdate.*[Ss]ince\s*=|
@@ -1356,7 +1357,18 @@ JSEOF
             s = scheme[i]
             if (!(s in NAME)) continue
             r = (i in role) ? role[i] : viewer[i]
-            if (r != "") print NAME[s] " :: handler = " r
+            if (r != "") handler[s] = r
+          }
+          # http and https are one control in System Settings, so reporting both
+          # meant two rows for every browser change. The https handler is emitted
+          # only when it disagrees, which is the case actually worth seeing.
+          if ("http" in handler)       print "default-browser :: handler = " handler["http"]
+          else if ("https" in handler) print "default-browser :: handler = " handler["https"]
+          if ("https" in handler && "http" in handler && handler["https"] != handler["http"])
+            print "default-browser-https :: handler = " handler["https"]
+          for (s in handler) {
+            if (s == "http" || s == "https") continue
+            print NAME[s] " :: handler = " handler[s]
           }
         }
       '

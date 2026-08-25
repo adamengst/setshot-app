@@ -253,6 +253,20 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
            let stem = URL(string: "file://\(raw)")?.deletingPathExtension().lastPathComponent,
            let label = map[stem] { return label }
     }
+    // Default handlers are recorded as bundle identifiers, and LaunchServices
+    // lowercases them, so the raw value reads "com.apple.safari". Resolve the app's
+    // real name. This is a live lookup, but an app's name is its identity rather
+    // than a setting this comparison could be about — and an app that is no longer
+    // installed falls back to the identifier, which is still the honest answer.
+    if key == "handler", raw.contains("."), !raw.contains("/"), !raw.contains(" ") {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: raw) {
+            // displayName is localized but keeps the ".app" extension when Finder is
+            // set to show extensions.
+            var name = FileManager.default.displayName(atPath: url.path)
+            if name.hasSuffix(".app") { name = String(name.dropLast(4)) }
+            if !name.isEmpty { return name }
+        }
+    }
     switch raw.lowercased() {
     case "true", "yes", "1": return "On"
     case "false", "no", "0": return "Off"

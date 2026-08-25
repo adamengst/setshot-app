@@ -86,6 +86,24 @@ final class FormatValueTests: XCTestCase {
         )
     }
 
+    func testDefaultHandlerShowsTheAppName() {
+        // LaunchServices records and lowercases bundle identifiers, so the raw value
+        // is "com.apple.safari" — not something to show anyone.
+        XCTAssertEqual(formatValue("com.apple.safari", key: "handler"), "Safari")
+    }
+
+    func testUninstalledHandlerFallsBackToItsIdentifier() {
+        // A snapshot can name an app that is no longer installed, and the identifier
+        // is then the only honest answer.
+        XCTAssertEqual(formatValue("com.example.definitely.not.installed", key: "handler"),
+                       "com.example.definitely.not.installed")
+    }
+
+    func testHandlerLookupIgnoresValuesThatAreNotIdentifiers() {
+        XCTAssertEqual(formatValue("/Applications/Foo.app", key: "handler"), "Foo")
+        XCTAssertEqual(formatValue("(not set)", key: "handler"), "(not set)")
+    }
+
     func testBooleanFallbacksAreUnchanged() {
         XCTAssertEqual(formatValue("1"), "On")
         XCTAssertEqual(formatValue("false"), "Off")
