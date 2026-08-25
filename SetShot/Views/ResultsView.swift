@@ -322,9 +322,13 @@ func displayName(forUUID uuid: String) -> String? {
               let cfUUID = CGDisplayCreateUUIDFromDisplayID(CGDirectDisplayID(number.uint32Value))?
                   .takeRetainedValue()
         else { continue }
-        if (CFUUIDCreateString(nil, cfUUID) as String).caseInsensitiveCompare(uuid) == .orderedSame {
-            return screen.localizedName
-        }
+        guard (CFUUIDCreateString(nil, cfUUID) as String).caseInsensitiveCompare(uuid) == .orderedSame
+        else { continue }
+        // NSScreen calls the internal display "Built-in Retina Display"; System
+        // Settings calls it "Built-in Display", and that is the name a reader is
+        // looking for when they go to change the setting.
+        let id = CGDirectDisplayID(number.uint32Value)
+        return CGDisplayIsBuiltin(id) != 0 ? "Built-in Display" : screen.localizedName
     }
     return nil
 }

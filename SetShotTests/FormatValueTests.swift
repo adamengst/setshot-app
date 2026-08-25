@@ -223,6 +223,22 @@ final class FormatValueTests: XCTestCase {
         XCTAssertEqual(rowDescription(entry: prefixEntry(nil), key: "AppleKeyboardUIMode"), "Test")
     }
 
+    func testBuiltInDisplayUsesTheNameSystemSettingsShows() throws {
+        // NSScreen says "Built-in Retina Display"; System Settings says "Built-in
+        // Display", which is what someone reading the row will be looking for.
+        let builtIn = NSScreen.screens.first { screen in
+            guard let n = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber
+            else { return false }
+            return CGDisplayIsBuiltin(CGDirectDisplayID(n.uint32Value)) != 0
+        }
+        try XCTSkipIf(builtIn == nil, "No internal display on this Mac")
+        guard let builtIn,
+              let n = builtIn.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+              let cf = CGDisplayCreateUUIDFromDisplayID(CGDirectDisplayID(n.uint32Value))?.takeRetainedValue()
+        else { return }
+        XCTAssertEqual(displayName(forUUID: CFUUIDCreateString(nil, cf) as String), "Built-in Display")
+    }
+
     func testAerialWallpaperShowsItsName() throws {
         // Aerials are stored only as asset UUIDs; the catalogue naming them is a
         // world-readable JSON file, so this needs no permission.
