@@ -36,7 +36,9 @@ struct HTMLExporter {
         .arrow { color: #999; }
         .open-btn { font-size: 12px; color: #007aff; text-decoration: none; border: 1px solid #007aff; border-radius: 5px; padding: 3px 9px; white-space: nowrap; flex-shrink: 0; align-self: flex-start; }
         .open-btn:hover { background: #007aff; color: #fff; }
-        @media print { .open-btn { display: none; } }
+        @media print { .open-btn { display: none; }
+          .item { break-inside: avoid; page-break-inside: avoid; background: none; border: 1px solid #ddd; }
+          .section { break-inside: auto; } }
         </style>
         </head>
         <body>

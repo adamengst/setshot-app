@@ -48,27 +48,34 @@ struct ResultsView: View {
         .toolbar {
             if !diff.recognized.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Export HTML…") { exportHTML() }
+                    Menu("Export…") {
+                        Button("HTML…") { export(.html) }
+                        Button("Markdown…") { export(.markdown) }
+                    }
+                    .fixedSize()
                 }
             }
         }
         .frame(minWidth: 600)
     }
 
-    private func exportHTML() {
+    private func export(_ format: ExportFormat) {
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.html]
+        panel.allowedContentTypes = [format.contentType]
         panel.nameFieldStringValue = "SetShot — \(StoredSnapshot.exportComputerName) — "
-            + "\(before.exportLabel) vs \(after.exportLabel).html"
+            + "\(before.exportLabel) vs \(after.exportLabel).\(format.fileExtension)"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let macOSMajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
-        let html = HTMLExporter.export(
-            result: diff,
-            beforeName: before.displayName,
-            afterName: after.displayName,
-            macOSMajor: macOSMajor
-        )
-        try? html.write(to: url, atomically: true, encoding: .utf8)
+        let text: String
+        switch format {
+        case .html:
+            text = HTMLExporter.export(result: diff, beforeName: before.displayName,
+                                       afterName: after.displayName, macOSMajor: macOSMajor)
+        case .markdown:
+            text = MarkdownExporter.export(result: diff, beforeName: before.displayName,
+                                           afterName: after.displayName, macOSMajor: macOSMajor)
+        }
+        try? text.write(to: url, atomically: true, encoding: .utf8)
     }
 
     private func limitedAccessBanner(_ message: String) -> some View {

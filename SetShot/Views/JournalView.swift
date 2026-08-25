@@ -96,7 +96,11 @@ struct JournalView: View {
                 .buttonStyle(.plain)
             }
             if !appModel.journal.isEmpty {
-                Button("Export HTML…") { exportJournal() }
+                Menu("Export…") {
+                    Button("HTML…") { exportJournal(.html) }
+                    Button("Markdown…") { exportJournal(.markdown) }
+                }
+                .fixedSize()
                 Button("Clear All") {
                     showingClearConfirm = true
                 }
@@ -115,15 +119,21 @@ struct JournalView: View {
         }
     }
 
-    private func exportJournal() {
+    private func exportJournal(_ format: ExportFormat) {
         let panel = NSSavePanel()
-        panel.allowedContentTypes = [.html]
+        panel.allowedContentTypes = [format.contentType]
         panel.nameFieldStringValue = "SetShot Journal — \(StoredSnapshot.exportComputerName) — "
-            + "\(StoredSnapshot.exportDateStamp).html"
+            + "\(StoredSnapshot.exportDateStamp).\(format.fileExtension)"
         panel.canCreateDirectories = true
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        let html = JournalHTMLExporter.export(journal: appModel.journal, oldestFirst: oldestFirst)
-        try? html.data(using: .utf8)?.write(to: url, options: .atomic)
+        let text: String
+        switch format {
+        case .html:
+            text = JournalHTMLExporter.export(journal: appModel.journal, oldestFirst: oldestFirst)
+        case .markdown:
+            text = MarkdownExporter.export(journal: appModel.journal, oldestFirst: oldestFirst)
+        }
+        try? text.data(using: .utf8)?.write(to: url, options: .atomic)
     }
 
     private var emptyState: some View {
