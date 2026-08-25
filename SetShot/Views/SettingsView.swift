@@ -85,9 +85,16 @@ struct SettingsView: View {
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                // macOS only prompts once. After that, MusicAuthorization.request()
+                // returns the existing answer without showing anything, so the only way
+                // back is System Settings.
                 if musicStatus == .notDetermined {
                     Button("Request Media & Apple Music Access") {
                         requestMusicAccess()
+                    }
+                } else if musicStatus != nil {
+                    Button("Open Media & Apple Music Settings") {
+                        NSWorkspace.shared.open(Self.mediaSettingsURL)
                     }
                 }
             }
@@ -120,10 +127,13 @@ struct SettingsView: View {
         return str
     }
 
+    static let mediaSettingsURL = URL(
+        string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Media")!
+
     private var musicDescription: AttributedString {
         var str = AttributedString("For SetShot to read settings from the Music app, Home Sharing, and related systems, it needs Media & Apple Music access. When you enable this toggle, macOS will ask for permission on the next snapshot. You can review or revoke this in ")
         var link = AttributedString("System Settings \u{2192} Privacy & Security \u{2192} Media & Apple Music.")
-        link.link = URL(string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Media")!
+        link.link = Self.mediaSettingsURL
         str += link
         return str
     }
