@@ -110,8 +110,8 @@ final class FormatValueTests: XCTestCase {
     // via key_prefix renders identically for every key it matches. The subject is
     // what says which display, which app, or which background item a row is about.
 
-    private func prefixEntry(_ prefix: String?) -> KBEntry {
-        KBEntry(id: "t", domain: "d", key: "", source: "s", valueType: "string",
+    private func prefixEntry(_ prefix: String?, domain: String = "d") -> KBEntry {
+        KBEntry(id: "t", domain: domain, key: "", source: "s", valueType: "string",
                 description: "Test", uiLocation: nil, uiLocationOverrides: nil, settingsURL: nil,
                 noise: false, noiseReason: nil, minMacOS: nil, notes: nil, aiGenerated: false,
                 contributedByIssue: nil, valueMap: nil, keyPrefix: prefix,
@@ -151,6 +151,60 @@ final class FormatValueTests: XCTestCase {
         XCTAssertEqual(
             rowSubject(entry: prefixEntry("Displays."), key: "Displays.\(uuid).Desktop"),
             "\(uuid).Desktop"
+        )
+    }
+
+    // MARK: - Wallpaper rows
+
+    func testWallpaperSubjectReadsAsASentence() {
+        // The stored shape is how macOS nests wallpaper state, not something to show.
+        let uuid = "00000000-0000-0000-0000-000000000000"
+        let cases = [
+            ("Desktop.Content.Choices[0].Files[0].relative", "Desktop picture"),
+            ("Desktop.Content.Choices[0].Provider", "Desktop picture type"),
+            ("Desktop.Content.Choices[0].Configuration.placement", "Desktop picture placement"),
+            ("Desktop.Content.Shuffle", "Desktop picture rotation"),
+            ("Desktop.Content.Shuffle.Type", "Desktop picture rotation trigger"),
+            ("Desktop.Content.Shuffle.Duration[0]", "Desktop picture rotation interval"),
+            ("Idle.Content.Choices[0].Configuration.module.relative", "Screen saver"),
+        ]
+        for (leaf, expected) in cases {
+            XCTAssertEqual(
+                rowSubject(entry: prefixEntry("Displays.", domain: "wallpaper"),
+                           key: "Displays.\(uuid).\(leaf)"),
+                "\(expected) on \(uuid)",
+                leaf
+            )
+        }
+    }
+
+    func testWallpaperSubjectNamesTheWholeMachineScopes() {
+        XCTAssertEqual(
+            rowSubject(entry: prefixEntry("AllSpacesAndDisplays.Desktop.Content.Choices", domain: "wallpaper"),
+                       key: "AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative"),
+            "Desktop picture on all displays"
+        )
+        XCTAssertEqual(
+            rowSubject(entry: prefixEntry("SystemDefault.Desktop.Content.Choices", domain: "wallpaper"),
+                       key: "SystemDefault.Desktop.Content.Choices[0].Files[0].relative"),
+            "Desktop picture on the system default"
+        )
+    }
+
+    func testBuiltInWallpaperShowsItsName() {
+        XCTAssertEqual(
+            formatValue("file:///System/Library/Desktop%20Pictures/Sequoia%20Sunrise.madesktop"),
+            "Sequoia Sunrise"
+        )
+    }
+
+    func testChosenPhotoIsLabelledRatherThanShownAsAHash() {
+        // macOS copies a photo you pick under a content hash and keeps no record of
+        // its name, so the hash is all there is — shortened, but still distinct enough
+        // to tell two photos apart.
+        XCTAssertEqual(
+            formatValue("file:///Users/x/Library/Application%20Support/com.apple.desktop.photos/ee3ebb28973e24dea544113339d59dca.jpeg"),
+            "Photo ee3ebb28\u{2026}"
         )
     }
 

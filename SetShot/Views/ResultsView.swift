@@ -186,6 +186,68 @@ func unrecognizedRowText(rawLine: String, before: String, after: String, key: St
 }
 
 
+
+/// Turns a wallpaper key into a sentence. The stored shape — Desktop.Content.
+/// Choices[0].Configuration.placement — is an implementation detail of how macOS
+/// nests wallpaper state, and printing it raw asks the reader to decode it.
+private func wallpaperSubject(key: String) -> String? {
+    var rest = key
+    var scope: String
+
+    if rest.hasPrefix("Displays.") {
+        rest = String(rest.dropFirst("Displays.".count))
+        let uuid = String(rest.prefix(36))
+        scope = displayName(forUUID: uuid) ?? uuid
+        rest = String(rest.dropFirst(min(37, rest.count)))   // uuid plus its trailing dot
+    } else if rest.hasPrefix("AllSpacesAndDisplays.") {
+        rest = String(rest.dropFirst("AllSpacesAndDisplays.".count))
+        scope = "all displays"
+    } else if rest.hasPrefix("SystemDefault.") {
+        rest = String(rest.dropFirst("SystemDefault.".count))
+        scope = "the system default"
+    } else if rest == "AllSpacesAndDisplays.Type" || rest.hasSuffix(".Type") || rest == "Type" {
+        return nil
+    } else {
+        return nil
+    }
+
+    // Desktop wallpaper and Idle (screen saver) share the same nested shape.
+    var subject: String
+    if rest == "Type" {
+        subject = "Whether every display shares one wallpaper"
+    } else {
+        let isIdle = rest.hasPrefix("Idle.")
+        let thing = isIdle ? "Screen saver" : "Desktop picture"
+        let leaf = rest
+            .replacingOccurrences(of: #"^(Desktop|Idle)\."#, with: "",
+                                  options: .regularExpression)
+            .replacingOccurrences(of: #"\[\d+\]"#, with: "", options: .regularExpression)
+        switch leaf {
+        case "Content.Choices.Files.relative",
+             "Content.Choices.Configuration.module.relative":
+            subject = thing
+        case "Content.Choices.Provider":
+            subject = "\(thing) type"
+        case "Content.Choices.Configuration.placement":
+            subject = "\(thing) placement"
+        case "Content.Choices.Configuration",
+             "Content.Choices.Configuration.backgroundColor.colorSpace":
+            subject = "\(thing) options"
+        case "Content.Shuffle":
+            subject = "\(thing) rotation"
+        case "Content.Shuffle.Type":
+            subject = "\(thing) rotation trigger"
+        case "Content.Shuffle.Duration":
+            subject = "\(thing) rotation interval"
+        case "LastSet", "LastUse":
+            return nil
+        default:
+            subject = "\(thing) — \(leaf)"
+        }
+    }
+    return "\(subject) on \(scope)"
+}
+
 /// The part of a key that says *which* thing a row is about, for entries that cover
 /// many keys via key_prefix. Without it every per-display wallpaper, every privacy
 /// permission and every launch agent renders as the same sentence with different
@@ -197,6 +259,7 @@ func unrecognizedRowText(rawLine: String, before: String, after: String, key: St
 /// be nameable as something.
 func rowSubject(entry: KBEntry, key: String) -> String? {
     guard let prefix = entry.keyPrefix else { return nil }   // exact match: description is specific
+    if entry.domain == "wallpaper" { return wallpaperSubject(key: key) }
     var subject = key.hasPrefix(prefix) ? String(key.dropFirst(prefix.count)) : key
     guard !subject.isEmpty else { return nil }
 
@@ -326,7 +389,11 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
         return url.deletingPathExtension().lastPathComponent
     }
     if raw.hasPrefix("file://"), let url = URL(string: raw) {
-        return url.deletingPathExtension().lastPathComponent
+        let name = url.deletingPathExtension().lastPathComponent
+        if url.path.contains("/com.apple.desktop.photos/") {
+            return "Photo \(name.prefix(8))\u{2026}"
+        }
+        return name
     }
     if raw.hasPrefix("AppleUSBAudioEngine:") {
         let parts = raw.split(separator: ":", omittingEmptySubsequences: false)

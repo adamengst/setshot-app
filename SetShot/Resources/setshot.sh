@@ -732,6 +732,9 @@ NOISE_PATTERN='(
   wallpaper :: .*\.(LastSet|LastUse)\s*=|
   wallpaper :: Spaces\.|
   wallpaper :: .*\.Configuration\.backgroundColor\.|
+  wallpaper :: .*\s=\s\$null$|
+  wallpaper :: .*\.Configuration\s*=\s*<binary|
+  wallpaper :: .*\.Shuffle\.Duration\[1\]\s*=|
   CacheDelete.*::|
   facetime.*:: lastFetchedContactHistoryToken\.|
   thebrowser.*:: .*[Uu]pdate.*[Ss]ince\s*=|
