@@ -185,7 +185,52 @@ func unrecognizedRowText(rawLine: String, before: String, after: String, key: St
         .fixedSize(horizontal: false, vertical: true)
 }
 
-func recognizedRowText(description: String, location: String?, old: String, new: String) -> some View {
+
+/// The part of a key that says *which* thing a row is about, for entries that cover
+/// many keys via key_prefix. Without it every per-display wallpaper, every privacy
+/// permission and every launch agent renders as the same sentence with different
+/// values, because a recognized row otherwise shows only its description.
+///
+/// Display UUIDs and bundle identifiers are resolved to names where possible. Both
+/// are identity rather than settings, and both fall back to the raw value — a
+/// display that is no longer attached, or an app no longer installed, still has to
+/// be nameable as something.
+func rowSubject(entry: KBEntry, key: String) -> String? {
+    guard let prefix = entry.keyPrefix else { return nil }   // exact match: description is specific
+    var subject = key.hasPrefix(prefix) ? String(key.dropFirst(prefix.count)) : key
+    guard !subject.isEmpty else { return nil }
+
+    if let range = subject.range(of: #"[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}"#,
+                                 options: [.regularExpression, .caseInsensitive]),
+       let name = displayName(forUUID: String(subject[range])) {
+        subject.replaceSubrange(range, with: name)
+    }
+    if !subject.contains("/"), !subject.contains(" "), subject.contains("."),
+       let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: subject) {
+        var name = FileManager.default.displayName(atPath: url.path)
+        if name.hasSuffix(".app") { name = String(name.dropLast(4)) }
+        if !name.isEmpty { subject = name }
+    }
+    return subject
+}
+
+/// Maps a display's UUID to the name macOS shows for it. Only displays currently
+/// attached can be named; a snapshot easily outlives a monitor.
+func displayName(forUUID uuid: String) -> String? {
+    for screen in NSScreen.screens {
+        guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+              let cfUUID = CGDisplayCreateUUIDFromDisplayID(CGDirectDisplayID(number.uint32Value))?
+                  .takeRetainedValue()
+        else { continue }
+        if (CFUUIDCreateString(nil, cfUUID) as String).caseInsensitiveCompare(uuid) == .orderedSame {
+            return screen.localizedName
+        }
+    }
+    return nil
+}
+
+func recognizedRowText(description: String, location: String?, subject: String? = nil,
+                       old: String, new: String) -> some View {
     let bodyFont  = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .medium)
     let calloutFont = NSFont.systemFont(ofSize: NSFont.systemFontSize - 1)
     let monoFont  = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize - 1, weight: .regular)
@@ -194,8 +239,13 @@ func recognizedRowText(description: String, location: String?, old: String, new:
     }
     let ns = NSMutableAttributedString()
     ns.append(NSAttributedString(string: description, attributes: [
-        .font: bodyFont, .paragraphStyle: para(location != nil ? 3 : 8)
+        .font: bodyFont, .paragraphStyle: para(location != nil || subject != nil ? 3 : 8)
     ]))
+    if let subject {
+        ns.append(NSAttributedString(string: "\n" + subject, attributes: [
+            .font: monoFont, .paragraphStyle: para(location != nil ? 3 : 8)
+        ]))
+    }
     if let location {
         ns.append(NSAttributedString(string: "\n" + location, attributes: [
             .font: calloutFont, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: para(8)
@@ -349,6 +399,7 @@ private struct RecognizedRow: View {
                 recognizedRowText(
                     description: entry.description ?? "",
                     location: uiLocation,
+                    subject: rowSubject(entry: entry, key: diff.key),
                     old: formatValue(diff.beforeValue, key: diff.key,
                                      valueMap: entry.valueMap, detail: diff.beforeDetail),
                     new: formatValue(diff.afterValue, key: diff.key,

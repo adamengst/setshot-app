@@ -104,6 +104,56 @@ final class FormatValueTests: XCTestCase {
         XCTAssertEqual(formatValue("(not set)", key: "handler"), "(not set)")
     }
 
+    // MARK: - Row subjects
+    //
+    // A recognized row shows only its description, so an entry covering many keys
+    // via key_prefix renders identically for every key it matches. The subject is
+    // what says which display, which app, or which background item a row is about.
+
+    private func prefixEntry(_ prefix: String?) -> KBEntry {
+        KBEntry(id: "t", domain: "d", key: "", source: "s", valueType: "string",
+                description: "Test", uiLocation: nil, uiLocationOverrides: nil, settingsURL: nil,
+                noise: false, noiseReason: nil, minMacOS: nil, notes: nil, aiGenerated: false,
+                contributedByIssue: nil, valueMap: nil, keyPrefix: prefix,
+                iconBundleID: nil, implicitDefault: nil, requiresHardware: nil)
+    }
+
+    func testExactMatchEntriesHaveNoSubject() {
+        // The description already names the setting; a subject would be redundant.
+        XCTAssertNil(rowSubject(entry: prefixEntry(nil), key: "AppleKeyboardUIMode"))
+    }
+
+    func testSubjectIsTheKeyBeyondThePrefix() {
+        XCTAssertEqual(
+            rowSubject(entry: prefixEntry(""), key: "com.backblaze.bzbmenu.plist"),
+            "com.backblaze.bzbmenu.plist"
+        )
+    }
+
+    func testSubjectNamesTheAppBehindABundleIdentifier() {
+        XCTAssertEqual(
+            rowSubject(entry: prefixEntry("kTCCServiceCamera/"), key: "kTCCServiceCamera/com.apple.safari"),
+            "Safari"
+        )
+    }
+
+    func testSubjectKeepsAnUnresolvableIdentifier() {
+        XCTAssertEqual(
+            rowSubject(entry: prefixEntry("kTCCServiceCamera/"),
+                       key: "kTCCServiceCamera/com.example.not.installed"),
+            "com.example.not.installed"
+        )
+    }
+
+    func testSubjectKeepsAnUnknownDisplayUUID() {
+        // A snapshot outlives a monitor; the UUID is then all there is.
+        let uuid = "00000000-0000-0000-0000-000000000000"
+        XCTAssertEqual(
+            rowSubject(entry: prefixEntry("Displays."), key: "Displays.\(uuid).Desktop"),
+            "\(uuid).Desktop"
+        )
+    }
+
     func testBooleanFallbacksAreUnchanged() {
         XCTAssertEqual(formatValue("1"), "On")
         XCTAssertEqual(formatValue("false"), "Off")

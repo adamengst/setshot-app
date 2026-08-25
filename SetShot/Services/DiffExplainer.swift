@@ -55,11 +55,16 @@ enum DiffExplainer {
         print("\(total) \(total == 1 ? "change" : "changes") detected:\n")
 
         if !result.recognized.isEmpty {
-            let maxLen = result.recognized
-                .map { ($0.entry.description ?? $0.diff.key).count }
-                .max() ?? 0
+            // Entries covering many keys need the subject too, or every per-display
+            // wallpaper and every privacy permission prints as the same sentence.
+            func label(for item: (entry: KBEntry, diff: DiffLine)) -> String {
+                let base = item.entry.description ?? item.diff.key
+                guard let subject = rowSubject(entry: item.entry, key: item.diff.key) else { return base }
+                return "\(base) [\(subject)]"
+            }
+            let maxLen = result.recognized.map { label(for: $0).count }.max() ?? 0
             for item in result.recognized {
-                let label = item.entry.description ?? item.diff.key
+                let label = label(for: item)
                 let bvf = formatValue(item.diff.beforeValue, key: item.diff.key,
                                       valueMap: item.entry.valueMap, detail: item.diff.beforeDetail)
                 let avf = formatValue(item.diff.afterValue, key: item.diff.key,
