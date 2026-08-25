@@ -22,17 +22,15 @@ struct SnapshotLibraryView: View {
     private var descriptionsBySnapshotID: [String: [String]] {
         var result: [String: [String]] = [:]
         for entry in appModel.journal {
-            var list = result[entry.afterSnapshotId, default: []]
-            if list.count < 3 {
-                // Composed from the current knowledge base rather than the text stored
-                // when the comparison ran, so entries written before a description
-                // improved read the way a fresh comparison would. The stored text is
-                // the fallback for a setting the KB no longer describes.
-                let composed = rowDescription(domain: entry.domain, key: entry.key,
-                                              kb: appModel.kb)
-                list.append(composed ?? entry.entryDescription)
-                result[entry.afterSnapshotId] = list
-            }
+            // Only the first three per snapshot are shown, and skipping the rest
+            // early avoids composing descriptions nothing will display.
+            if (result[entry.afterSnapshotId]?.count ?? 0) >= 3 { continue }
+            // Composed from the current knowledge base rather than the text stored
+            // when the comparison ran, so entries written before a description
+            // improved read the way a fresh comparison would. The stored text is
+            // the fallback for a setting the KB no longer describes.
+            let composed = rowDescription(domain: entry.domain, key: entry.key, kb: appModel.kb)
+            result[entry.afterSnapshotId, default: []].append(composed ?? entry.entryDescription)
         }
         return result
     }
@@ -141,14 +139,18 @@ struct SnapshotLibraryView: View {
     }
 
     private var snapshotList: some View {
-        ScrollView {
+        // Computed once here, not inside the ForEach: a computed property is
+        // re-evaluated on every access, so reading it per row walked the whole
+        // journal once per snapshot.
+        let descriptions = descriptionsBySnapshotID
+        return ScrollView {
             VStack(spacing: 0) {
                 ForEach(allSnapshots) { snapshot in
                     SnapshotRow(
                         snapshot: snapshot,
                         isSelected: selectedIDs.contains(snapshot.id),
                         role: roleLabel(for: snapshot),
-                        changeDescriptions: descriptionsBySnapshotID[snapshot.id] ?? []
+                        changeDescriptions: descriptions[snapshot.id] ?? []
                     ) { flags in
                         toggleSelection(snapshot, modifiers: flags)
                     } onRename: { newName in

@@ -5,6 +5,18 @@ struct KnowledgeBase {
     let version: Int
     let updatedAt: Date?
 
+    /// Entries grouped by domain, so a lookup does not scan the whole knowledge base.
+    /// Grouping preserves order within each domain, which the match precedence below
+    /// relies on for two entries that tie.
+    private let byDomain: [String: [KBEntry]]
+
+    init(entries: [KBEntry], version: Int, updatedAt: Date?) {
+        self.entries = entries
+        self.version = version
+        self.updatedAt = updatedAt
+        self.byDomain = Dictionary(grouping: entries, by: \.domain)
+    }
+
     static let empty = KnowledgeBase(entries: [], version: 0, updatedAt: nil)
 
     /// Finds the entry describing `key` in `domain`, most specific match first.
@@ -17,9 +29,10 @@ struct KnowledgeBase {
     /// what happened to Home Sharing, Remote Management's screen-sharing permission
     /// and Spotlight's search categories.
     func entry(forDomain domain: String, key: String) -> KBEntry? {
+        guard let candidates = byDomain[domain] else { return nil }
         var best: (entry: KBEntry, prefixLength: Int)?
 
-        for candidate in entries where candidate.domain == domain {
+        for candidate in candidates {
             // An entry naming this key exactly always wins: a prefix rule is a
             // default for the domain, and a specific entry overrides the default.
             if candidate.key == key { return candidate }
