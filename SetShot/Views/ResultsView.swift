@@ -219,7 +219,7 @@ enum AerialCatalogue {
 /// One KB entry has to cover every key under a display, because the display's UUID
 /// sits in the middle of the key and a key_prefix cannot skip it. So the specifics —
 /// which display, and which aspect of its wallpaper — are composed here.
-private func wallpaperDescription(key: String) -> String? {
+func wallpaperDescription(key: String) -> String? {
     let uuidPattern = #"[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}"#
     var rest = key
     let scope: String
@@ -307,6 +307,20 @@ func rowSubject(entry: KBEntry, key: String) -> String? {
 /// An entry matching one exact key describes itself. An entry covering many keys
 /// through key_prefix does not: it needs to say which display, app or item this row
 /// is about, and that belongs on the description line — SetShot has no second one.
+/// Description for a change known only by its domain and key, which is how the
+/// journal and the snapshot list see one.
+///
+/// The knowledge base may no longer cover the key: wallpaper moved from a top-level
+/// Displays. path to the Spaces. path macOS keeps current, and journal entries
+/// written before that still hold the old form. Composing from the key regardless
+/// means those rows read the way a comparison run today would.
+func rowDescription(domain: String, key: String, kb: KnowledgeBase) -> String? {
+    if let entry = kb.entry(forDomain: domain, key: key) {
+        return rowDescription(entry: entry, key: key)
+    }
+    return domain == "wallpaper" ? wallpaperDescription(key: key) : nil
+}
+
 func rowDescription(entry: KBEntry, key: String) -> String {
     if entry.domain == "wallpaper", let built = wallpaperDescription(key: key) { return built }
     let base = entry.description ?? key

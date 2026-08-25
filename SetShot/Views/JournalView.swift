@@ -211,7 +211,7 @@ private struct JournalRow: View {
 
     var body: some View {
         let kbEntry = kb.entry(forDomain: entry.domain, key: entry.key)
-        let description = kbEntry.map { rowDescription(entry: $0, key: entry.key) }
+        let description = rowDescription(domain: entry.domain, key: entry.key, kb: kb)
             ?? entry.entryDescription
         let location = kbEntry?.uiLocation ?? entry.uiLocation
         let settingsURL = validatedSettingsURL(kbEntry?.settingsURL ?? entry.settingsURL)

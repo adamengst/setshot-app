@@ -28,8 +28,8 @@ struct SnapshotLibraryView: View {
                 // when the comparison ran, so entries written before a description
                 // improved read the way a fresh comparison would. The stored text is
                 // the fallback for a setting the KB no longer describes.
-                let composed = appModel.kb.entry(forDomain: entry.domain, key: entry.key)
-                    .map { rowDescription(entry: $0, key: entry.key) }
+                let composed = rowDescription(domain: entry.domain, key: entry.key,
+                                              kb: appModel.kb)
                 list.append(composed ?? entry.entryDescription)
                 result[entry.afterSnapshotId] = list
             }

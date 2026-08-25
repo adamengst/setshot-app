@@ -256,6 +256,25 @@ final class FormatValueTests: XCTestCase {
         }
     }
 
+    func testHistoricalWallpaperKeysStillCompose() throws {
+        // Journal entries written before wallpaper moved from a top-level Displays.
+        // path to the Spaces. path macOS keeps current still hold the old form, which
+        // no knowledge base entry covers. They have to read the way a comparison run
+        // today would, not fall back to whatever wording was stored at the time.
+        let kb = KnowledgeBase(entries: try TestSupport.requireKnowledgeBase(),
+                               version: 0, updatedAt: nil)
+        let legacy = "Displays.\(display).Desktop.Content.Choices[0].Files[0].relative"
+        XCTAssertNil(kb.entry(forDomain: "wallpaper", key: legacy),
+                     "If the KB covers this again, this test is no longer testing the fallback")
+        XCTAssertEqual(rowDescription(domain: "wallpaper", key: legacy, kb: kb),
+                       "Wallpaper on \(display).")
+    }
+
+    func testNonWallpaperRowsWithNoEntryFallBack() throws {
+        let kb = KnowledgeBase(entries: [], version: 0, updatedAt: nil)
+        XCTAssertNil(rowDescription(domain: "com.apple.dock", key: "autohide", kb: kb))
+    }
+
     func testAerialWallpaperShowsItsName() throws {
         // Aerials are stored only as asset UUIDs; the catalogue naming them is a
         // world-readable JSON file, so this needs no permission.
