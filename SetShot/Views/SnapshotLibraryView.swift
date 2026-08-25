@@ -24,7 +24,13 @@ struct SnapshotLibraryView: View {
         for entry in appModel.journal {
             var list = result[entry.afterSnapshotId, default: []]
             if list.count < 3 {
-                list.append(entry.entryDescription)
+                // Composed from the current knowledge base rather than the text stored
+                // when the comparison ran, so entries written before a description
+                // improved read the way a fresh comparison would. The stored text is
+                // the fallback for a setting the KB no longer describes.
+                let composed = appModel.kb.entry(forDomain: entry.domain, key: entry.key)
+                    .map { rowDescription(entry: $0, key: entry.key) }
+                list.append(composed ?? entry.entryDescription)
                 result[entry.afterSnapshotId] = list
             }
         }
