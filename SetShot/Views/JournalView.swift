@@ -118,7 +118,8 @@ struct JournalView: View {
     private func exportJournal() {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.html]
-        panel.nameFieldStringValue = "SetShot Journal.html"
+        panel.nameFieldStringValue = "SetShot Journal — \(StoredSnapshot.exportComputerName) — "
+            + "\(StoredSnapshot.exportDateStamp).html"
         panel.canCreateDirectories = true
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let html = JournalHTMLExporter.export(journal: appModel.journal, oldestFirst: oldestFirst)

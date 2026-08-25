@@ -58,7 +58,8 @@ struct ResultsView: View {
     private func exportHTML() {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.html]
-        panel.nameFieldStringValue = "SetShot — \(before.displayName) vs \(after.displayName).html"
+        panel.nameFieldStringValue = "SetShot — \(StoredSnapshot.exportComputerName) — "
+            + "\(before.exportLabel) vs \(after.exportLabel).html"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         let macOSMajor = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
         let html = HTMLExporter.export(
