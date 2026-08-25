@@ -8,7 +8,6 @@ struct SettingsView: View {
     @AppStorage("SUEnableAutomaticChecks") private var autoCheckForUpdates = true
     @AppStorage("OldestFirst") private var oldestFirst = false
     @AppStorage("AutoDeleteEmptyScheduledSnapshots") private var autoDeleteEmpty = true
-    @AppStorage("CheckMusicSettings") private var checkMusicSettings = false
     @State private var isEnabled = SchedulerManager.isInstalled
     @State private var fdaGranted: Bool? = nil
     @State private var musicStatus: MusicAuthorization.Status? = nil
@@ -148,21 +147,12 @@ struct SettingsView: View {
         fdaGranted = await fda
         let status = await music
         musicStatus = status
-        // Sync UserDefaults with actual TCC state so the snapshot env var stays correct.
-        // notDetermined also resets the flag — a tccutil reset must not leave
-        // CheckMusicSettings=true while TCC is unsettled.
-        if status == .authorized {
-            checkMusicSettings = true
-        } else {
-            checkMusicSettings = false
-        }
     }
 
     private func requestMusicAccess() {
         Task {
             let status = await MusicAuthorization.request()
             musicStatus = status
-            checkMusicSettings = (status == .authorized)
         }
     }
 

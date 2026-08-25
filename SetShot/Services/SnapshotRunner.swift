@@ -46,14 +46,20 @@ struct SnapshotRunner {
         return false
     }
 
-    /// Whether Music data capture is both opted in and TCC-authorized.
-    /// Checking currentStatus here (without request()) is non-prompting and
-    /// ensures a tccutil reset can't leave CheckMusicSettings=true while TCC
-    /// is .notDetermined, which would bypass the media file filter and trigger
-    /// a spurious permission dialog.
+    /// Whether the media domains can be read.
+    ///
+    /// The authorization is the whole answer. Reading those domains can only raise a
+    /// permission dialog while the status is notDetermined, and this never returns
+    /// true in that case, so nothing here can prompt — currentStatus does not ask,
+    /// unlike request().
+    ///
+    /// This used to also require a stored CheckMusicSettings preference, which the
+    /// Settings pane wrote to mirror the authorization. That mirror only updated when
+    /// the pane was opened, so granting the permission in System Settings left media
+    /// capture off until the user happened to visit Settings, with nothing to show
+    /// why.
     static func musicEnabled() -> Bool {
-        guard UserDefaults.standard.bool(forKey: "CheckMusicSettings") else { return false }
-        return MusicAuthorization.currentStatus == .authorized
+        MusicAuthorization.currentStatus == .authorized
     }
 
     /// Whether this Mac has an internal battery. Evaluated once at launch and
