@@ -146,8 +146,8 @@ final class DiffEngineTests: XCTestCase {
     // `TCC :: available` to separate "a permission changed" from "SetShot can
     // suddenly see all of them".
 
-    private func tccKB() -> KnowledgeBase {
-        KnowledgeBase(entries: [
+    private func tccKB(extra: [KBEntry] = []) -> KnowledgeBase {
+        KnowledgeBase(entries: extra + [
             makeEntry(domain: "TCC", key: "available"),
             makeEntry(domain: "TCC-user", keyPrefix: "kTCCServiceMediaLibrary/"),
             makeEntry(domain: "TCC-system", keyPrefix: "kTCCServiceSystemPolicyAllFiles/"),
@@ -208,6 +208,33 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.recognized.first?.diff.key, "available")
         XCTAssertTrue(result.unrecognized.isEmpty, "Permission rows should be withheld")
         XCTAssertTrue(result.limitedAccessWarning?.contains("granted Full Disk Access") == true)
+    }
+
+    func testLosingAccessWithholdsSettingsThatMerelyBecameUnreadable() {
+        // Revoking Full Disk Access on a real Mac made Time Machine read as switched
+        // off and Mail's settings as wiped: those files live behind the permission, so
+        // they vanished from the snapshot. A value on one side only says what SetShot
+        // could read, not what changed.
+        let kb = KnowledgeBase(entries: [
+            makeEntry(domain: "com.apple.TimeMachine", key: "AutoBackup"),
+            makeEntry(domain: "com.apple.mail-shared", key: "AddressDisplayMode"),
+            makeEntry(domain: "com.apple.dock", key: "autohide"),
+        ], version: 1, updatedAt: nil)
+        let result = engine().parse(diffOutput: """
+            -TCC :: available = 1
+            +TCC :: available = 0
+            -/Users/x/Library/Preferences/com.apple.TimeMachine.plist :: AutoBackup = 1
+            -/Users/x/Library/Preferences/com.apple.mail-shared.plist :: AddressDisplayMode = 0
+            -/Users/x/Library/Preferences/com.apple.dock.plist :: autohide = 0
+            +/Users/x/Library/Preferences/com.apple.dock.plist :: autohide = 1
+            """, kb: tccKB(extra: kb.entries))
+
+        // The Dock changed for real — both sides have a value — so it survives.
+        let keys = Set(result.recognized.map(\.diff.key) + result.unrecognized.map(\.key))
+        XCTAssertTrue(keys.contains("autohide"), "A real change must not be withheld")
+        XCTAssertFalse(keys.contains("AutoBackup"), "Time Machine only became unreadable")
+        XCTAssertFalse(keys.contains("AddressDisplayMode"), "Mail only became unreadable")
+        XCTAssertTrue(keys.contains("available"), "The row explaining the results must stay")
     }
 
     func testLosingFullDiskAccessSuppressesTheFloodOfPermissions() {

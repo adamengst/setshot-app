@@ -192,15 +192,27 @@ struct DiffEngine {
             if before != after {
             let gained = after == "1"
             tccVisibilityWarning = gained
-                ? "SetShot was granted Full Disk Access between these snapshots, so privacy "
-                  + "permissions are visible in the later one and absent from the earlier one. "
-                  + "Individual permissions are left out of these results because every one of "
-                  + "them would show as newly added. Compare two snapshots taken with Full Disk "
-                  + "Access to see permission changes."
-                : "SetShot lost Full Disk Access between these snapshots, so privacy permissions "
-                  + "are missing from the later one. Individual permissions are left out of these "
-                  + "results because every one of them would show as deleted."
-            pairs.removeAll { $0.domain.hasPrefix("TCC-") }
+                ? "SetShot was granted Full Disk Access between these snapshots. Privacy "
+                  + "permissions, and settings stored behind that permission — Mail, Time "
+                  + "Machine and Focus among them — could not be read for the earlier snapshot. "
+                  + "Anything that appears in only one of the two is left out of these results, "
+                  + "because it reflects what SetShot could read rather than anything that "
+                  + "changed. Compare two snapshots taken with Full Disk Access to see real "
+                  + "permission changes."
+                : "SetShot lost Full Disk Access between these snapshots. Privacy permissions, "
+                  + "and settings stored behind that permission — Mail, Time Machine and Focus "
+                  + "among them — could not be read for the later snapshot. Anything that "
+                  + "appears in only one of the two is left out of these results, because it "
+                  + "reflects what SetShot could read rather than anything that changed."
+            // A value that exists on one side only is the signature of a file that became
+            // readable or unreadable, not of a setting someone changed. Losing access made
+            // Time Machine look switched off and Mail's settings look wiped. A genuine
+            // change has a value on both sides and is kept.
+            pairs.removeAll { pair in
+                if pair.domain == "TCC" && pair.key == "available" { return false }
+                if pair.domain.hasPrefix("TCC-") { return true }
+                return (pair.before ?? "").isEmpty || (pair.after ?? "").isEmpty
+            }
             }
         }
 
