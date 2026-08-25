@@ -116,7 +116,8 @@ final class DiffEngineTests: XCTestCase {
                                              after: snapshot(format: 2), kb: kb)
         let warning = try XCTUnwrap(result.limitedAccessWarning)
         XCTAssertTrue(warning.contains("different versions of SetShot"), warning)
-        XCTAssertTrue(warning.contains("before"), "It should say which snapshot is older")
+        XCTAssertTrue(warning.contains("b26") && warning.contains("b27"),
+                      "It should name the releases each format belongs to")
     }
 
     func testFormatWarningOutranksTheFullDiskAccessOne() async throws {

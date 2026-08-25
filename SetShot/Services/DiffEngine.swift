@@ -55,12 +55,14 @@ struct DiffEngine {
 
         let warning: String?
         if beforeFormat != afterFormat {
-            let older = min(beforeFormat, afterFormat) == beforeFormat ? "before" : "after"
+            // Names the releases each format belongs to, so this needs revisiting
+            // whenever SNAPSHOT_FORMAT is bumped in setshot.sh.
             warning = "These snapshots were taken by different versions of SetShot, which "
-                + "capture settings differently (format \(beforeFormat) and \(afterFormat)). "
-                + "Some of the changes below are the \(older) snapshot recording the same "
-                + "settings in an older way rather than anything on this Mac changing. For a "
-                + "clean comparison, use two snapshots taken by the same version."
+                + "capture settings differently (format 1 from b26 and earlier and format 2 "
+                + "from b27 and later). Some of the changes below are the Before snapshot "
+                + "recording the same settings in an older way rather than anything on this "
+                + "Mac changing. For a clean comparison, use two snapshots taken by the same "
+                + "version."
         } else if let visibilityChange = parsed.limitedAccessWarning {
             warning = visibilityChange
         } else if beforeLimited && afterLimited {
