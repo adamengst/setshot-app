@@ -50,6 +50,22 @@ final class MarkdownExporterTests: XCTestCase {
         XCTAssertTrue(md.contains("> Something about Full Disk Access."), md)
     }
 
+    func testHTMLExportCarriesTheWarningToo() {
+        // Whether a snapshot was taken without a permission changes how the whole file
+        // should be read, so both formats have to carry it.
+        let r = DiffResult(recognized: [], unrecognized: [], noise: [], unrecognizedOverflow: 0,
+                           limitedAccessWarning: "Something about Full Disk Access.")
+        let html = HTMLExporter.export(result: r, beforeName: "A", afterName: "B", macOSMajor: 15)
+        XCTAssertTrue(html.contains("class=\"warning\""), "The notice should be styled")
+        XCTAssertTrue(html.contains("Something about Full Disk Access."), html.prefix(400).description)
+    }
+
+    func testHTMLExportOmitsTheWarningWhenThereIsNone() {
+        let html = HTMLExporter.export(result: result([]), beforeName: "A", afterName: "B",
+                                       macOSMajor: 15)
+        XCTAssertFalse(html.contains("class=\"warning\""))
+    }
+
     func testBracketsInADescriptionCannotBreakTheList() {
         // A key like Choices[0].Files[0] would otherwise read as a Markdown link.
         let md = MarkdownExporter.export(

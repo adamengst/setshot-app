@@ -12,6 +12,12 @@ struct HTMLExporter {
             row(entry: item.entry, diff: item.diff, macOSMajor: macOSMajor)
         }.joined(separator: "\n")
 
+        // Whether a snapshot was taken without a permission, or by an older version,
+        // changes how the rest of the file should be read — so it travels with it.
+        let warning = result.limitedAccessWarning.map {
+            "<p class=\"warning\">\(htmlEscape($0))</p>"
+        } ?? ""
+
         return """
         <!DOCTYPE html>
         <html lang="en">
@@ -31,12 +37,14 @@ struct HTMLExporter {
         .description { font-weight: 600; margin-bottom: 3px; }
         .location { font-size: 13px; color: #666; margin-bottom: 8px; }
         .values { font-family: ui-monospace, monospace; font-size: 13px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .warning { background: #fdf0e2; border: 1px solid #f0d5b4; border-radius: 8px; padding: 12px 14px; margin-bottom: 20px; font-size: 14px; line-height: 1.45; }
         .before { color: #c25b00; }
         .after { color: #0055cc; }
         .arrow { color: #999; }
         .open-btn { font-size: 12px; color: #007aff; text-decoration: none; border: 1px solid #007aff; border-radius: 5px; padding: 3px 9px; white-space: nowrap; flex-shrink: 0; align-self: flex-start; }
         .open-btn:hover { background: #007aff; color: #fff; }
         @media print { .open-btn { display: none; }
+          .warning { break-inside: avoid; }
           .item { break-inside: avoid; page-break-inside: avoid; background: none; border: 1px solid #ddd; }
           .section { break-inside: auto; } }
         </style>
@@ -44,6 +52,7 @@ struct HTMLExporter {
         <body>
         <h1>\(htmlEscape(title))</h1>
         <p class="subtitle">\(result.recognized.count) recognized change\(result.recognized.count == 1 ? "" : "s")</p>
+        \(warning)
         \(rows)
         </body>
         </html>

@@ -48,10 +48,14 @@ struct ResultsView: View {
         .toolbar {
             if !diff.recognized.isEmpty {
                 ToolbarItem(placement: .primaryAction) {
-                    Menu("Export…") {
+                    Menu("Export") {
                         Button("HTML…") { export(.html) }
                         Button("Markdown…") { export(.markdown) }
                     }
+                    // A menu is not an action, so no ellipsis; the items keep theirs
+                    // because each opens a save panel. The indicator picks up the accent
+                    // colour by default, which points at a control that needs no pointing at.
+                    .tint(.primary)
                     .fixedSize()
                 }
             }

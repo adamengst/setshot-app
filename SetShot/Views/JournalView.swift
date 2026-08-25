@@ -96,10 +96,11 @@ struct JournalView: View {
                 .buttonStyle(.plain)
             }
             if !appModel.journal.isEmpty {
-                Menu("Export…") {
+                Menu("Export") {
                     Button("HTML…") { exportJournal(.html) }
                     Button("Markdown…") { exportJournal(.markdown) }
                 }
+                .tint(.primary)
                 .fixedSize()
                 Button("Clear All") {
                     showingClearConfirm = true
