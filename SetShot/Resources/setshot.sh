@@ -732,6 +732,7 @@ NOISE_PATTERN='(
 
   wallpaper :: .*\.(LastSet|LastUse)\s*=|
   wallpaper :: Spaces\.[0-9A-F-]*\.Default\.|
+  alf.*:: applications\[[0-9]+\]\.(alias|reqdata)\s*=|
   wallpaper :: Displays\.|
   wallpaper :: .*\.Configuration\.backgroundColor\.|
   wallpaper :: .*\s=\s\$null$|
