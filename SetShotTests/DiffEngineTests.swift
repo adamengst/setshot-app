@@ -89,6 +89,57 @@ final class DiffEngineTests: XCTestCase {
                        "The path change itself must still be reported")
     }
 
+    // MARK: - Capture format
+    //
+    // A format change alters what is captured, so comparing across one shows renamed
+    // and restructured keys as though settings had changed. Anyone updating from an
+    // older build has a library of older-format snapshots and will hit this.
+
+    private func snapshot(format: Int?, extra: String = "") -> Snapshot {
+        let header = format.map { "Format: \($0) (SetShot 1.0 (26))\n" } ?? ""
+        return Snapshot(takenAt: .now, rawOutput: """
+            ==========================================
+            macOS Settings Snapshot
+            \(header)==========================================
+            \(extra)
+            """)
+    }
+
+    func testSnapshotWithoutAFormatLineIsFormatOne() {
+        XCTAssertEqual(DiffEngine.snapshotFormat(of: snapshot(format: nil).rawOutput), 1)
+        XCTAssertEqual(DiffEngine.snapshotFormat(of: snapshot(format: 2).rawOutput), 2)
+    }
+
+    func testComparingAcrossFormatsWarns() async throws {
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
+        let result = try await engine().diff(before: snapshot(format: nil),
+                                             after: snapshot(format: 2), kb: kb)
+        let warning = try XCTUnwrap(result.limitedAccessWarning)
+        XCTAssertTrue(warning.contains("different versions of SetShot"), warning)
+        XCTAssertTrue(warning.contains("before"), "It should say which snapshot is older")
+    }
+
+    func testFormatWarningOutranksTheFullDiskAccessOne() async throws {
+        // An older snapshot has no `TCC :: available` line at all, and its absence
+        // otherwise reads as Full Disk Access having been lost — which is exactly the
+        // false report that prompted this.
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
+        let result = try await engine().diff(
+            before: snapshot(format: 2, extra: "TCC :: available = 1"),
+            after: snapshot(format: nil),
+            kb: kb)
+        let warning = try XCTUnwrap(result.limitedAccessWarning)
+        XCTAssertTrue(warning.contains("different versions of SetShot"), warning)
+        XCTAssertFalse(warning.contains("lost Full Disk Access"), warning)
+    }
+
+    func testMatchingFormatsDoNotWarn() async throws {
+        let kb = KnowledgeBase(entries: [], version: 1, updatedAt: nil)
+        let result = try await engine().diff(before: snapshot(format: 2),
+                                             after: snapshot(format: 2), kb: kb)
+        XCTAssertNil(result.limitedAccessWarning)
+    }
+
     // MARK: - Privacy permissions
     //
     // Reading the TCC databases needs Full Disk Access, so the snapshot carries

@@ -88,6 +88,11 @@ struct SnapshotRunner {
         if let bin = Bundle.main.executableURL?.path {
             env["SETSHOT_BIN"] = bin
         }
+        // Recorded in the snapshot header so a comparison can say which build took it.
+        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+            let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String
+            env["SETSHOT_VERSION"] = build.map { "\(version) (\($0))" } ?? version
+        }
         env["SETSHOT_CHECK_MUSIC"] = Self.musicEnabled() ? "1" : "0"
 
         let exitCode = try await spawnProcess(

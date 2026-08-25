@@ -45,8 +45,23 @@ struct DiffEngine {
         // the script only wrote when it already had access, so it never fired.
         let beforeLimited = before.rawOutput.contains("TCC :: available = 0")
         let afterLimited = after.rawOutput.contains("TCC :: available = 0")
+        // A format change alters what is captured, so a comparison across one shows
+        // renamed and restructured keys as though they were settings that changed.
+        // This has to outrank the Full Disk Access warning below, which it explains:
+        // an older snapshot has no `TCC :: available` line, and its absence otherwise
+        // reads as access having been lost.
+        let beforeFormat = Self.snapshotFormat(of: before.rawOutput)
+        let afterFormat = Self.snapshotFormat(of: after.rawOutput)
+
         let warning: String?
-        if let visibilityChange = parsed.limitedAccessWarning {
+        if beforeFormat != afterFormat {
+            let older = min(beforeFormat, afterFormat) == beforeFormat ? "before" : "after"
+            warning = "These snapshots were taken by different versions of SetShot, which "
+                + "capture settings differently (format \(beforeFormat) and \(afterFormat)). "
+                + "Some of the changes below are the \(older) snapshot recording the same "
+                + "settings in an older way rather than anything on this Mac changing. For a "
+                + "clean comparison, use two snapshots taken by the same version."
+        } else if let visibilityChange = parsed.limitedAccessWarning {
             warning = visibilityChange
         } else if beforeLimited && afterLimited {
             warning = "Both snapshots were taken without Full Disk Access for SetShot \u{2014} privacy permission data and some app preferences are missing from both."
@@ -76,6 +91,20 @@ struct DiffEngine {
     // boundaries (e.g. a snapshot taken before a domain filter change vs. after).
     private static let maxValueLength = 500
     private static let maxUnrecognized = 500
+
+
+    /// The capture format a snapshot was written in. Snapshots taken before the
+    /// header carried one are format 1.
+    static func snapshotFormat(of snapshot: String) -> Int {
+        for line in snapshot.components(separatedBy: "\n").prefix(12) {
+            guard line.hasPrefix("Format:") else { continue }
+            let digits = line.dropFirst("Format:".count)
+                .drop(while: { !$0.isNumber })
+                .prefix(while: { $0.isNumber })
+            return Int(digits) ?? 1
+        }
+        return 1
+    }
 
     /// Reads a key's value straight out of a snapshot, for values the display needs
     /// even when they did not change and so never appear in the diff.

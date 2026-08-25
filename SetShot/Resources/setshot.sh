@@ -72,6 +72,7 @@ NOISE_PATTERN='(
   ^[-+]Date:\s|
   ^[-+]Snapshot complete:|
   ^[-+]Mode:\s|
+  ^[-+]Format:\s|
   ^[-+]#{5}|
 
   xpc\.activity2\.plist ::|
@@ -952,6 +953,20 @@ NOISE_RE="$(echo "$NOISE_PATTERN" | sed 's/^[[:space:]]*//' | grep -v '^#' | tr 
 
 # ── Device identity ───────────────────────────────────────────────────────────
 
+# What a snapshot's captured shape is. Bump this whenever a change to what is
+# emitted would make an older snapshot compare badly against a newer one — a
+# renamed domain, a restructured key, a different value encoding. Comparisons
+# across a bump are still run, but the results are prefaced with a warning,
+# because format differences otherwise read as settings that changed.
+#
+#   1  original format
+#   2  TCC rows as service/client = auth_value; TCC :: available; wallpaper
+#      relabelled from its file path and read from Spaces.<space>.Displays.
+#      <display>; SIP/Gatekeeper/FileVault/Firewall and nvram normalised;
+#      launch agents, Time Machine, system extensions and network config
+#      given key = value form; default browser http/https merged
+SNAPSHOT_FORMAT=2
+
 SETSHOT_PREF_DOMAIN="com.tidbits.setshot"
 SETSHOT_PREF_KEY="DeviceName"
 
@@ -1117,6 +1132,7 @@ do_snapshot() {
     echo "macOS: $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
     echo "Host:  $(scutil --get ComputerName 2>/dev/null || echo 'unknown')"
     echo "User:  $(whoami)"
+    echo "Format: $SNAPSHOT_FORMAT${SETSHOT_VERSION:+ (SetShot $SETSHOT_VERSION)}"
     if [ "$use_sudo" = true ]; then
       echo "Mode:  elevated (--sudo)"
     fi

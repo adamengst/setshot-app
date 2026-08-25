@@ -107,7 +107,7 @@ enum TestSupport {
     private static let sentinel = try! NSRegularExpression(pattern: #"^[^=]*::\s*\(.*\)\s*$"#)
     /// The banner block at the top of every snapshot, and the footer.
     private static let banner = try! NSRegularExpression(
-        pattern: #"^(={10,}|macOS Settings Snapshot|Date:|macOS:|Host:|User:|Mode:|Snapshot complete:)"#
+        pattern: #"^(={10,}|macOS Settings Snapshot|Date:|macOS:|Host:|User:|Mode:|Format:|Snapshot complete:)"#
     )
 
     static func sections(of snapshot: String) -> [Section] {
