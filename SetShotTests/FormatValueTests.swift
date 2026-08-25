@@ -12,11 +12,41 @@ final class FormatValueTests: XCTestCase {
         "PfDe": "Desktop", "PfLo": "Custom folder", "PfOt": "Custom folder",
     ]
 
+    func testCustomFolderResolvesFromTheSnapshotItCameFrom() {
+        // The folder name comes from the snapshot the value was read out of, so each
+        // side of a comparison shows its own folder rather than today's.
+        XCTAssertEqual(
+            formatValue("PfLo", key: "NewWindowTarget", valueMap: newWindowTargetMap,
+                        detail: "file:///Users/someone/Pictures/Art/"),
+            "Art"
+        )
+        XCTAssertEqual(
+            formatValue("PfOt", key: "NewWindowTarget", valueMap: newWindowTargetMap,
+                        detail: "file:///Users/someone/Documents/Invoices/"),
+            "Invoices"
+        )
+    }
+
+    func testCustomFolderFallsBackWhenTheSnapshotHasNoPath() {
+        // Older snapshots predate the path being captured, and a malformed value must
+        // not produce a nonsense name. "Custom folder" is vague but never wrong.
+        for detail in [nil, "", "not-a-url"] as [String?] {
+            XCTAssertEqual(
+                formatValue("PfLo", key: "NewWindowTarget",
+                            valueMap: newWindowTargetMap, detail: detail),
+                "Custom folder",
+                "detail=\(detail ?? "nil")"
+            )
+        }
+    }
+
     func testCustomFolderTargetDoesNotReadLiveDefaults() {
         // This used to resolve a folder name from live UserDefaults, which showed
         // today's folder for both sides of a comparison — so switching from one
         // custom folder to another read as no change at all, and old snapshots were
         // labelled with the current folder.
+        // With no detail supplied the live NewWindowTargetPath must not be consulted,
+        // whatever it currently holds.
         XCTAssertEqual(
             formatValue("PfLo", key: "NewWindowTarget", valueMap: newWindowTargetMap),
             "Custom folder"

@@ -60,8 +60,10 @@ enum DiffExplainer {
                 .max() ?? 0
             for item in result.recognized {
                 let label = item.entry.description ?? item.diff.key
-                let bvf = formatValue(item.diff.beforeValue, key: item.diff.key, valueMap: item.entry.valueMap)
-                let avf = formatValue(item.diff.afterValue, key: item.diff.key, valueMap: item.entry.valueMap)
+                let bvf = formatValue(item.diff.beforeValue, key: item.diff.key,
+                                      valueMap: item.entry.valueMap, detail: item.diff.beforeDetail)
+                let avf = formatValue(item.diff.afterValue, key: item.diff.key,
+                                      valueMap: item.entry.valueMap, detail: item.diff.afterDetail)
                 let bv = bvf.isEmpty ? "(none)" : bvf
                 let av = avf.isEmpty ? "(none)" : avf
                 print("  \(label.padding(toLength: maxLen, withPad: " ", startingAt: 0))  \(bv) → \(av)")

@@ -9,6 +9,15 @@ struct DiffLine: Identifiable {
     let afterValue: String
     let macOSVersion: String
     let rawLine: String
+    /// A companion value read from the same snapshot, needed to label this one.
+    ///
+    /// NewWindowTarget is the case this exists for: the choice is an enum whose
+    /// "custom folder" options say nothing about which folder, and the folder lives
+    /// in a separate key that does not necessarily change at the same time. Reading
+    /// that key from live defaults showed today's folder on both sides of every
+    /// comparison, so it has to come from the snapshots themselves.
+    var beforeDetail: String?
+    var afterDetail: String?
 }
 
 struct DiffResult {

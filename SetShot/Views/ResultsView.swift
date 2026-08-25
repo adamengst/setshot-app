@@ -214,19 +214,27 @@ func recognizedRowText(description: String, location: String?, old: String, new:
         .fixedSize(horizontal: false, vertical: true)
 }
 
-func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil) -> String {
+func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil,
+                 detail: String? = nil) -> String {
     if let map = valueMap {
         // Resolve dynamic system values for Finder new window target. These read the
         // machine's own identity, which the snapshot does not record.
         //
-        // PfLo/PfOt (a custom folder) deliberately does not resolve a name here. The
-        // folder is a setting in its own right, held in NewWindowTargetPath, and
-        // reading it from live UserDefaults showed today's folder for both sides of a
-        // comparison — including for snapshots taken before it changed. The value_map
-        // labels these "Custom folder", and NewWindowTargetPath is reported as its own
-        // row carrying the before and after paths the snapshots actually hold.
+        // PfLo/PfOt (a custom folder) resolves from `detail`, which the caller reads
+        // out of the snapshot this value came from. It used to come from live
+        // UserDefaults, which showed today's folder on both sides of a comparison.
+        // With no detail available the value_map's "Custom folder" is used instead —
+        // vague, but never wrong.
         if key == "NewWindowTarget" {
-            if raw == "PfHm" {
+            if raw == "PfLo" || raw == "PfOt" {
+                // isFileURL matters: URL(string:) happily parses a bare string as a
+                // relative URL, so a malformed value would otherwise be shown as if
+                // it were a folder name.
+                if let detail, let url = URL(string: detail), url.isFileURL,
+                   !url.lastPathComponent.isEmpty, url.lastPathComponent != "/" {
+                    return url.lastPathComponent
+                }
+            } else if raw == "PfHm" {
                 return FileManager.default.homeDirectoryForCurrentUser.lastPathComponent
             } else if raw == "PfCm" {
                 return Host.current().localizedName ?? map["PfCm"] ?? "My Mac"
@@ -327,8 +335,10 @@ private struct RecognizedRow: View {
                 recognizedRowText(
                     description: entry.description ?? "",
                     location: uiLocation,
-                    old: formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap),
-                    new: formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap)
+                    old: formatValue(diff.beforeValue, key: diff.key,
+                                     valueMap: entry.valueMap, detail: diff.beforeDetail),
+                    new: formatValue(diff.afterValue, key: diff.key,
+                                     valueMap: entry.valueMap, detail: diff.afterDetail)
                 )
                 Spacer()
                 VStack(alignment: .center, spacing: 0) {

@@ -47,6 +47,48 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.unrecognized.count, 0)
     }
 
+    func testFinderTargetPathIsTakenFromEachSnapshot() {
+        // The real case from testing: switching away from a custom folder leaves
+        // NewWindowTargetPath untouched, so it never appears in the diff — the folder
+        // name has to be read out of the snapshots directly.
+        let kb = KnowledgeBase(entries: [
+            makeEntry(domain: "com.apple.finder", key: "NewWindowTarget"),
+        ], version: 1, updatedAt: nil)
+        let beforeSnapshot = """
+            /Users/x/Library/Preferences/com.apple.finder.plist :: NewWindowTarget = PfLo
+            /Users/x/Library/Preferences/com.apple.finder.plist :: NewWindowTargetPath = file:///Users/x/Pictures/Art/
+            """
+        let afterSnapshot = """
+            /Users/x/Library/Preferences/com.apple.finder.plist :: NewWindowTarget = PfHm
+            /Users/x/Library/Preferences/com.apple.finder.plist :: NewWindowTargetPath = file:///Users/x/Pictures/Art/
+            """
+        let result = engine().parse(diffOutput: """
+            -/Users/x/Library/Preferences/com.apple.finder.plist :: NewWindowTarget = PfLo
+            +/Users/x/Library/Preferences/com.apple.finder.plist :: NewWindowTarget = PfHm
+            """, kb: kb, beforeSnapshot: beforeSnapshot, afterSnapshot: afterSnapshot)
+
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertEqual(result.recognized.first?.diff.beforeDetail, "file:///Users/x/Pictures/Art/")
+        XCTAssertEqual(result.recognized.first?.diff.afterDetail, "file:///Users/x/Pictures/Art/")
+    }
+
+    func testFinderTargetPathIsPerSnapshotNotShared() {
+        // Custom folder to a different custom folder: NewWindowTarget never moves off
+        // PfLo, so the path is the only record, and each side must show its own.
+        let kb = KnowledgeBase(entries: [
+            makeEntry(domain: "com.apple.finder", key: "NewWindowTarget"),
+        ], version: 1, updatedAt: nil)
+        let result = engine().parse(diffOutput: """
+            -/Users/x/Library/Preferences/com.apple.finder.plist :: NewWindowTargetPath = file:///Users/x/Pictures/Art/
+            +/Users/x/Library/Preferences/com.apple.finder.plist :: NewWindowTargetPath = file:///Users/x/Documents/
+            """, kb: kb,
+            beforeSnapshot: "com.apple.finder.plist :: NewWindowTargetPath = file:///Users/x/Pictures/Art/",
+            afterSnapshot: "com.apple.finder.plist :: NewWindowTargetPath = file:///Users/x/Documents/")
+
+        XCTAssertEqual(result.unrecognized.count + result.recognized.count, 1,
+                       "The path change itself must still be reported")
+    }
+
     // MARK: - Privacy permissions
     //
     // Reading the TCC databases needs Full Disk Access, so the snapshot carries

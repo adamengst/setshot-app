@@ -37,7 +37,8 @@ struct DiffEngine {
             arguments: [scriptCopy.path, "diff", beforeFile.path, afterFile.path]
         )
 
-        let parsed = parse(diffOutput: diffOutput, kb: kb)
+        let parsed = parse(diffOutput: diffOutput, kb: kb,
+                           beforeSnapshot: before.rawOutput, afterSnapshot: after.rawOutput)
 
         // `TCC :: available = 0` marks a snapshot taken without Full Disk Access. The
         // previous check looked for a "grant Full Disk Access to SetShot" string that
@@ -76,7 +77,25 @@ struct DiffEngine {
     private static let maxValueLength = 500
     private static let maxUnrecognized = 500
 
-    func parse(diffOutput: String, kb: KnowledgeBase) -> DiffResult {
+    /// Reads a key's value straight out of a snapshot, for values the display needs
+    /// even when they did not change and so never appear in the diff.
+    private static func value(ofKey key: String, inDomain domain: String,
+                              from snapshot: String) -> String? {
+        guard !snapshot.isEmpty else { return nil }
+        for line in snapshot.components(separatedBy: "\n") {
+            guard line.contains(domain), let range = line.range(of: " :: \(key) = ") else { continue }
+            return String(line[range.upperBound...])
+        }
+        return nil
+    }
+
+    func parse(diffOutput: String, kb: KnowledgeBase,
+               beforeSnapshot: String = "", afterSnapshot: String = "") -> DiffResult {
+        let beforeFinderTarget = Self.value(ofKey: "NewWindowTargetPath",
+                                            inDomain: "com.apple.finder", from: beforeSnapshot)
+        let afterFinderTarget = Self.value(ofKey: "NewWindowTargetPath",
+                                           inDomain: "com.apple.finder", from: afterSnapshot)
+
         let macOSVersion: String = {
             let v = ProcessInfo.processInfo.operatingSystemVersion
             return "\(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
@@ -169,7 +188,7 @@ struct DiffEngine {
             guard !isUID(before) && !isUID(after) else { continue }
             if let entry = kb.entry(forDomain: p.domain, key: p.key) {
                 let effectiveBefore = before.isEmpty ? (entry.implicitDefault ?? "") : before
-                let diffLine = DiffLine(
+                var diffLine = DiffLine(
                     domain: p.domain,
                     key: p.key,
                     source: inferSource(rawDomain: p.rawDomain),
@@ -178,6 +197,10 @@ struct DiffEngine {
                     macOSVersion: macOSVersion,
                     rawLine: "\(p.rawDomain) :: \(p.key)"
                 )
+                if p.domain == "com.apple.finder" && p.key == "NewWindowTarget" {
+                    diffLine.beforeDetail = beforeFinderTarget
+                    diffLine.afterDetail = afterFinderTarget
+                }
                 if entry.noise {
                     noise.append((entry, diffLine))
                 } else {
