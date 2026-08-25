@@ -43,7 +43,7 @@ struct KBFeedbackView: View {
             Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 16, verticalSpacing: 8) {
                 GridRow {
                     Text("Setting").foregroundStyle(.secondary)
-                    Text(entry.description ?? entry.key)
+                    Text(rowDescription(entry: entry, key: diff.key))
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }

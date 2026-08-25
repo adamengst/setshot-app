@@ -41,6 +41,22 @@ final class JournalStoreTests: XCTestCase {
         return (try! JSONDecoder().decode([KBEntry].self, from: json))[0]
     }
 
+    /// A prefix entry, which is what makes the composed description differ from the
+    /// KB's own text.
+    private func makePrefixKBEntry(domain: String, keyPrefix: String) -> KBEntry {
+        let json = """
+        [{
+            "id": "test.prefix", "domain": "\(domain)", "key": "",
+            "key_prefix": "\(keyPrefix)", "source": "defaults", "value_type": "string",
+            "description": "Generic description", "ui_location": null,
+            "settings_url": null, "noise": false, "noise_reason": null,
+            "min_macos": "13.0", "notes": null, "ai_generated": false,
+            "contributed_by_issue": null, "value_map": null
+        }]
+        """.data(using: .utf8)!
+        return (try! JSONDecoder().decode([KBEntry].self, from: json))[0]
+    }
+
     private func makeDiffLine(domain: String = "com.apple.test", key: String = "SomeKey",
                                before: String = "False", after: String = "True") -> DiffLine {
         DiffLine(domain: domain, key: key, source: "defaults",
@@ -54,6 +70,24 @@ final class JournalStoreTests: XCTestCase {
     }
 
     // MARK: - Tests
+
+    // The snapshot list and the journal both read the description stored here, so it
+    // has to be the same text the comparison showed. Storing the KB's own wording made
+    // a wallpaper row read "Wallpaper or screen saver set for a single display…" in the
+    // list while the comparison said "Wallpaper placement on Built-in Display."
+
+    func testJournalStoresTheComposedDescriptionNotTheKBWording() async throws {
+        let key = "kTCCServiceCamera/com.apple.safari"
+        let entry = makePrefixKBEntry(domain: "TCC-user", keyPrefix: "kTCCServiceCamera/")
+        let diff = makeDiffLine(domain: "TCC-user", key: key)
+        let added = await store.add(recognized: [(entry: entry, diff: diff)],
+                                    afterSnapshot: makeSnapshot())
+
+        let stored = try XCTUnwrap(added.first)
+        XCTAssertEqual(stored.entryDescription, rowDescription(entry: entry, key: key))
+        XCTAssertNotEqual(stored.entryDescription, entry.description,
+                          "Storing the KB wording loses which app the row was about")
+    }
 
     func testAddNewEntries() async {
         let snapshot = makeSnapshot()

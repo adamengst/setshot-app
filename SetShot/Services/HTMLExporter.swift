@@ -49,7 +49,7 @@ struct HTMLExporter {
     }
 
     private static func row(entry: KBEntry, diff: DiffLine, macOSMajor: Int) -> String {
-        let desc = htmlEscape(entry.description ?? diff.key)
+        let desc = htmlEscape(rowDescription(entry: entry, key: diff.key))
         let location = entry.effectiveUILocation(macOSMajor: macOSMajor).map { "<div class=\"location\">\(htmlEscape($0))</div>" } ?? ""
         let before = htmlEscape(diff.beforeValue.isEmpty ? "(none)" : formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap))
         let after = htmlEscape(diff.afterValue.isEmpty ? "(none)" : formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap))

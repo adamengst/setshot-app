@@ -112,7 +112,7 @@ actor JournalStore {
                 afterSnapshotName: afterSnapshot.displayName,
                 domain: item.diff.domain,
                 key: item.diff.key,
-                entryDescription: item.entry.description ?? "",
+                entryDescription: rowDescription(entry: item.entry, key: item.diff.key),
                 uiLocation: item.entry.uiLocation,
                 settingsURL: item.entry.settingsURL,
                 oldValue: before,
