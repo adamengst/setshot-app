@@ -181,6 +181,28 @@ struct DiffEngine {
         // grant on the Mac would otherwise appear as added or deleted at once,
         // burying whatever actually changed. Report the capability change instead.
         var tccVisibilityWarning: String?
+
+        // Media & Apple Music gates the media domains the same way Full Disk Access
+        // gates the privacy databases: without it those domains are skipped and their
+        // settings vanish from the snapshot. Both sides must carry the marker — a
+        // snapshot taken before it existed says nothing about what was captured, and
+        // assuming it was off would invent a change.
+        if let media = pairs.first(where: { $0.domain == "Music" && $0.key == "available" }),
+           let mediaBefore = media.before, let mediaAfter = media.after,
+           mediaBefore != mediaAfter {
+            let turnedOn = mediaAfter == "1"
+            let side = turnedOn ? "earlier" : "later"
+            tccVisibilityWarning = "Media & Apple Music access was turned "
+                + (turnedOn ? "on" : "off") + " between these snapshots, so the Music, TV and "
+                + "related settings could not be read for the \(side) one. Anything that appears "
+                + "in only one of the two is left out of these results, because it reflects what "
+                + "SetShot could read rather than anything that changed."
+            pairs.removeAll { pair in
+                if pair.domain == "Music" && pair.key == "available" { return false }
+                return (pair.before ?? "").isEmpty || (pair.after ?? "").isEmpty
+            }
+        }
+
         // An absent value means the snapshot predates TCC capture entirely, which is
         // the same situation as not being able to read the databases — so treat it as
         // "not readable" rather than skipping the check. Without this, comparing any

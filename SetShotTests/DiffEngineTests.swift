@@ -210,6 +210,44 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertTrue(result.limitedAccessWarning?.contains("granted Full Disk Access") == true)
     }
 
+    func testTurningOffMediaAccessWithholdsTheSettingsItGates() {
+        // Without Media & Apple Music the script skips the media domains entirely, so
+        // roughly three hundred settings vanish from the snapshot. They did not change.
+        let kb = KnowledgeBase(entries: [
+            makeEntry(domain: "Music", key: "available"),
+            makeEntry(domain: "com.apple.Music", key: "userWantsPlaybackNotifications"),
+            makeEntry(domain: "com.apple.dock", key: "autohide"),
+        ], version: 1, updatedAt: nil)
+        let result = engine().parse(diffOutput: """
+            -Music :: available = 1
+            +Music :: available = 0
+            -/Users/x/Library/Preferences/com.apple.Music.plist :: userWantsPlaybackNotifications = 1
+            -/Users/x/Library/Preferences/com.apple.dock.plist :: autohide = 0
+            +/Users/x/Library/Preferences/com.apple.dock.plist :: autohide = 1
+            """, kb: kb)
+
+        let keys = Set(result.recognized.map(\.diff.key) + result.unrecognized.map(\.key))
+        XCTAssertTrue(keys.contains("available"))
+        XCTAssertTrue(keys.contains("autohide"), "A real change must not be withheld")
+        XCTAssertFalse(keys.contains("userWantsPlaybackNotifications"),
+                       "Music settings only became unreadable")
+        XCTAssertTrue(result.limitedAccessWarning?.contains("Media & Apple Music") == true)
+    }
+
+    func testMediaMarkerMissingOnOneSideChangesNothing() {
+        // A snapshot taken before the marker existed says nothing about what was
+        // captured; assuming it was off would invent a change.
+        let kb = KnowledgeBase(entries: [
+            makeEntry(domain: "com.apple.Music", key: "userWantsPlaybackNotifications"),
+        ], version: 1, updatedAt: nil)
+        let result = engine().parse(diffOutput: """
+            +Music :: available = 1
+            -/Users/x/Library/Preferences/com.apple.Music.plist :: userWantsPlaybackNotifications = 1
+            """, kb: kb)
+        XCTAssertNil(result.limitedAccessWarning)
+        XCTAssertEqual(result.recognized.count, 1, "The Music setting should still be reported")
+    }
+
     func testLosingAccessWithholdsSettingsThatMerelyBecameUnreadable() {
         // Revoking Full Disk Access on a real Mac made Time Machine read as switched
         // off and Mail's settings as wiped: those files live behind the permission, so

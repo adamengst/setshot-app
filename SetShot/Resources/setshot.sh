@@ -1507,6 +1507,11 @@ JSEOF
       echo "TCC :: available = 0"
     fi
 
+    # The same idea for Media & Apple Music. Without that permission the media
+    # domains are skipped entirely, so roughly three hundred settings disappear from
+    # the snapshot — a comparison would otherwise report them as deleted.
+    echo "Music :: available = ${SETSHOT_CHECK_MUSIC:-0}"
+
     if [ -r "$USER_TCC" ]; then
       sqlite3 "$USER_TCC" \
         "SELECT 'TCC-user :: ' || service || '/' || client || ' = ' || auth_value
