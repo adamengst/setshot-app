@@ -239,6 +239,23 @@ final class FormatValueTests: XCTestCase {
         XCTAssertEqual(displayName(forUUID: CFUUIDCreateString(nil, cf) as String), "Built-in Display")
     }
 
+    func testPlacementValuesReadAsTheirSettingsNames() throws {
+        // Read off four snapshots taken one per change, Fill → Fit → Stretch → Center.
+        // 1 arrives as "True" because the flattener coerces integer 1 to a boolean;
+        // formatValue normalises it back before the map lookup, which is what lets a
+        // map keyed on integers work at all.
+        let entries = try TestSupport.requireKnowledgeBase()
+        let kb = KnowledgeBase(entries: entries, version: 0, updatedAt: nil)
+        let key = "Spaces.B91CBB8D-60AD-49CD-BE1E-36DA590B78FC.Displays."
+                + "37D8832A-2D66-02CA-B9F7-8F30A301B230.Desktop.Content.Choices[0].Configuration.placement"
+        let entry = try XCTUnwrap(kb.entry(forDomain: "wallpaper", key: key))
+        let expected = [("True", "Fill Screen"), ("1", "Fill Screen"), ("5", "Fit to Screen"),
+                        ("4", "Stretch to Fill Screen"), ("3", "Center")]
+        for (raw, label) in expected {
+            XCTAssertEqual(formatValue(raw, key: key, valueMap: entry.valueMap), label, raw)
+        }
+    }
+
     func testAerialWallpaperShowsItsName() throws {
         // Aerials are stored only as asset UUIDs; the catalogue naming them is a
         // world-readable JSON file, so this needs no permission.
