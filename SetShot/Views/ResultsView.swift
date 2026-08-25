@@ -187,79 +187,87 @@ func unrecognizedRowText(rawLine: String, before: String, after: String, key: St
 
 
 
-/// Turns a wallpaper key into a sentence. The stored shape — Desktop.Content.
-/// Choices[0].Configuration.placement — is an implementation detail of how macOS
-/// nests wallpaper state, and printing it raw asks the reader to decode it.
-private func wallpaperSubject(key: String) -> String? {
+/// Names for the aerial wallpapers, which are stored only as asset UUIDs.
+///
+/// macOS keeps the catalogue in a world-readable JSON file, so no permission is
+/// needed. Read once — it is 137 entries and never changes between snapshots.
+enum AerialCatalogue {
+    private static let path =
+        "/Library/Application Support/com.apple.idleassetsd/Customer/entries.json"
+
+    static let namesByID: [String: String] = {
+        guard let data = FileManager.default.contents(atPath: path),
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let assets = root["assets"] as? [[String: Any]]
+        else { return [:] }
+        return assets.reduce(into: [:]) { map, asset in
+            if let id = asset["id"] as? String,
+               let name = asset["accessibilityLabel"] as? String {
+                map[id.uppercased()] = name
+            }
+        }
+    }()
+
+    static func name(forAssetID id: String) -> String? {
+        namesByID[id.uppercased()]
+    }
+}
+
+
+/// The whole description for a wallpaper row, built rather than looked up.
+///
+/// One KB entry has to cover every key under a display, because the display's UUID
+/// sits in the middle of the key and a key_prefix cannot skip it. So the specifics —
+/// which display, and which aspect of its wallpaper — are composed here.
+private func wallpaperDescription(key: String) -> String? {
     var rest = key
-    var scope: String
+    let scope: String
 
     if rest.hasPrefix("Displays.") {
         rest = String(rest.dropFirst("Displays.".count))
         let uuid = String(rest.prefix(36))
         scope = displayName(forUUID: uuid) ?? uuid
-        rest = String(rest.dropFirst(min(37, rest.count)))   // uuid plus its trailing dot
+        rest = String(rest.dropFirst(min(37, rest.count)))
     } else if rest.hasPrefix("AllSpacesAndDisplays.") {
         rest = String(rest.dropFirst("AllSpacesAndDisplays.".count))
         scope = "all displays"
     } else if rest.hasPrefix("SystemDefault.") {
         rest = String(rest.dropFirst("SystemDefault.".count))
         scope = "the system default"
-    } else if rest == "AllSpacesAndDisplays.Type" || rest.hasSuffix(".Type") || rest == "Type" {
-        return nil
     } else {
         return nil
     }
 
-    // Desktop wallpaper and Idle (screen saver) share the same nested shape.
-    var subject: String
+    let perDisplay = key.hasPrefix("Displays.")
+    let qualifier = perDisplay ? ", set when “Show on all Spaces” is turned off" : ""
+
     if rest == "Type" {
-        subject = "Whether every display shares one wallpaper"
-    } else {
-        let isIdle = rest.hasPrefix("Idle.")
-        let thing = isIdle ? "Screen saver" : "Desktop picture"
-        let leaf = rest
-            .replacingOccurrences(of: #"^(Desktop|Idle)\."#, with: "",
-                                  options: .regularExpression)
-            .replacingOccurrences(of: #"\[\d+\]"#, with: "", options: .regularExpression)
-        switch leaf {
-        case "Content.Choices.Files.relative",
-             "Content.Choices.Configuration.module.relative":
-            subject = thing
-        case "Content.Choices.Provider":
-            subject = "\(thing) type"
-        case "Content.Choices.Configuration.placement":
-            subject = "\(thing) placement"
-        case "Content.Choices.Configuration",
-             "Content.Choices.Configuration.backgroundColor.colorSpace":
-            subject = "\(thing) options"
-        case "Content.Shuffle":
-            subject = "\(thing) rotation"
-        case "Content.Shuffle.Type":
-            subject = "\(thing) rotation trigger"
-        case "Content.Shuffle.Duration":
-            subject = "\(thing) rotation interval"
-        case "LastSet", "LastUse":
-            return nil
-        default:
-            subject = "\(thing) — \(leaf)"
-        }
+        return "Whether every display and Space shares one wallpaper."
     }
-    return "\(subject) on \(scope)"
+    let isIdle = rest.hasPrefix("Idle.")
+    let leaf = rest
+        .replacingOccurrences(of: #"^(Desktop|Idle)\."#, with: "", options: .regularExpression)
+        .replacingOccurrences(of: #"\[\d+\]"#, with: "", options: .regularExpression)
+
+    if isIdle {
+        return "Screen saver for \(scope)\(qualifier)."
+    }
+    switch leaf {
+    case "Content.Choices.Configuration.placement":
+        return "Wallpaper placement for \(scope)\(qualifier)."
+    default:
+        return "Wallpaper for \(scope)\(qualifier)."
+    }
 }
 
-/// The part of a key that says *which* thing a row is about, for entries that cover
-/// many keys via key_prefix. Without it every per-display wallpaper, every privacy
-/// permission and every launch agent renders as the same sentence with different
-/// values, because a recognized row otherwise shows only its description.
+/// The part of a key that says *which* thing a row is about, for entries covering
+/// many keys via key_prefix — which app a permission is for, which background item.
 ///
-/// Display UUIDs and bundle identifiers are resolved to names where possible. Both
-/// are identity rather than settings, and both fall back to the raw value — a
-/// display that is no longer attached, or an app no longer installed, still has to
-/// be nameable as something.
+/// Display UUIDs and bundle identifiers resolve to names where possible. Both are
+/// identity rather than settings, and both fall back to the raw value: a snapshot
+/// outlives a monitor, and an app can be uninstalled.
 func rowSubject(entry: KBEntry, key: String) -> String? {
     guard let prefix = entry.keyPrefix else { return nil }   // exact match: description is specific
-    if entry.domain == "wallpaper" { return wallpaperSubject(key: key) }
     var subject = key.hasPrefix(prefix) ? String(key.dropFirst(prefix.count)) : key
     guard !subject.isEmpty else { return nil }
 
@@ -277,6 +285,18 @@ func rowSubject(entry: KBEntry, key: String) -> String? {
     return subject
 }
 
+/// The description shown for a recognized row.
+///
+/// An entry matching one exact key describes itself. An entry covering many keys
+/// through key_prefix does not: it needs to say which display, app or item this row
+/// is about, and that belongs on the description line — SetShot has no second one.
+func rowDescription(entry: KBEntry, key: String) -> String {
+    if entry.domain == "wallpaper", let built = wallpaperDescription(key: key) { return built }
+    let base = entry.description ?? key
+    guard let subject = rowSubject(entry: entry, key: key) else { return base }
+    return "\(base.hasSuffix(".") ? String(base.dropLast()) : base) — \(subject)"
+}
+
 /// Maps a display's UUID to the name macOS shows for it. Only displays currently
 /// attached can be named; a snapshot easily outlives a monitor.
 func displayName(forUUID uuid: String) -> String? {
@@ -292,8 +312,7 @@ func displayName(forUUID uuid: String) -> String? {
     return nil
 }
 
-func recognizedRowText(description: String, location: String?, subject: String? = nil,
-                       old: String, new: String) -> some View {
+func recognizedRowText(description: String, location: String?, old: String, new: String) -> some View {
     let bodyFont  = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .medium)
     let calloutFont = NSFont.systemFont(ofSize: NSFont.systemFontSize - 1)
     let monoFont  = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize - 1, weight: .regular)
@@ -302,13 +321,8 @@ func recognizedRowText(description: String, location: String?, subject: String? 
     }
     let ns = NSMutableAttributedString()
     ns.append(NSAttributedString(string: description, attributes: [
-        .font: bodyFont, .paragraphStyle: para(location != nil || subject != nil ? 3 : 8)
+        .font: bodyFont, .paragraphStyle: para(location != nil ? 3 : 8)
     ]))
-    if let subject {
-        ns.append(NSAttributedString(string: "\n" + subject, attributes: [
-            .font: monoFont, .paragraphStyle: para(location != nil ? 3 : 8)
-        ]))
-    }
     if let location {
         ns.append(NSAttributedString(string: "\n" + location, attributes: [
             .font: calloutFont, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: para(8)
@@ -388,6 +402,9 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
     if raw.hasPrefix("/"), let url = URL(string: "file://\(raw)") {
         return url.deletingPathExtension().lastPathComponent
     }
+    if key.hasSuffix("assetID"), let name = AerialCatalogue.name(forAssetID: raw) {
+        return name
+    }
     if raw.hasPrefix("file://"), let url = URL(string: raw) {
         let name = url.deletingPathExtension().lastPathComponent
         if url.path.contains("/com.apple.desktop.photos/") {
@@ -464,9 +481,8 @@ private struct RecognizedRow: View {
                 .padding(.top, 2)
             HStack(alignment: .top, spacing: 8) {
                 recognizedRowText(
-                    description: entry.description ?? "",
+                    description: rowDescription(entry: entry, key: diff.key),
                     location: uiLocation,
-                    subject: rowSubject(entry: entry, key: diff.key),
                     old: formatValue(diff.beforeValue, key: diff.key,
                                      valueMap: entry.valueMap, detail: diff.beforeDetail),
                     new: formatValue(diff.afterValue, key: diff.key,

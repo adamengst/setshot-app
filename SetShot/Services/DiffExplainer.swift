@@ -58,9 +58,7 @@ enum DiffExplainer {
             // Entries covering many keys need the subject too, or every per-display
             // wallpaper and every privacy permission prints as the same sentence.
             func label(for item: (entry: KBEntry, diff: DiffLine)) -> String {
-                let base = item.entry.description ?? item.diff.key
-                guard let subject = rowSubject(entry: item.entry, key: item.diff.key) else { return base }
-                return "\(base) [\(subject)]"
+                rowDescription(entry: item.entry, key: item.diff.key)
             }
             let maxLen = result.recognized.map { label(for: $0).count }.max() ?? 0
             for item in result.recognized {

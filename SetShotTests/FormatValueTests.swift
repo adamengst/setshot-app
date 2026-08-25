@@ -155,40 +155,70 @@ final class FormatValueTests: XCTestCase {
     }
 
     // MARK: - Wallpaper rows
+    //
+    // One KB entry covers every key under a display, because the display's UUID sits
+    // in the middle of the key and a key_prefix cannot skip it. The description is
+    // therefore composed, not looked up — and it has to be one line, since SetShot
+    // has no second description line.
 
-    func testWallpaperSubjectReadsAsASentence() {
-        // The stored shape is how macOS nests wallpaper state, not something to show.
+    private func wallpaperEntry() -> KBEntry { prefixEntry("Displays.", domain: "wallpaper") }
+
+    func testPerDisplayWallpaperDescriptionNamesTheDisplay() {
         let uuid = "00000000-0000-0000-0000-000000000000"
-        let cases = [
-            ("Desktop.Content.Choices[0].Files[0].relative", "Desktop picture"),
-            ("Desktop.Content.Choices[0].Provider", "Desktop picture type"),
-            ("Desktop.Content.Choices[0].Configuration.placement", "Desktop picture placement"),
-            ("Desktop.Content.Shuffle", "Desktop picture rotation"),
-            ("Desktop.Content.Shuffle.Type", "Desktop picture rotation trigger"),
-            ("Desktop.Content.Shuffle.Duration[0]", "Desktop picture rotation interval"),
-            ("Idle.Content.Choices[0].Configuration.module.relative", "Screen saver"),
-        ]
-        for (leaf, expected) in cases {
-            XCTAssertEqual(
-                rowSubject(entry: prefixEntry("Displays.", domain: "wallpaper"),
-                           key: "Displays.\(uuid).\(leaf)"),
-                "\(expected) on \(uuid)",
-                leaf
-            )
-        }
+        XCTAssertEqual(
+            rowDescription(entry: wallpaperEntry(),
+                           key: "Displays.\(uuid).Desktop.Content.Choices[0].Files[0].relative"),
+            "Wallpaper for \(uuid), set when \u{201C}Show on all Spaces\u{201D} is turned off."
+        )
     }
 
-    func testWallpaperSubjectNamesTheWholeMachineScopes() {
+    func testWallpaperDescriptionDistinguishesItsAspects() {
+        let uuid = "00000000-0000-0000-0000-000000000000"
+        let e = wallpaperEntry()
+        XCTAssertTrue(rowDescription(entry: e,
+            key: "Displays.\(uuid).Desktop.Content.Choices[0].Configuration.placement")
+            .hasPrefix("Wallpaper placement for"))
+        XCTAssertTrue(rowDescription(entry: e,
+            key: "Displays.\(uuid).Idle.Content.Choices[0].Configuration.module.relative")
+            .hasPrefix("Screen saver for"))
+        XCTAssertEqual(rowDescription(entry: e, key: "Displays.\(uuid).Type"),
+                       "Whether every display and Space shares one wallpaper.")
+    }
+
+    func testWholeMachineWallpaperScopesReadPlainly() {
         XCTAssertEqual(
-            rowSubject(entry: prefixEntry("AllSpacesAndDisplays.Desktop.Content.Choices", domain: "wallpaper"),
-                       key: "AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative"),
-            "Desktop picture on all displays"
+            rowDescription(entry: prefixEntry("AllSpacesAndDisplays.Desktop.Content.Choices",
+                                              domain: "wallpaper"),
+                           key: "AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative"),
+            "Wallpaper for all displays."
         )
         XCTAssertEqual(
-            rowSubject(entry: prefixEntry("SystemDefault.Desktop.Content.Choices", domain: "wallpaper"),
-                       key: "SystemDefault.Desktop.Content.Choices[0].Files[0].relative"),
-            "Desktop picture on the system default"
+            rowDescription(entry: prefixEntry("SystemDefault.Desktop.Content.Choices",
+                                              domain: "wallpaper"),
+                           key: "SystemDefault.Desktop.Content.Choices[0].Files[0].relative"),
+            "Wallpaper for the system default."
         )
+    }
+
+    func testOtherPrefixEntriesGetTheirSubjectOnTheSameLine() {
+        let e = prefixEntry("kTCCServiceCamera/")
+        XCTAssertEqual(rowDescription(entry: e, key: "kTCCServiceCamera/com.apple.safari"),
+                       "Test — Safari")
+    }
+
+    func testExactMatchEntriesKeepTheirDescriptionAlone() {
+        XCTAssertEqual(rowDescription(entry: prefixEntry(nil), key: "AppleKeyboardUIMode"), "Test")
+    }
+
+    func testAerialWallpaperShowsItsName() throws {
+        // Aerials are stored only as asset UUIDs; the catalogue naming them is a
+        // world-readable JSON file, so this needs no permission.
+        try XCTSkipIf(AerialCatalogue.namesByID.isEmpty, "No aerial catalogue on this Mac")
+        let id = "4A3590EC-FF30-41E7-85FE-210FF6112917"
+        XCTAssertEqual(formatValue(id, key: "Content.Choices.Configuration.assetID"),
+                       AerialCatalogue.name(forAssetID: id))
+        XCTAssertFalse(formatValue(id, key: "Content.Choices.Configuration.assetID").contains("-"),
+                       "An asset UUID should never reach the reader")
     }
 
     func testBuiltInWallpaperShowsItsName() {
