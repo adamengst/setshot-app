@@ -54,7 +54,11 @@ actor SubmissionService {
         var payload: [String: String] = [
             "entry_id":               entry.id,
             "domain":                 entry.domain,
-            "key":                    entry.key,
+            // The row's own key, not the entry's. An entry matching by key_prefix has an
+            // empty key, and the worker rejects a submission whose key is empty — so
+            // feedback on any prefix entry failed. This also says which app or display
+            // the report is about.
+            "key":                    diff.key.isEmpty ? entry.key : diff.key,
             "current_description":    entry.description ?? "",
             "current_ui_location":    entry.uiLocation ?? "",
             "current_settings_url":   entry.settingsURL ?? "",

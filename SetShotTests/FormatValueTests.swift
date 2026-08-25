@@ -213,6 +213,32 @@ final class FormatValueTests: XCTestCase {
         )
     }
 
+    func testDescriptionCanPlaceTheSubjectItself() {
+        // "Camera access for Safari" reads better than a sentence with the app tacked
+        // on, so a description may position the subject with {subject}.
+        var e = prefixEntry("kTCCServiceCamera/")
+        e = KBEntry(id: e.id, domain: e.domain, key: e.key, source: e.source,
+                    valueType: e.valueType, description: "Camera access for {subject}",
+                    uiLocation: nil, uiLocationOverrides: nil, settingsURL: nil,
+                    noise: false, noiseReason: nil, minMacOS: nil, notes: nil,
+                    aiGenerated: false, contributedByIssue: nil, valueMap: nil,
+                    keyPrefix: e.keyPrefix, iconBundleID: nil, implicitDefault: nil,
+                    requiresHardware: nil)
+        XCTAssertEqual(rowDescription(entry: e, key: "kTCCServiceCamera/com.apple.safari"),
+                       "Camera access for Safari")
+    }
+
+    func testPlaceholderIsRemovedWhenThereIsNoSubject() {
+        // An exact-match entry has no subject, and a stray {subject} must not show.
+        let e = KBEntry(id: "t", domain: "d", key: "k", source: "s", valueType: "string",
+                        description: "Camera access for {subject}", uiLocation: nil,
+                        uiLocationOverrides: nil, settingsURL: nil, noise: false,
+                        noiseReason: nil, minMacOS: nil, notes: nil, aiGenerated: false,
+                        contributedByIssue: nil, valueMap: nil, keyPrefix: nil,
+                        iconBundleID: nil, implicitDefault: nil, requiresHardware: nil)
+        XCTAssertFalse(rowDescription(entry: e, key: "k").contains("{subject}"))
+    }
+
     func testOtherPrefixEntriesGetTheirSubjectOnTheSameLine() {
         let e = prefixEntry("kTCCServiceCamera/")
         XCTAssertEqual(rowDescription(entry: e, key: "kTCCServiceCamera/com.apple.safari"),

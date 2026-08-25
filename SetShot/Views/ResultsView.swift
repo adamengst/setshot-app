@@ -324,7 +324,14 @@ func rowDescription(domain: String, key: String, kb: KnowledgeBase) -> String? {
 func rowDescription(entry: KBEntry, key: String) -> String {
     if entry.domain == "wallpaper", let built = wallpaperDescription(key: key) { return built }
     let base = entry.description ?? key
-    guard let subject = rowSubject(entry: entry, key: key) else { return base }
+    guard let subject = rowSubject(entry: entry, key: key) else {
+        return base.replacingOccurrences(of: "{subject}", with: "")
+    }
+    // A description can place the subject itself, for entries that read better as
+    // "Camera access for Safari" than as a sentence with the app appended.
+    if base.contains("{subject}") {
+        return base.replacingOccurrences(of: "{subject}", with: subject)
+    }
     return "\(base.hasSuffix(".") ? String(base.dropLast()) : base) — \(subject)"
 }
 
