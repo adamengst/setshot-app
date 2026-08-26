@@ -296,5 +296,8 @@ struct ReleaseNotesView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
+        // Escape clears the field, the same as the x button beside it. Guarded so an
+        // empty field does not swallow Escape from anything else that wants it.
+        .onExitCommand { if !searchQuery.isEmpty { searchQuery = "" } }
     }
 }

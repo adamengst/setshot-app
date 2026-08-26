@@ -22,6 +22,12 @@
 
 - **Fixed: the folder for new Finder windows showed the wrong value** — When set to a custom folder, both sides of a comparison showed today's folder rather than what each snapshot recorded, so changing from one custom folder to another reported nothing at all.
 
+- **Export as Markdown** — Export HTML in comparisons and in the Journal is now an Export menu offering HTML or Markdown. The Markdown is plain text with a checkbox for each change, so it reads in any editor and can be diffed between two Macs to see what differs. Suggested by Chris Pepper.
+
+- **Exports are named after the Mac and the date** — A comparison used to save as something like "SetShot — media-on vs Today at 16:06.html", which names no machine and stops meaning anything the next day, and the Journal always saved as "SetShot Journal.html". Both now include the computer name and a sortable date, so exports from two Macs can sit in the same folder. Suggested by Chris Pepper.
+
+- **Escape clears a search field** — In the Journal, About and Release Notes search fields, pressing Escape now empties the field, the same as clicking the x beside it. Suggested by Chris Pepper.
+
 - **Settings has a menu item** — SetShot → Settings, under About SetShot, with the usual Command-comma. The shortcut already worked but nothing in the menus said so, suggested by John Gruber.
 
 - **Knowledge base updates** — Around 130 new entries covering privacy permissions, security status, wallpaper, network configuration and background items. Corrected the battery indicator values, which were mislabeled; the Notification Center sort order and Stage Manager grouping, which pointed at controls that either do not exist or only appear when Stage Manager is on; the Lock Screen password hint, which is a switch rather than a retry count in macOS 15; and menu bar clock and battery entries that showed no icon. Described the system font settings, Finder's Quit menu item, grammatical gender, the Spoken Content voice, the TV app appearance, and the Mail sender-domain list; suppressed noise from analytics timestamps, transient Finder view settings, per-Space wallpaper duplication and several daemon flags.
