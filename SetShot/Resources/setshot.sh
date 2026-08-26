@@ -1467,6 +1467,33 @@ JSEOF
       }
     '
 
+    echo ""
+    echo "# --- scutil: VPN configurations ---"
+    # A VPN does not appear in `networksetup -listallnetworkservices`, which lists
+    # hardware services, so a VPN that software installs was invisible -- reported
+    # by a user who installed Tailscale and saw nothing about the VPN it adds.
+    # `scutil --nc list` needs no root and lists every configuration System Settings
+    # shows under Network > VPN.
+    #
+    # Keyed on the name shown there, so a VPN appearing or disappearing is one line.
+    # Only the quoted name and the leading asterisk are read: both are stable across
+    # macOS versions, where the type and flag columns vary by VPN kind. Whether a VPN
+    # happens to be connected right now is state rather than a setting and would flap
+    # between snapshots, so it is left out.
+    _vpn=$(scutil --nc list 2>/dev/null | awk '
+      /^Available network connection services/ { next }
+      /"/ {
+        enabled = (substr($0, 1, 1) == "*") ? "enabled" : "disabled"
+        name = $0; sub(/^[^"]*"/, "", name); sub(/".*$/, "", name)
+        if (name != "") print "vpn :: " name " = " enabled
+      }
+    ')
+    if [ -n "$_vpn" ]; then
+      echo "$_vpn"
+    else
+      echo "vpn :: (none configured)"
+    fi
+
     section "CONFIGURATION PROFILES"
     # `profiles list -all` needs root, and prints its refusal to stdout — where both
     # 2>/dev/null and the || fallback miss it, so the error text landed in every

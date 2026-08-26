@@ -285,6 +285,41 @@ final class SnapshotContractTests: XCTestCase {
         }
     }
 
+    // MARK: - VPN configurations
+
+    /// A user installed Tailscale and saw nothing about the VPN it adds:
+    /// `networksetup -listallnetworkservices` lists hardware services, so a VPN
+    /// installed by software was invisible. This asserts the shape `scutil --nc list`
+    /// is read into — a Mac with no VPN emits the empty-state sentinel instead, which
+    /// is why the section is not in sectionsThatMustHaveData.
+    func testVPNConfigurationsAreCapturedInAReadableShape() throws {
+        for analysis in try allAnalyses() where analysis.isLive {
+            let lines = analysis.raw
+                .components(separatedBy: "\n")
+                .filter { $0.hasPrefix("vpn :: ") }
+
+            XCTAssertFalse(lines.isEmpty,
+                           "[\(analysis.name)] captured nothing for VPN configurations, not "
+                           + "even the empty-state sentinel.")
+
+            // Either every line is a real configuration, or the one sentinel stands alone.
+            if lines == ["vpn :: (none configured)"] { continue }
+
+            for line in lines {
+                XCTAssertTrue(TestSupport.isParseable(line), """
+                    [\(analysis.name)] "\(line)" cannot be parsed, so a VPN appearing \
+                    would never reach a comparison.
+                    """)
+                let value = line.components(separatedBy: " = ").last ?? ""
+                XCTAssertTrue(["enabled", "disabled"].contains(value), """
+                    [\(analysis.name)] "\(line)" has value "\(value)". Only the name and \
+                    the leading asterisk are meant to be read from scutil; anything else \
+                    means the output format moved.
+                    """)
+            }
+        }
+    }
+
     // MARK: - Allowlist hygiene
 
     func testKnownIssuesAreStillIssues() throws {
