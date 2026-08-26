@@ -467,10 +467,20 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
             if !name.isEmpty { return name }
         }
     }
-    switch raw.lowercased() {
-    case "true", "yes", "1": return "On"
-    case "false", "no", "0": return "Off"
-    default: break
+    // A value_map that gives 0 or 1 a label of its own — "Never" for a sleep timer,
+    // "Text fields and lists only" for full keyboard access — is describing a
+    // magnitude or a set of choices, not a switch. Coercing an unmapped value there
+    // reported a one-minute display sleep as "On". The fallback below is for values
+    // with no map to speak of.
+    let mapDescribesAScale = valueMap.map {
+        ($0["0"] != nil && $0["0"] != "Off") || ($0["1"] != nil && $0["1"] != "On")
+    } ?? false
+    if !mapDescribesAScale {
+        switch raw.lowercased() {
+        case "true", "yes", "1": return "On"
+        case "false", "no", "0": return "Off"
+        default: break
+        }
     }
     if raw.hasPrefix("/"), let url = URL(string: "file://\(raw)") {
         return url.deletingPathExtension().lastPathComponent

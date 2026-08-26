@@ -352,6 +352,32 @@ final class FormatValueTests: XCTestCase {
                        notAnAerial)
     }
 
+    func testASleepTimerOfOneMinuteIsNotReportedAsOn() {
+        // Setting "Turn display off on battery" to 1 minute rendered as "On", because
+        // an unmapped 1 fell through to the boolean coercion.
+        let minutes = ["0": "Never"]
+        XCTAssertEqual(formatValue("1", key: "Battery Power.displaysleep", valueMap: minutes), "1")
+        XCTAssertEqual(formatValue("5", key: "Battery Power.displaysleep", valueMap: minutes), "5")
+        XCTAssertEqual(formatValue("0", key: "Battery Power.displaysleep", valueMap: minutes), "Never")
+    }
+
+    func testAnEnumeratedSettingDoesNotCoerceItsUnmappedValues() {
+        // Full keyboard access: 1 is a real mode, not "On".
+        let modes = ["0": "Text fields and lists only", "2": "All controls"]
+        XCTAssertEqual(formatValue("1", key: "AppleKeyboardUIMode", valueMap: modes), "1")
+        XCTAssertEqual(formatValue("2", key: "AppleKeyboardUIMode", valueMap: modes), "All controls")
+    }
+
+    func testGenuineSwitchesStillReadOnAndOff() {
+        let onOff = ["0": "Off", "1": "On"]
+        XCTAssertEqual(formatValue("1", key: "womp", valueMap: onOff), "On")
+        XCTAssertEqual(formatValue("0", key: "womp", valueMap: onOff), "Off")
+        // No map at all is the case the coercion exists for.
+        XCTAssertEqual(formatValue("1", key: "whatever"), "On")
+        XCTAssertEqual(formatValue("True", key: "whatever"), "On")
+        XCTAssertEqual(formatValue("false", key: "whatever"), "Off")
+    }
+
     func testBuiltInWallpaperShowsItsName() {
         XCTAssertEqual(
             formatValue("file:///System/Library/Desktop%20Pictures/Sequoia%20Sunrise.madesktop"),
