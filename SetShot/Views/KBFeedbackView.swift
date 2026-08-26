@@ -134,6 +134,10 @@ struct KBFeedbackView: View {
     }
 
     private func submit() async {
+        if let problem = SubmissionValidator.problem(withNotes: notes) {
+            errorMessage = problem
+            return
+        }
         isSubmitting = true
         errorMessage = nil
         do {

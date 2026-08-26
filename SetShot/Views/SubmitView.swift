@@ -109,6 +109,10 @@ struct SubmitView: View {
     }
 
     private func submit() async {
+        if let problem = SubmissionValidator.problem(withNotes: feedbackNotes) {
+            errorMessage = problem
+            return
+        }
         isSubmitting = true
         errorMessage = nil
         do {

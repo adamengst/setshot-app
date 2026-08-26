@@ -18,6 +18,8 @@
 
 - **Fixed: firewall changes were reported as nonsense** — Turning the firewall on or off produced two entries with garbled names instead of one change, because the state was recorded in a form the comparison could not read.
 
+- **Fixed: submissions failed with no explanation** — A submission whose notes contained a link, text in angle brackets, or more than 1000 characters was refused, and the sheet said only "Submission failed. Please try again" — advice that could not work, since the same text always failed. SetShot now checks before sending and says what to change.
+
 - **Fixed: feedback containing angle brackets was rejected** — A submission whose notes contained something like `<name@example.com>` was refused, and the sheet said only "Submission failed. Please try again." The check meant to block HTML tags was matching any angle brackets with a letter after the first one.
 
 - **Fixed: Submit Feedback failed for some settings** — Feedback on anything covered by a general knowledge base entry — privacy permissions, launch agents, wallpaper, network services — was rejected before it reached me.
