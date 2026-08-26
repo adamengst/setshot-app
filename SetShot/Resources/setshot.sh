@@ -1468,30 +1468,42 @@ JSEOF
     '
 
     echo ""
-    echo "# --- scutil: VPN configurations ---"
+    echo "# --- scutil: network connection services ---"
     # A VPN does not appear in `networksetup -listallnetworkservices`, which lists
-    # hardware services, so a VPN that software installs was invisible -- reported
-    # by a user who installed Tailscale and saw nothing about the VPN it adds.
-    # `scutil --nc list` needs no root and lists every configuration System Settings
-    # shows under Network > VPN.
+    # hardware services, so a VPN that software installs was invisible -- reported by
+    # a user who installed Tailscale and saw nothing about the VPN it adds.
+    # `scutil --nc list` needs no root and covers them.
     #
-    # Keyed on the name shown there, so a VPN appearing or disappearing is one line.
-    # Only the quoted name and the leading asterisk are read: both are stable across
-    # macOS versions, where the type and flag columns vary by VPN kind. Whether a VPN
-    # happens to be connected right now is state rather than a setting and would flap
-    # between snapshots, so it is left out.
-    _vpn=$(scutil --nc list 2>/dev/null | awk '
+    # It lists network connection *services*, of which VPNs are only a subset: a
+    # 2020 iMac reported an ESP32 dev board as "USB JTAG/serial debug unit". So the
+    # kind is captured alongside the name rather than every row being called a VPN,
+    # which would have raised a false security alarm every time someone plugged in a
+    # serial device.
+    #
+    # The kind comes from the bracket at the end of the line -- [PPP:Modem],
+    # [PPP:L2TP], [IPSec], [VPN:<bundle id>] -- not from the type field before the
+    # name, which is prose ("PPP --> USB JTAG/serial debug unit"). Reporting the kind
+    # rather than filtering on a list of VPN types means a type Apple adds later
+    # still shows up.
+    #
+    # Keyed on the name System Settings shows, so a service appearing or disappearing
+    # is one line. Whether it is connected right now is state rather than a setting
+    # and would flap between snapshots, so it is left out.
+    _netconn=$(scutil --nc list 2>/dev/null | awk '
       /^Available network connection services/ { next }
       /"/ {
         enabled = (substr($0, 1, 1) == "*") ? "enabled" : "disabled"
         name = $0; sub(/^[^"]*"/, "", name); sub(/".*$/, "", name)
-        if (name != "") print "vpn :: " name " = " enabled
+        kind = ""
+        if (match($0, /\[[^]]*\][[:space:]]*$/)) kind = substr($0, RSTART + 1, RLENGTH - 2)
+        sub(/[[:space:]]+$/, "", kind)
+        if (name != "") print "netconnection :: " name " = " enabled (kind == "" ? "" : " (" kind ")")
       }
     ')
-    if [ -n "$_vpn" ]; then
-      echo "$_vpn"
+    if [ -n "$_netconn" ]; then
+      echo "$_netconn"
     else
-      echo "vpn :: (none configured)"
+      echo "netconnection :: (none configured)"
     fi
 
     section "CONFIGURATION PROFILES"

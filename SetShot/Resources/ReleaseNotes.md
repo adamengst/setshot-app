@@ -8,7 +8,7 @@
 
 - **Sound output and input devices are tracked** — Which device sound plays through and records from. macOS keeps no record of this on disk — the audio preference files hold per-device settings but nothing naming the active one — so connecting AirPods could switch every Sound setting on screen while a comparison reported nothing. It changes whenever a device is connected or disconnected, not only when you choose one.
 
-- **VPN configurations are now tracked** — A VPN that software adds — Tailscale, for one — never showed up, because the network services SetShot read are the hardware ones and a VPN is not among them. Every configuration System Settings lists under Network → VPN is now reported by name, along with whether it is switched on, so one appearing that you did not set up is visible. Reported by a user.
+- **VPNs and other network connections are now tracked** — A VPN that software adds — Tailscale, for one — never showed up, because the network services SetShot read are the hardware ones and a VPN is not among them. Every service System Settings lists under Network → VPN is now reported by name, with its kind and whether it is switched on, so one appearing that you did not set up is visible. The kind matters: not everything listed there is a VPN, and a 2020 iMac turned out to list a plugged-in dev board as a serial connection. Reported by a user.
 
 - **More settings tracked** — Default Web browser and email client, launch agents and daemons, DNS servers, proxies and network services, Time Machine destinations, system extensions, configuration profiles, and whether the startup chime plays.
 

@@ -285,39 +285,82 @@ final class SnapshotContractTests: XCTestCase {
         }
     }
 
-    // MARK: - VPN configurations
+    // MARK: - Network connection services
 
     /// A user installed Tailscale and saw nothing about the VPN it adds:
     /// `networksetup -listallnetworkservices` lists hardware services, so a VPN
-    /// installed by software was invisible. This asserts the shape `scutil --nc list`
-    /// is read into — a Mac with no VPN emits the empty-state sentinel instead, which
-    /// is why the section is not in sectionsThatMustHaveData.
-    func testVPNConfigurationsAreCapturedInAReadableShape() throws {
+    /// installed by software was invisible. A Mac with no services emits the
+    /// empty-state sentinel instead, which is why this section is not in
+    /// sectionsThatMustHaveData.
+    func testNetworkConnectionServicesAreCapturedInAReadableShape() throws {
         for analysis in try allAnalyses() where analysis.isLive {
             let lines = analysis.raw
                 .components(separatedBy: "\n")
-                .filter { $0.hasPrefix("vpn :: ") }
+                .filter { $0.hasPrefix("netconnection :: ") }
 
             XCTAssertFalse(lines.isEmpty,
-                           "[\(analysis.name)] captured nothing for VPN configurations, not "
-                           + "even the empty-state sentinel.")
-
-            // Either every line is a real configuration, or the one sentinel stands alone.
-            if lines == ["vpn :: (none configured)"] { continue }
+                           "[\(analysis.name)] captured nothing for network connection "
+                           + "services, not even the empty-state sentinel.")
+            if lines == ["netconnection :: (none configured)"] { continue }
 
             for line in lines {
                 XCTAssertTrue(TestSupport.isParseable(line), """
                     [\(analysis.name)] "\(line)" cannot be parsed, so a VPN appearing \
                     would never reach a comparison.
                     """)
+                // "enabled" or "disabled", optionally followed by the kind in brackets.
                 let value = line.components(separatedBy: " = ").last ?? ""
-                XCTAssertTrue(["enabled", "disabled"].contains(value), """
-                    [\(analysis.name)] "\(line)" has value "\(value)". Only the name and \
-                    the leading asterisk are meant to be read from scutil; anything else \
-                    means the output format moved.
+                let state = value.components(separatedBy: " (").first ?? ""
+                XCTAssertTrue(["enabled", "disabled"].contains(state), """
+                    [\(analysis.name)] "\(line)" starts its value with "\(state)". Only \
+                    the name, the leading asterisk and the trailing bracket are meant to \
+                    be read from scutil; anything else means the output format moved.
                     """)
             }
         }
+    }
+
+    /// scutil lists network connection services, of which VPNs are only a subset —
+    /// a 2020 iMac reported an ESP32 dev board as "USB JTAG/serial debug unit"
+    /// [PPP:Modem]. Calling every one of them a VPN raised a false security alarm,
+    /// so the kind travels with the value.
+    ///
+    /// Runs the script's own awk program, lifted out of setshot.sh, against captured
+    /// output from two Macs. A live Mac may have no services at all, so this is the
+    /// only thing that exercises the parse.
+    func testTheKindIsReadFromTheTrailingBracketNotTheTypeField() throws {
+        let script = try String(contentsOf: TestSupport.scriptURL, encoding: .utf8)
+        guard let open = script.range(of: "scutil --nc list 2>/dev/null | awk '"),
+              let close = script.range(of: "')", range: open.upperBound..<script.endIndex)
+        else { return XCTFail("Could not find the scutil awk program in setshot.sh") }
+        let program = String(script[open.upperBound..<close.lowerBound])
+
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let programURL = dir.appendingPathComponent("nc.awk")
+        let sampleURL = dir.appendingPathComponent("nc.txt")
+        try program.write(to: programURL, atomically: true, encoding: .utf8)
+
+        // Line 2 is verbatim from a 2020 iMac on macOS 15.7. The type field before the
+        // name is prose and repeats the device name, which is why the kind has to come
+        // from the trailing bracket.
+        try """
+            Available network connection services in the current set (*=enabled):
+            * (Disconnected)   B44D65CF-5842-4E0A-BBD3-32BC90572082 PPP --> USB JTAG/serial debug unit "USB JTAG/serial debug unit"     [PPP:Modem]
+            * (Connected)      9E7F1A2B-1234-4567-89AB-CDEF012345AB VPN "Tailscale"     [VPN:com.tailscale.ipn.macsys]
+              (Connected)      1A2B3C4D-1234-4567-89AB-CDEF012345AB IPSec "Home"     [IPSec]
+            * (Disconnected)   5555AAAA-1234-4567-89AB-CDEF012345AB PPP --> Ethernet "No Bracket"
+            """.write(to: sampleURL, atomically: true, encoding: .utf8)
+
+        let result = try TestSupport.run("/usr/bin/awk", ["-f", programURL.path, sampleURL.path])
+        XCTAssertEqual(result.output.trimmingCharacters(in: .whitespacesAndNewlines), """
+            netconnection :: USB JTAG/serial debug unit = enabled (PPP:Modem)
+            netconnection :: Tailscale = enabled (VPN:com.tailscale.ipn.macsys)
+            netconnection :: Home = disabled (IPSec)
+            netconnection :: No Bracket = enabled
+            """)
     }
 
     // MARK: - Allowlist hygiene
