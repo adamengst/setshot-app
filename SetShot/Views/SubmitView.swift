@@ -14,7 +14,7 @@ struct SubmitView: View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Submit Unknown Setting")
                 .font(.headline)
-            Text("This data will be sent to the developer to help identify similar changes in the future. Submitted data is transmitted securely and stored privately. No personally identifying information is collected or stored.")
+            Text("This data will be sent to the developer to help identify similar changes in the future. Submitted data is transmitted securely and stored privately. SetShot does not collect any identifying information unless you choose to provide it.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 

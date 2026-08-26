@@ -35,7 +35,7 @@ struct KBFeedbackView: View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Submit Feedback")
                 .font(.headline)
-            Text("This data will be sent to the developer to help improve SetShot's knowledge base. Submitted data is transmitted securely and stored privately. No personally identifying information is collected or stored.")
+            Text("This data will be sent to the developer to help improve SetShot's knowledge base. Submitted data is transmitted securely and stored privately. SetShot does not collect any identifying information unless you choose to provide it.")
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, alignment: .leading)

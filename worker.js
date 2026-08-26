@@ -21,7 +21,10 @@ const MAX_VALUE_LENGTH = 2000;
 const MAX_FEEDBACK_NOTES_LENGTH = 1000;
 const VALID_FEEDBACK_CATEGORIES = new Set(['expected_change', 'likely_noise']);
 const URL_PATTERN = /https?:\/\/|ftp:\/\/|javascript:/i;
-const HTML_PATTERN = /<[a-z][\s\S]*>/i;
+// Tag-shaped only. The previous pattern matched any "<" plus a letter followed by
+// a ">" anywhere later, so an email address written as <name@example.com> was
+// rejected and the sender saw only "Submission failed. Please try again."
+const HTML_PATTERN = /<\/?[a-z][a-z0-9]*(\s[^<>]*)?>/i;
 
 function validateItem(item) {
   for (const field of REQUIRED_FIELDS) {

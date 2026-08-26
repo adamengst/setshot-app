@@ -18,6 +18,8 @@
 
 - **Fixed: firewall changes were reported as nonsense** — Turning the firewall on or off produced two entries with garbled names instead of one change, because the state was recorded in a form the comparison could not read.
 
+- **Fixed: feedback containing angle brackets was rejected** — A submission whose notes contained something like `<name@example.com>` was refused, and the sheet said only "Submission failed. Please try again." The check meant to block HTML tags was matching any angle brackets with a letter after the first one.
+
 - **Fixed: Submit Feedback failed for some settings** — Feedback on anything covered by a general knowledge base entry — privacy permissions, launch agents, wallpaper, network services — was rejected before it reached me.
 
 - **Fixed: Music and TV settings stopped being captured after granting access** — Granting Media & Apple Music left capture switched off until you happened to open SetShot's Settings. It now follows the permission directly. There is also a button to reopen that pane once you have answered the prompt, which previously left no way back.
