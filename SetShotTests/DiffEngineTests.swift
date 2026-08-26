@@ -165,6 +165,85 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.recognized.first?.diff.afterValue, "2")
     }
 
+    // MARK: - Inert SystemDefault wallpaper
+
+    /// The three lines that moved when the power cord came out, and the per-display
+    /// choice that did not.
+    private static let systemDefaultFlipDiff = """
+        -wallpaper :: SystemDefault.Desktop.Content.Choices[0].Configuration.assetID = 4A3590EC-FF30-41E7-85FE-210FF6112917
+        +wallpaper :: SystemDefault.Desktop.Content.Choices[0].Configuration.placement = True
+        +wallpaper :: SystemDefault.Desktop.Content.Choices[0].Files[0].relative = file:///Users/adam/Library/Application%20Support/com.apple.desktop.photos/ee3ebb28.jpeg
+        """
+
+    private static let perDisplaySnapshot = """
+        wallpaper :: Spaces..Displays.37D8832A.Desktop.Content.Choices[0].Files[0].relative = file:///a.heic
+        wallpaper :: SystemDefault.Desktop.Content.Choices[0].Configuration.assetID = 4A3590EC
+        """
+
+    private static let fallbackOnlySnapshot = """
+        wallpaper :: SystemDefault.Desktop.Content.Choices[0].Configuration.assetID = 4A3590EC
+        """
+
+    private func wallpaperKB() -> KnowledgeBase {
+        KnowledgeBase(entries: [
+            makeEntry(domain: "wallpaper", keyPrefix: "SystemDefault.Desktop.Content.Choices"),
+            makeEntry(domain: "wallpaper", keyPrefix: "Spaces."),
+        ], version: 1, updatedAt: nil)
+    }
+
+    func testSystemDefaultWallpaperIsSuppressedWhenEveryDisplayHasItsOwnChoice() {
+        let result = engine().parse(diffOutput: Self.systemDefaultFlipDiff, kb: wallpaperKB(),
+                                    beforeSnapshot: Self.perDisplaySnapshot,
+                                    afterSnapshot: Self.perDisplaySnapshot)
+        XCTAssertEqual(result.recognized.count, 0,
+                       "SystemDefault is the fallback for a display with no choice of its own; "
+                       + "with per-display choices on both sides it cannot be what is on screen.")
+        XCTAssertEqual(result.unrecognized.count, 0)
+    }
+
+    func testSystemDefaultWallpaperIsReportedWhenNothingElseSetsIt() {
+        let result = engine().parse(diffOutput: Self.systemDefaultFlipDiff, kb: wallpaperKB(),
+                                    beforeSnapshot: Self.fallbackOnlySnapshot,
+                                    afterSnapshot: Self.fallbackOnlySnapshot)
+        XCTAssertEqual(result.recognized.count, 3,
+                       "With no per-display choice, SystemDefault is the wallpaper.")
+    }
+
+    func testSystemDefaultWallpaperIsReportedWhenPerDisplayChoicesAreRemoved() {
+        let result = engine().parse(diffOutput: Self.systemDefaultFlipDiff, kb: wallpaperKB(),
+                                    beforeSnapshot: Self.perDisplaySnapshot,
+                                    afterSnapshot: Self.fallbackOnlySnapshot)
+        XCTAssertEqual(result.recognized.count, 3,
+                       "Falling back to SystemDefault is itself a change worth reporting.")
+    }
+
+    func testPerDisplayWallpaperChangesAreNeverSuppressed() {
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: Spaces..Displays.37D8832A.Desktop.Content.Choices[0].Files[0].relative = file:///a.heic
+            +wallpaper :: Spaces..Displays.37D8832A.Desktop.Content.Choices[0].Files[0].relative = file:///b.heic
+            """, kb: wallpaperKB(),
+            beforeSnapshot: Self.perDisplaySnapshot, afterSnapshot: Self.perDisplaySnapshot)
+        XCTAssertEqual(result.recognized.count, 1)
+    }
+
+    func testScreenSaverFallbackIsSuppressedIndependentlyOfTheDesktop() {
+        // Per-display choices exist for the desktop but not the screen saver, so the
+        // desktop fallback is inert and the screen saver fallback is not.
+        let snapshot = Self.perDisplaySnapshot
+        let kb = KnowledgeBase(entries: [
+            makeEntry(domain: "wallpaper", keyPrefix: "SystemDefault.Desktop.Content.Choices"),
+            makeEntry(domain: "wallpaper", keyPrefix: "SystemDefault.Idle.Content.Choices"),
+        ], version: 1, updatedAt: nil)
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: SystemDefault.Desktop.Content.Choices[0].Configuration.assetID = A
+            +wallpaper :: SystemDefault.Desktop.Content.Choices[0].Configuration.assetID = B
+            -wallpaper :: SystemDefault.Idle.Content.Choices[0].Configuration.module.relative = file:///x
+            +wallpaper :: SystemDefault.Idle.Content.Choices[0].Configuration.module.relative = file:///y
+            """, kb: kb, beforeSnapshot: snapshot, afterSnapshot: snapshot)
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertTrue(result.recognized[0].diff.key.hasPrefix("SystemDefault.Idle"))
+    }
+
     func testFullDiskAccessGrantToAnotherAppIsReported() {
         let result = engine().parse(diffOutput: """
             -TCC-system :: kTCCServiceSystemPolicyAllFiles/com.example.tool = 0

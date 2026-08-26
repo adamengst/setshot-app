@@ -49,7 +49,8 @@ enum DiffExplainer {
         }
 
         let diffOutput = runDiff(before: beforeTmp.path, after: afterTmp.path)
-        let result = DiffEngine().parse(diffOutput: diffOutput, kb: kb)
+        let result = DiffEngine().parse(diffOutput: diffOutput, kb: kb,
+                                        beforeSnapshot: beforeText, afterSnapshot: afterText)
 
         let total = result.recognized.count + result.unrecognized.count
         print("\(total) \(total == 1 ? "change" : "changes") detected:\n")

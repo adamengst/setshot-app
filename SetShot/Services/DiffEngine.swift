@@ -240,6 +240,36 @@ struct DiffEngine {
             }
         }
 
+        // While a laptop runs on battery, macOS substitutes a still image for a
+        // dynamic desktop or aerial and rewrites the SystemDefault entry to match,
+        // switching it back on the power adapter. Unplugging therefore reported the
+        // system default wallpaper changing, with nothing on screen having changed:
+        // SystemDefault is the fallback for a display that has no choice of its own,
+        // and once every display has one it is inert. Only suppressed when both
+        // snapshots show per-display choices, so a Mac genuinely relying on the
+        // fallback still reports it, and so does a change that removes the
+        // per-display choices.
+        func perDisplayWallpaperBranches(in snapshot: String) -> Set<String> {
+            guard !snapshot.isEmpty else { return [] }
+            var found: Set<String> = []
+            for line in snapshot.components(separatedBy: "\n")
+            where line.hasPrefix("wallpaper :: Spaces.") {
+                if line.contains(".Desktop.Content.Choices") { found.insert("Desktop") }
+                if line.contains(".Idle.Content.Choices") { found.insert("Idle") }
+            }
+            return found
+        }
+        let inertSystemDefaults = perDisplayWallpaperBranches(in: beforeSnapshot)
+            .intersection(perDisplayWallpaperBranches(in: afterSnapshot))
+        if !inertSystemDefaults.isEmpty {
+            pairs.removeAll { pair in
+                guard pair.domain == "wallpaper" else { return false }
+                return inertSystemDefaults.contains {
+                    pair.key.hasPrefix("SystemDefault.\($0).Content")
+                }
+            }
+        }
+
         for p in pairs {
             let before = p.before ?? ""
             let after = p.after ?? ""
