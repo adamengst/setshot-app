@@ -270,6 +270,45 @@ struct DiffEngine {
             }
         }
 
+        // A wallpaper choice names its image with either Configuration.assetID (an
+        // aerial or dynamic desktop) or Files[N].relative (a picture), never both.
+        // Replacing one kind with the other therefore arrived as two rows for one
+        // wallpaper — the old identifier disappearing and the new one appearing,
+        // each with a blank on the other side. They are paired back into the single
+        // change they describe, keeping the row that says what the wallpaper is now
+        // and giving it the identifier the old one carried.
+        //
+        // Runs before the per-Space collapse so a pair always comes from one Space's
+        // own record: matching across Spaces would have to guess which Space's old
+        // wallpaper the new one replaced. A solid colour uses a third shape
+        // (Configuration.backgroundColor) and is not paired.
+        var imageRowsByChoice: [String: [Int]] = [:]
+        for (i, pair) in pairs.enumerated() where pair.domain == "wallpaper" {
+            guard let leaf = pair.key.range(
+                of: #"\.(Configuration\.assetID|Files\[\d+\]\.relative)$"#,
+                options: .regularExpression) else { continue }
+            imageRowsByChoice[String(pair.key[..<leaf.lowerBound]), default: []].append(i)
+        }
+        var pairedAway = Set<Int>()
+        for (_, indices) in imageRowsByChoice where indices.count == 2 {
+            func vanished(_ i: Int) -> Bool {
+                !(pairs[i].before ?? "").isEmpty && (pairs[i].after ?? "").isEmpty
+            }
+            func appeared(_ i: Int) -> Bool {
+                (pairs[i].before ?? "").isEmpty && !(pairs[i].after ?? "").isEmpty
+            }
+            let (first, second) = (indices[0], indices[1])
+            let old: Int, new: Int
+            if vanished(first), appeared(second) { old = first; new = second }
+            else if vanished(second), appeared(first) { old = second; new = first }
+            else { continue }
+            pairs[new].before = pairs[old].before
+            pairedAway.insert(old)
+        }
+        if !pairedAway.isEmpty {
+            pairs = pairs.enumerated().filter { !pairedAway.contains($0.offset) }.map(\.element)
+        }
+
         // "Show on all Spaces" writes the same wallpaper into every Space, so one
         // change arrived as one row per Space — five identical "Wallpaper on Built-in
         // Display" rows for a single wallpaper. A Space is not something the wallpaper

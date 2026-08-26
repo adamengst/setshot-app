@@ -336,6 +336,22 @@ final class FormatValueTests: XCTestCase {
                        "An asset UUID should never reach the reader")
     }
 
+    func testAerialNameResolvesUnderThePictureKeyItWasPairedInto() throws {
+        // Pairing an aerial being replaced by a picture keeps the picture's key and
+        // moves the aerial's identifier onto its before value, so the lookup cannot
+        // depend on the key ending in assetID.
+        try XCTSkipIf(AerialCatalogue.namesByID.isEmpty, "No aerial catalogue on this Mac")
+        let id = "4A3590EC-FF30-41E7-85FE-210FF6112917"
+        XCTAssertEqual(formatValue(id, key: "Content.Choices[0].Files[0].relative"),
+                       AerialCatalogue.name(forAssetID: id))
+    }
+
+    func testAnIdentifierThatIsNotAnAerialIsLeftAlone() {
+        let notAnAerial = "00000000-0000-0000-0000-000000000000"
+        XCTAssertEqual(formatValue(notAnAerial, key: "Content.Choices[0].Files[0].relative"),
+                       notAnAerial)
+    }
+
     func testBuiltInWallpaperShowsItsName() {
         XCTAssertEqual(
             formatValue("file:///System/Library/Desktop%20Pictures/Sequoia%20Sunrise.madesktop"),

@@ -475,7 +475,11 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
     if raw.hasPrefix("/"), let url = URL(string: "file://\(raw)") {
         return url.deletingPathExtension().lastPathComponent
     }
-    if key.hasSuffix("assetID"), let name = AerialCatalogue.name(forAssetID: raw) {
+    // Keyed on assetID, but a wallpaper row that paired an aerial being replaced by
+    // a picture carries the aerial's identifier under the picture's key, so a bare
+    // identifier is looked up whatever the key says. Anything absent from the
+    // catalogue falls through untouched.
+    if !raw.contains("/"), !raw.contains(" "), let name = AerialCatalogue.name(forAssetID: raw) {
         return name
     }
     if raw.hasPrefix("file://"), let url = URL(string: raw) {

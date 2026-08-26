@@ -205,7 +205,9 @@ final class DiffEngineTests: XCTestCase {
         let result = engine().parse(diffOutput: Self.systemDefaultFlipDiff, kb: wallpaperKB(),
                                     beforeSnapshot: Self.fallbackOnlySnapshot,
                                     afterSnapshot: Self.fallbackOnlySnapshot)
-        XCTAssertEqual(result.recognized.count, 3,
+        // Two, not three: the flip replaces an aerial with a picture, so the assetID
+        // and file rows pair into one, leaving that and the placement row.
+        XCTAssertEqual(result.recognized.count, 2,
                        "With no per-display choice, SystemDefault is the wallpaper.")
     }
 
@@ -213,7 +215,7 @@ final class DiffEngineTests: XCTestCase {
         let result = engine().parse(diffOutput: Self.systemDefaultFlipDiff, kb: wallpaperKB(),
                                     beforeSnapshot: Self.perDisplaySnapshot,
                                     afterSnapshot: Self.fallbackOnlySnapshot)
-        XCTAssertEqual(result.recognized.count, 3,
+        XCTAssertEqual(result.recognized.count, 2,
                        "Falling back to SystemDefault is itself a change worth reporting.")
     }
 
@@ -242,6 +244,69 @@ final class DiffEngineTests: XCTestCase {
             """, kb: kb, beforeSnapshot: snapshot, afterSnapshot: snapshot)
         XCTAssertEqual(result.recognized.count, 1)
         XCTAssertTrue(result.recognized[0].diff.key.hasPrefix("SystemDefault.Idle"))
+    }
+
+    // MARK: - Pairing an aerial with the picture that replaced it
+
+    private static let choice =
+        "Spaces.AAAAAAAA-1111-2222-3333-444444444444.Displays."
+        + "37D8832A-2D66-02CA-B9F7-8F30A301B230.Desktop.Content.Choices[0]"
+
+    func testAnAerialReplacedByAPictureIsOneChange() {
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: \(Self.choice).Configuration.assetID = AERIAL-ID
+            +wallpaper :: \(Self.choice).Files[0].relative = file:///new.jpg
+            """, kb: spacesKB())
+        XCTAssertEqual(result.recognized.count, 1)
+        let row = result.recognized[0].diff
+        XCTAssertTrue(row.key.hasSuffix("Files[0].relative"),
+                      "The surviving row should say what the wallpaper is now.")
+        XCTAssertEqual(row.beforeValue, "AERIAL-ID")
+        XCTAssertEqual(row.afterValue, "file:///new.jpg")
+    }
+
+    func testAPictureReplacedByAnAerialIsOneChange() {
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: \(Self.choice).Files[0].relative = file:///old.jpg
+            +wallpaper :: \(Self.choice).Configuration.assetID = AERIAL-ID
+            """, kb: spacesKB())
+        XCTAssertEqual(result.recognized.count, 1)
+        let row = result.recognized[0].diff
+        XCTAssertTrue(row.key.hasSuffix("Configuration.assetID"))
+        XCTAssertEqual(row.beforeValue, "file:///old.jpg")
+        XCTAssertEqual(row.afterValue, "AERIAL-ID")
+    }
+
+    func testSeparateChoicesAreNotPairedWithEachOther() {
+        // Choices[0] and Choices[1] are two slots in a shuffling wallpaper, not one
+        // image being replaced.
+        let base = "Spaces.AAAAAAAA-1111-2222-3333-444444444444.Displays."
+            + "37D8832A-2D66-02CA-B9F7-8F30A301B230.Desktop.Content"
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: \(base).Choices[0].Configuration.assetID = AERIAL-ID
+            +wallpaper :: \(base).Choices[1].Files[0].relative = file:///new.jpg
+            """, kb: spacesKB())
+        XCTAssertEqual(result.recognized.count, 2)
+    }
+
+    func testAnAerialRemovedWithNothingReplacingItStillReports() {
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: \(Self.choice).Configuration.assetID = AERIAL-ID
+            """, kb: spacesKB())
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertEqual(result.recognized[0].diff.afterValue, "")
+    }
+
+    func testTwoWallpapersBothChangingValueAreNotPaired() {
+        // Both sides have a value, so neither is an identifier appearing or
+        // disappearing — pairing them would drop a real change.
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: \(Self.choice).Configuration.assetID = ONE
+            +wallpaper :: \(Self.choice).Configuration.assetID = TWO
+            -wallpaper :: \(Self.choice).Files[0].relative = file:///a.jpg
+            +wallpaper :: \(Self.choice).Files[0].relative = file:///b.jpg
+            """, kb: spacesKB())
+        XCTAssertEqual(result.recognized.count, 2)
     }
 
     // MARK: - Per-Space wallpaper collapse
