@@ -62,7 +62,7 @@ Neither is required — without them, SetShot merely captures fewer settings, an
 The data SetShot works with is inherently non-sensitive—it's system settings like toggles, sliders, and preferences, not passwords, documents, photos, or personal content. That said, SetShot is designed to keep your data private.
 
 * **Snapshots, comparisons, and journal entries** are stored only on your Mac and are never transmitted anywhere.
-* **Submissions** are the one exception. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record.
+* **Submissions** are the one exception. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately, along with anything you type into the notes field. SetShot does not collect any identifying information unless you choose to provide it there. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record.
 
 SetShot is open source. If you want to verify exactly what data the app collects and how it is handled, the full source code is available here. Use it at your own risk.
 
