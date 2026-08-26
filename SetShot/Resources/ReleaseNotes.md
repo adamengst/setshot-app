@@ -6,6 +6,8 @@
 
 - **Wallpaper and screen saver changes are now tracked** — Including per-display wallpapers, which is what you get when "Show on all Spaces" is turned off. Built-in wallpapers and aerials show their names — Sequoia Sunrise, Palau Jellies — instead of file paths or asset identifiers, displays are named the way System Settings names them, and placement reads Fill Screen or Center rather than a number.
 
+- **Sound output and input devices are tracked** — Which device sound plays through and records from. macOS keeps no record of this on disk — the audio preference files hold per-device settings but nothing naming the active one — so connecting AirPods could switch every Sound setting on screen while a comparison reported nothing. It changes whenever a device is connected or disconnected, not only when you choose one.
+
 - **More settings tracked** — Default Web browser and email client, launch agents and daemons, DNS servers, proxies and network services, Time Machine destinations, system extensions, configuration profiles, and whether the startup chime plays.
 
 - **Permission changes no longer bury a comparison** — Granting or revoking Full Disk Access or Media & Apple Music changes what SetShot can read, not what is set on your Mac. Revoking Full Disk Access used to report Time Machine as switched off and Mail's settings as wiped; turning off Media & Apple Music reported numerous Music and TV settings as deleted. SetShot now reports the permission change itself and says that anything appearing in only one snapshot reflects what it could read.

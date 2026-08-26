@@ -1319,6 +1319,18 @@ JSEOF
       echo "screentimedx :: (screentimediagnose not found)"
     fi
 
+    section "SOUND OUTPUT AND INPUT"
+    # Which device sound is currently going to and coming from. Nothing on disk
+    # records this — the audio preference files hold per-device settings but no
+    # pointer to the active one, so connecting AirPods changed every Sound setting
+    # on screen while the snapshot saw only the devices arriving. coreaudiod holds
+    # it as runtime state, and system_profiler is the way to ask (about 0.2s).
+    system_profiler SPAudioDataType 2>/dev/null | awk '
+      /^ {8}[A-Za-z].*:$/ { name = $0; sub(/^ +/, "", name); sub(/:$/, "", name) }
+      /Default Output Device: Yes/ { print "sound :: outputDevice = " name }
+      /Default Input Device: Yes/  { print "sound :: inputDevice = " name }
+    '
+
     section "SOUND (NVRAM)"
     # Play sound on startup is stored in NVRAM, not a plist. nvram prints
     # "StartupMute<TAB>%01", which has neither `::` nor `=`, so the value was
