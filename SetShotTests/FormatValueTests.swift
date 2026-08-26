@@ -198,6 +198,30 @@ final class FormatValueTests: XCTestCase {
         )
     }
 
+    func testWallpaperDescriptionHandlesAnEmptySpaceUUID() {
+        // macOS writes the across-Spaces default with no Space UUID, so the key reads
+        // "Spaces..Displays.<display>". Looking for two UUIDs found only the display's
+        // and gave up, dropping the row to the generic description with its raw key.
+        XCTAssertEqual(
+            rowDescription(entry: wallpaperEntry(),
+                           key: "Spaces..Displays.\(display).Desktop.Content.Choices[0].Files[0].relative"),
+            "Wallpaper on \(display)."
+        )
+    }
+
+    func testPluralWallpaperScopesAgreeWithTheirVerb() {
+        XCTAssertEqual(
+            rowDescription(entry: prefixEntry("AllSpacesAndDisplays.Type", domain: "wallpaper"),
+                           key: "AllSpacesAndDisplays.Type"),
+            "Whether all displays show the same image as wallpaper and screen saver."
+        )
+        XCTAssertEqual(
+            rowDescription(entry: prefixEntry("SystemDefault.Type", domain: "wallpaper"),
+                           key: "SystemDefault.Type"),
+            "Whether new displays and Spaces show the same image as wallpaper and screen saver."
+        )
+    }
+
     func testWholeMachineWallpaperScopesReadPlainly() {
         XCTAssertEqual(
             rowDescription(entry: prefixEntry("AllSpacesAndDisplays.Desktop.Content.Choices",

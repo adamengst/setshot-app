@@ -270,6 +270,24 @@ struct DiffEngine {
             }
         }
 
+        // "Show on all Spaces" writes the same wallpaper into every Space, so one
+        // change arrived as one row per Space — five identical "Wallpaper on Built-in
+        // Display" rows for a single wallpaper. A Space is not something the wallpaper
+        // is set for from the user's side, so rows that differ only by which Space
+        // they came from, and that land on the same before and after, collapse to one.
+        // Spaces that genuinely held different wallpapers still report separately,
+        // because their before values differ.
+        var seenAcrossSpaces = Set<String>()
+        pairs.removeAll { pair in
+            guard pair.domain == "wallpaper", pair.key.hasPrefix("Spaces.") else { return false }
+            // The Space UUID is empty for the entry macOS writes as the default across
+            // Spaces, so this also folds "Spaces..Displays.…" in with the rest.
+            let withoutSpace = pair.key.replacingOccurrences(
+                of: #"^Spaces\.[^.]*\."#, with: "Spaces.", options: .regularExpression)
+            let identity = "\(withoutSpace)\u{0}\(pair.before ?? "")\u{0}\(pair.after ?? "")"
+            return !seenAcrossSpaces.insert(identity).inserted
+        }
+
         for p in pairs {
             let before = p.before ?? ""
             let after = p.after ?? ""

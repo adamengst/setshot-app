@@ -245,31 +245,50 @@ func wallpaperDescription(key: String) -> String? {
         return (displayName(forUUID: uuid) ?? uuid, remainder)
     }
 
+    // A display name is one thing; "all displays" and "new displays and Spaces" are
+    // several, and the sentences below have to agree with whichever it is.
+    let scopeIsPlural: Bool
+
     if rest.hasPrefix("Spaces.") {
-        // Spaces.<space>.Displays.<display>.… — the display is the second UUID.
-        guard let afterSpace = takeDisplay(from: String(rest.dropFirst("Spaces.".count)))
-        else { return nil }
-        rest = afterSpace.1
-        guard rest.hasPrefix("Displays."), let d = takeDisplay(from: String(rest.dropFirst("Displays.".count)))
+        // Spaces.<space>.Displays.<display>.… — the display is the second UUID. macOS
+        // writes the across-Spaces default with an empty Space UUID, leaving
+        // "Spaces..Displays.<display>", so an empty first segment is stepped over
+        // rather than failing the whole key and dropping the row back to the generic
+        // description with its raw key attached.
+        var afterSpace = String(rest.dropFirst("Spaces.".count))
+        if afterSpace.hasPrefix(".") {
+            afterSpace.removeFirst()
+        } else if let taken = takeDisplay(from: afterSpace) {
+            afterSpace = taken.1
+        } else {
+            return nil
+        }
+        guard afterSpace.hasPrefix("Displays."),
+              let d = takeDisplay(from: String(afterSpace.dropFirst("Displays.".count)))
         else { return nil }
         scope = d.0
+        scopeIsPlural = false
         rest = d.1
     } else if rest.hasPrefix("Displays.") {
         guard let d = takeDisplay(from: String(rest.dropFirst("Displays.".count))) else { return nil }
         scope = d.0
+        scopeIsPlural = false
         rest = d.1
     } else if rest.hasPrefix("AllSpacesAndDisplays.") {
         rest = String(rest.dropFirst("AllSpacesAndDisplays.".count))
         scope = "all displays"
+        scopeIsPlural = true
     } else if rest.hasPrefix("SystemDefault.") {
         rest = String(rest.dropFirst("SystemDefault.".count))
         scope = "new displays and Spaces"
+        scopeIsPlural = true
     } else {
         return nil
     }
 
     if rest == "Type" {
-        return "Whether \(scope) shows the same image as wallpaper and screen saver."
+        return "Whether \(scope) \(scopeIsPlural ? "show" : "shows") the same image "
+            + "as wallpaper and screen saver."
     }
 
     // Desktop, Idle and Linked share one nested shape. Linked means the wallpaper

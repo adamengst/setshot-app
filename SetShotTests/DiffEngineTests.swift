@@ -244,6 +244,56 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertTrue(result.recognized[0].diff.key.hasPrefix("SystemDefault.Idle"))
     }
 
+    // MARK: - Per-Space wallpaper collapse
+
+    private static let displayA = "37D8832A-2D66-02CA-B9F7-8F30A301B230"
+
+    private func spacesKB() -> KnowledgeBase {
+        KnowledgeBase(entries: [makeEntry(domain: "wallpaper", keyPrefix: "Spaces.")],
+                      version: 1, updatedAt: nil)
+    }
+
+    func testOneWallpaperPerDisplayNoMatterHowManySpacesRecordedIt() {
+        // "Show on all Spaces" writes the same wallpaper into every Space, so this
+        // arrived as one identical row per Space.
+        let leaf = "Desktop.Content.Choices[0].Files[0].relative"
+        var diff = ""
+        for space in ["", "AAAAAAAA-1111-2222-3333-444444444444", "BBBBBBBB-1111-2222-3333-444444444444"] {
+            let key = "Spaces.\(space).Displays.\(Self.displayA).\(leaf)"
+            diff += "-wallpaper :: \(key) = file:///old.jpg\n"
+            diff += "+wallpaper :: \(key) = file:///new.jpg\n"
+        }
+        let result = engine().parse(diffOutput: diff, kb: spacesKB())
+        XCTAssertEqual(result.recognized.count, 1)
+    }
+
+    func testSpacesThatGenuinelyHeldDifferentWallpapersStillReportSeparately() {
+        let leaf = "Desktop.Content.Choices[0].Files[0].relative"
+        var diff = ""
+        for (space, old) in [("AAAAAAAA-1111-2222-3333-444444444444", "one.jpg"),
+                             ("BBBBBBBB-1111-2222-3333-444444444444", "two.jpg")] {
+            let key = "Spaces.\(space).Displays.\(Self.displayA).\(leaf)"
+            diff += "-wallpaper :: \(key) = file:///\(old)\n"
+            diff += "+wallpaper :: \(key) = file:///new.jpg\n"
+        }
+        let result = engine().parse(diffOutput: diff, kb: spacesKB())
+        XCTAssertEqual(result.recognized.count, 2,
+                       "Collapsing these would claim both Spaces started from the same wallpaper.")
+    }
+
+    func testDifferentDisplaysAreNeverCollapsedTogether() {
+        let other = "5E3571FF-033C-4BD8-A9CB-C8F33B34BBD2"
+        let leaf = "Desktop.Content.Choices[0].Files[0].relative"
+        var diff = ""
+        for display in [Self.displayA, other] {
+            let key = "Spaces.AAAAAAAA-1111-2222-3333-444444444444.Displays.\(display).\(leaf)"
+            diff += "-wallpaper :: \(key) = file:///old.jpg\n"
+            diff += "+wallpaper :: \(key) = file:///new.jpg\n"
+        }
+        let result = engine().parse(diffOutput: diff, kb: spacesKB())
+        XCTAssertEqual(result.recognized.count, 2)
+    }
+
     func testFullDiskAccessGrantToAnotherAppIsReported() {
         let result = engine().parse(diffOutput: """
             -TCC-system :: kTCCServiceSystemPolicyAllFiles/com.example.tool = 0
