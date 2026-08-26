@@ -96,11 +96,25 @@ struct JournalView: View {
                 .buttonStyle(.plain)
             }
             if !appModel.journal.isEmpty {
-                Menu("Export") {
+                // Inline, SwiftUI draws a Menu's indicator as a filled badge in the
+                // accent colour whatever the menu or button style — borderless only
+                // removes it by removing the frame too. The comparison window's copy
+                // looks plain because it sits in a toolbar, not because of any modifier.
+                // So the indicator is suppressed and the chevron drawn in the label,
+                // which keeps it the same colour as the text.
+                Menu {
                     Button("HTML…") { exportJournal(.html) }
                     Button("Markdown…") { exportJournal(.markdown) }
+                } label: {
+                    // The chevron has to live inside the text run. Given a label built
+                    // from separate views, SwiftUI hands the image and the title to an
+                    // NSButton, which draws the image on the leading side whatever order
+                    // they were written in.
+                    Text("Export\u{2005}\u{2005}")   // two four-per-em spaces, ~6pt total
+                        + Text(Image(systemName: "chevron.down"))
+                            .font(.system(size: 9, weight: .semibold))
                 }
-                .tint(.primary)
+                .menuIndicator(.hidden)
                 .fixedSize()
                 Button("Clear All") {
                     showingClearConfirm = true

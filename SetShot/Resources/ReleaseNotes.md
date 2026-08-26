@@ -6,9 +6,9 @@
 
 - **Wallpaper and screen saver changes are now tracked** — Including per-display wallpapers, which is what you get when "Show on all Spaces" is turned off. Built-in wallpapers and aerials show their names — Sequoia Sunrise, Palau Jellies — instead of file paths or asset identifiers, displays are named the way System Settings names them, and placement reads Fill Screen or Center rather than a number.
 
-- **More settings tracked** — Default web browser and mail client, launch agents and daemons, DNS servers, proxies and network services, Time Machine destinations, system extensions, configuration profiles, and whether the startup chime plays.
+- **More settings tracked** — Default Web browser and email client, launch agents and daemons, DNS servers, proxies and network services, Time Machine destinations, system extensions, configuration profiles, and whether the startup chime plays.
 
-- **Permission changes no longer bury a comparison** — Granting or revoking Full Disk Access or Media & Apple Music changes what SetShot can read, not what is set on your Mac. Revoking Full Disk Access used to report Time Machine as switched off and Mail's settings as wiped; turning off Media & Apple Music reported 310 Music and TV settings as deleted. SetShot now reports the permission change itself and says that anything appearing in only one snapshot reflects what it could read.
+- **Permission changes no longer bury a comparison** — Granting or revoking Full Disk Access or Media & Apple Music changes what SetShot can read, not what is set on your Mac. Revoking Full Disk Access used to report Time Machine as switched off and Mail's settings as wiped; turning off Media & Apple Music reported numerous Music and TV settings as deleted. SetShot now reports the permission change itself and says that anything appearing in only one snapshot reflects what it could read.
 
 - **Comparisons across versions are flagged** — Snapshots now record which capture format they used. Comparing a snapshot taken by b26 or earlier against a newer one shows a note explaining that some of the changes are the older snapshot recording the same settings in an older way, rather than anything on your Mac changing. Your existing snapshots still compare against each other normally.
 
@@ -16,13 +16,13 @@
 
 - **Fixed: firewall changes were reported as nonsense** — Turning the firewall on or off produced two entries with garbled names instead of one change, because the state was recorded in a form the comparison could not read.
 
-- **Fixed: the default web browser and mail client were never reported** — SetShot was reading the wrong file, so this section found nothing on any Mac.
-
-- **Fixed: Submit Feedback failed for many settings** — Feedback on anything covered by a general knowledge base entry — privacy permissions, launch agents, wallpaper, network services — was rejected before it reached me.
+- **Fixed: Submit Feedback failed for some settings** — Feedback on anything covered by a general knowledge base entry — privacy permissions, launch agents, wallpaper, network services — was rejected before it reached me.
 
 - **Fixed: Music and TV settings stopped being captured after granting access** — Granting Media & Apple Music left capture switched off until you happened to open SetShot's Settings. It now follows the permission directly. There is also a button to reopen that pane once you have answered the prompt, which previously left no way back.
 
 - **Fixed: the folder for new Finder windows showed the wrong value** — When set to a custom folder, both sides of a comparison showed today's folder rather than what each snapshot recorded, so changing from one custom folder to another reported nothing at all.
+
+- **Settings has a menu item** — SetShot → Settings, under About SetShot, with the usual Command-comma. The shortcut already worked but nothing in the menus said so, suggested by John Gruber.
 
 - **Knowledge base updates** — Around 130 new entries covering privacy permissions, security status, wallpaper, network configuration and background items. Corrected the battery indicator values, which were mislabeled; the Notification Center sort order and Stage Manager grouping, which pointed at controls that either do not exist or only appear when Stage Manager is on; the Lock Screen password hint, which is a switch rather than a retry count in macOS 15; and menu bar clock and battery entries that showed no icon. Described the system font settings, Finder's Quit menu item, grammatical gender, the Spoken Content voice, the TV app appearance, and the Mail sender-domain list; suppressed noise from analytics timestamps, transient Finder view settings, per-Space wallpaper duplication and several daemon flags.
 

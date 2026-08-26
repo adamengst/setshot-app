@@ -37,6 +37,13 @@ struct SetShotApp: App {
                 }
             }
             CommandGroup(after: .appInfo) {
+                // Settings is a tab in the main window rather than its own window, so
+                // the command tells the window to switch rather than opening anything.
+                Button("Settings…") {
+                    NotificationCenter.default.post(name: .setshotOpenSettings, object: nil)
+                }
+                .keyboardShortcut(",", modifiers: .command)
+
                 Button("Check for Updates…") {
                     updaterState.controller.updater.checkForUpdates()
                 }
@@ -350,4 +357,5 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
 extension Notification.Name {
     static let setshotOpenComparison = Notification.Name("com.tidbits.SetShot.openComparison")
+    static let setshotOpenSettings = Notification.Name("com.tidbits.SetShot.openSettings")
 }

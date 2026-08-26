@@ -91,10 +91,10 @@ struct SnapshotLibraryView: View {
                 UserDefaults.standard.set(true, forKey: "HasSeenAbout")
             }
         }
-        .overlay {
-            Button("") { activeTab = .settings }
-                .keyboardShortcut(",", modifiers: .command)
-                .opacity(0)
+        // Command-comma used to be a hidden button here, so the shortcut worked but no
+        // menu item showed it. The SetShot menu owns it now and posts this.
+        .onReceive(NotificationCenter.default.publisher(for: .setshotOpenSettings)) { _ in
+            activeTab = .settings
         }
         .alert("Error", isPresented: Binding(
             get: { errorMessage != nil },
