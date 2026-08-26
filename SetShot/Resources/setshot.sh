@@ -36,6 +36,15 @@ SCRIPT_NAME="$(basename "$0")"
 #
 # SETSHOT_BIN is injected by SnapshotRunner.swift when run from the app.
 # It is validated here; if absent or not executable, _flatten_plist_stdin is a no-op.
+# Batch flattening is only safe when the app injected SETSHOT_BIN: SnapshotRunner
+# copies this script out of the same bundle as the binary it names, so the two
+# always match and --flatten-plist-batch is guaranteed to exist. A binary found
+# by the standalone fallback below may predate that flag, and an unrecognised
+# argument would fall through to the SwiftUI lifecycle and hang, so standalone
+# runs keep the per-file path.
+_SETSHOT_BATCH=0
+if [ -n "${SETSHOT_BIN:-}" ] && [ -x "$SETSHOT_BIN" ]; then _SETSHOT_BATCH=1; fi
+
 if [ -z "${SETSHOT_BIN:-}" ] || [ ! -x "$SETSHOT_BIN" ]; then
   SETSHOT_BIN=""
   # When run standalone (not injected by the app), try standard install locations.
@@ -53,6 +62,27 @@ _flatten_plist_stdin() {
   # If SETSHOT_BIN is unavailable, silently produce no output.
   # This is intentional: running setshot.sh standalone outside the app
   # bundle is unsupported on clean macOS without CLT.
+}
+
+# Flattens a list of plist paths read from stdin, emitting "<path> :: key = value".
+# One binary invocation handles the whole list; the walk covers ~500 files, and a
+# spawn per file costs far more than the parsing. Falls back to one invocation per
+# file when batch mode is unavailable (see _SETSHOT_BATCH above). Both paths emit
+# the same bytes in the same order.
+_flatten_plist_list() {
+  if [ "$_SETSHOT_BATCH" = "1" ] && [ -n "$SETSHOT_BIN" ]; then
+    "$SETSHOT_BIN" --flatten-plist-batch 2>/dev/null
+  else
+    while IFS= read -r f; do
+      flatten_plist "$f"
+    done
+  fi
+}
+
+# Drops Music/TV-related paths unless the user opted into capturing them.
+# Mirrors _is_music_path, applied to a whole list instead of one path.
+_filter_music_paths() {
+  if [ "${SETSHOT_CHECK_MUSIC:-0}" != "1" ]; then grep -viE "/${_MUSIC_RE}"; else cat; fi
 }
 
 # ── Human-readable explainer ─────────────────────────────────────────────────
@@ -1154,22 +1184,22 @@ do_snapshot() {
     section "PLIST FILES: ~/Library/Preferences"
     # Only Apple-owned domains: com.apple.* plus a small whitelist of
     # Apple system plists that don't carry the com.apple prefix.
-    while IFS= read -r f; do
-      flatten_plist "$f"
-    done < <(find "$HOME/Library/Preferences" \( \
+    find "$HOME/Library/Preferences" \( \
         -name "com.apple.*.plist" \
         -o -name "CoreGraphics.plist" \
         -o -name "LockdownMode.plist" \
         -o -name "screentimedx.plist" \
         -o -name "sharing.plist" \
       \) -maxdepth 2 2>/dev/null \
-      | if [ "${SETSHOT_CHECK_MUSIC:-0}" != "1" ]; then grep -viE "/${_MUSIC_RE}"; else cat; fi \
-      | sort)
+      | _filter_music_paths \
+      | sort \
+      | _flatten_plist_list
 
     section "PLIST FILES: /Library/Preferences"
-    while IFS= read -r f; do
-      flatten_plist "$f"
-    done < <(find "/Library/Preferences" -name "com.apple.*.plist" -maxdepth 2 2>/dev/null | sort)
+    find "/Library/Preferences" -name "com.apple.*.plist" -maxdepth 2 2>/dev/null \
+      | sort \
+      | _filter_music_paths \
+      | _flatten_plist_list
 
     # Analytics opt-in lives outside /Library/Preferences — capture it explicitly
     DIAG_HIST="/Library/Application Support/CrashReporter/DiagnosticMessagesHistory.plist"
