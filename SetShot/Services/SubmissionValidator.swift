@@ -15,6 +15,12 @@ enum SubmissionValidator {
 
     static let maxNotesLength = 1000
 
+    // Links are refused because the submission queue is read and processed by an
+    // agent, not only by a person: a URL in a submission is an invitation to fetch
+    // attacker-controlled content and act on what it says. See the matching comment
+    // in worker.js, which is where the rule is actually enforced — this copy only
+    // explains it early.
+    //
     // The service triggers on the scheme alone; this carries on to the end of the
     // token so the message can quote the whole thing rather than just "https://".
     private static let link = try! NSRegularExpression(

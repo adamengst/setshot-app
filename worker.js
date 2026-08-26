@@ -20,6 +20,16 @@ const MAX_IDENTIFIER_LENGTH = 500;
 const MAX_VALUE_LENGTH = 2000;
 const MAX_FEEDBACK_NOTES_LENGTH = 1000;
 const VALID_FEEDBACK_CATEGORIES = new Set(['expected_change', 'likely_noise']);
+// Links are refused because the submission queue is read and processed by an agent,
+// not only by a person. A URL in a submission is an invitation to fetch
+// attacker-controlled content and act on what it says. That the repository is
+// private is not a reason to relax this — it is the reader, not the audience, that
+// makes it a risk.
+//
+// This is a speed bump rather than the control: "example.com/path" with no scheme
+// gets through, and tightening it to catch bare domains would reject ordinary text
+// like "com.apple.dock". The real protection is that nothing here is ever treated as
+// an instruction and no URL found in a submission is ever followed.
 const URL_PATTERN = /https?:\/\/|ftp:\/\/|javascript:/i;
 // Tag-shaped only. The previous pattern matched any "<" plus a letter followed by
 // a ">" anywhere later, so an email address written as <name@example.com> was
@@ -173,6 +183,9 @@ async function postIssue(env, title, body, labels = ['pending']) {
   );
 }
 
+// Kept in step with SubmissionValidator.swift, which applies the same rules in the
+// app so a rejection can be explained before anything is sent. That copy can only be
+// too lenient — whatever it misses is refused here.
 function validateKBFeedback(item) {
   for (const field of KB_FEEDBACK_REQUIRED_FIELDS) {
     if (typeof item[field] !== 'string' || item[field].length === 0) return false;
