@@ -689,6 +689,11 @@ NOISE_PATTERN='(
   RPIdentitySyncCache.*::|
   BDSICloudIdentityToken.*::|
   timemachine.*:: LastNotificationDates\.|
+  # Where a backup disk happens to be mounted right now is state, not a setting:
+  # unplugging a drive, or losing a bus-powered one along with the AC adapter,
+  # made the mount point vanish and reappear. The Name and ID of the destination
+  # still report one genuinely being added or removed.
+  timemachine.*:: destination\[[0-9]+\]\.MountPoint\s*=|
   ExternalObjects.*:: account:\[|
   appleintelligencereporting.*::|
   personalizationportrait.*::|
@@ -1569,18 +1574,23 @@ JSEOF
     # with private entitlements to query the KeyboardBrightnessClient SPI.
 
     echo "# --- pmset ---"
-    # Reformat pmset -g output into "pmset :: [section.]key = value" lines so
-    # DiffEngine can parse and diff individual energy settings. Section prefixes
-    # ("Battery Power.", "AC Power.") are added for named sections; "Currently
-    # in use" resets to no prefix. The trailing "(sleep prevented by ...)"
-    # parenthetical is stripped so the sleep timer value diffs cleanly.
-    pmset -g 2>/dev/null | awk '
+    # `pmset -g custom` lists both power profiles. `pmset -g` lists only whichever
+    # profile is live, so on a laptop every energy setting that differs between
+    # battery and the power adapter appeared to change the moment the power cord
+    # came out. Emitted as "pmset :: <profile>.<key> = <value>" to match the
+    # naming com.apple.PowerManagement already uses. Desktop Macs print only an
+    # "AC Power:" section, so the "Battery Power." keys are simply absent there
+    # rather than needing to be filtered out. Lines before any section header are
+    # skipped, so a future section this does not know about cannot leak in
+    # unprefixed. The trailing "(sleep prevented by ...)" parenthetical is
+    # stripped so the sleep timer value diffs cleanly.
+    pmset -g custom 2>/dev/null | awk '
       BEGIN { prefix="" }
-      /^Battery Power:/    { prefix="Battery Power."; next }
-      /^AC Power:/         { prefix="AC Power."; next }
-      /^Currently in use:/ { prefix=""; next }
-      /^[^ ]/              { prefix=""; next }
+      /^Battery Power:/ { prefix="Battery Power."; next }
+      /^AC Power:/      { prefix="AC Power."; next }
+      /^[^ ]/           { prefix=""; next }
       /^ / {
+        if (prefix == "") next
         line=$0; sub(/^ +/,"",line)
         sub(/ \([^)]*\)?$/,"",line)
         n=split(line,p); if(n<2) next

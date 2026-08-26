@@ -247,6 +247,44 @@ final class SnapshotContractTests: XCTestCase {
         }
     }
 
+    // MARK: - Power profiles
+
+    /// `pmset -g` reports only whichever power profile is live, so on a laptop every
+    /// energy setting that differs between battery and the power adapter changed the
+    /// moment the power cord came out. The script uses `pmset -g custom`, which lists
+    /// both profiles and so does not move with the power source. This asserts the
+    /// shape that guarantees it: every pmset line names its profile.
+    func testEveryPmsetLineNamesItsPowerProfile() throws {
+        for analysis in try allAnalyses() where analysis.isLive {
+            let lines = analysis.raw
+                .components(separatedBy: "\n")
+                .filter { $0.hasPrefix("pmset :: ") }
+
+            XCTAssertFalse(lines.isEmpty, "[\(analysis.name)] captured no pmset lines at all.")
+
+            let unprefixed = lines.filter {
+                !$0.hasPrefix("pmset :: AC Power.") && !$0.hasPrefix("pmset :: Battery Power.")
+            }
+            XCTAssertTrue(unprefixed.isEmpty, """
+                [\(analysis.name)] \(unprefixed.count) pmset line(s) carry no power profile, \
+                so they track whichever profile is live and will appear to change when the \
+                Mac is plugged in or unplugged. Examples:
+                \(unprefixed.prefix(3).map { "      \($0)" }.joined(separator: "\n"))
+                """)
+
+            XCTAssertTrue(lines.contains { $0.hasPrefix("pmset :: AC Power.") },
+                          "[\(analysis.name)] captured no AC Power profile.")
+
+            // Desktop Macs get no Battery Power section, which is the point: the keys
+            // are absent rather than needing to be filtered out afterwards.
+            let battery = lines.contains { $0.hasPrefix("pmset :: Battery Power.") }
+            XCTAssertEqual(battery, SnapshotRunner.hasBattery, """
+                [\(analysis.name)] pmset \(battery ? "reported" : "did not report") a Battery \
+                Power profile on a Mac that \(SnapshotRunner.hasBattery ? "has" : "has no") battery.
+                """)
+        }
+    }
+
     // MARK: - Allowlist hygiene
 
     func testKnownIssuesAreStillIssues() throws {
