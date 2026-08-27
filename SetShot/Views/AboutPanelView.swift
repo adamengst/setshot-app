@@ -56,6 +56,21 @@ struct AboutPanelView: View {
     private let appVersion = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
     private let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
 
+    // Version and build alone can't tell two builds apart: the build number only
+    // moves at release, so every local build of a release carries the same one.
+    // The executable's modification date is written when it is linked, so it
+    // identifies the build without a stamping phase — which would have to read
+    // .git, and ENABLE_USER_SCRIPT_SANDBOXING blocks script phases from doing so.
+    private let builtAt: String = {
+        guard let url = Bundle.main.executableURL,
+              let attrs = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let date = attrs[.modificationDate] as? Date
+        else { return "" }
+        let fmt = DateFormatter()
+        fmt.dateFormat = "yyyy-MM-dd HH:mm"
+        return fmt.string(from: date)
+    }()
+
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 8) {
@@ -67,7 +82,9 @@ struct AboutPanelView: View {
                 Text("SetShot")
                     .font(.title.bold())
                 SelectableCreditsText(
-                    lines: ["Version \(appVersion) (build \(build))"],
+                    lines: builtAt.isEmpty
+                        ? ["Version \(appVersion) (build \(build))"]
+                        : ["Version \(appVersion) (build \(build))", "Built \(builtAt)"],
                     fontSize: 11,
                     color: .secondaryLabelColor,
                     lineSpacing: 0,
