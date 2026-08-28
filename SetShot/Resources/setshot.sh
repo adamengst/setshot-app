@@ -810,6 +810,8 @@ NOISE_PATTERN='(
   liveactivitiesd.*:: LastAuthorizationStatusEventDate\s*=|
   cloudkeychainproxy.*:: KeyAccountUUID\s*=|
   audio.*SystemSettings.*:: seed\s*=|
+  audio\.InfoHelper\.plist ::|
+  audio\.AudioComponentCache\.plist ::|
   SoftwareUpdate.*:: DidSkipBackgroundDownload|
   SoftwareUpdate.*:: LastCollected.*Date\s*=|
   SoftwareUpdate.*:: LastLogin.*HarvestDate\s*=|
