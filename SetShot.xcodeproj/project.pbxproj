@@ -10,6 +10,7 @@
 		022E98AE65C8DF25677B38F1 /* DiffExplainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7A0EB091BBE2B5BE9042963 /* DiffExplainer.swift */; };
 		02FF6A17EE49D6807656DA17 /* JournalEntryDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16BC8706F8185F017B4E6163 /* JournalEntryDecodingTests.swift */; };
 		044DB3DFE964D0945D5CE9E7 /* SnapshotContractTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE2EF545D09952812EAF3D74 /* SnapshotContractTests.swift */; };
+		0774A3AC686A783E7173DC34 /* base_Sequoia_15.7.9.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = 6C775C67C084609F8FF8BD1C /* base_Sequoia_15.7.9.txt.gz */; };
 		0AFC03023DFBAD749E649981 /* JournalStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 347BED5814A5D9C1944FE30E /* JournalStoreTests.swift */; };
 		0E16E6D8791F4D87DDFECD0D /* DiffResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = C83C43C69E85AC39B6A1FDC4 /* DiffResult.swift */; };
 		1143463B88FBF9957A156950 /* SubmissionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1334AD759BA9369F202E6779 /* SubmissionService.swift */; };
@@ -38,6 +39,7 @@
 		750961F0FB45F04AB158FB6A /* SetShotApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5E8B01CA91F970990260529 /* SetShotApp.swift */; };
 		7657036547D21AA8777CD4C2 /* SettingsPaneIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30017B093D6AC6D842717D78 /* SettingsPaneIcon.swift */; };
 		7743F116DF1E7C882CE9E1EE /* ReleaseNotesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53F8A1D0A17B7C3AC861E7A9 /* ReleaseNotesView.swift */; };
+		784A6F3DE4900D48D9328899 /* base_Tahoe_26.6.2.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = 33768FEAFDEC45A5AEA8BEFE /* base_Tahoe_26.6.2.txt.gz */; };
 		7ADDE1A25FF0088471FAFE20 /* SnapshotTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC851344C45F930AD15B70EA /* SnapshotTakenView.swift */; };
 		7B9BF59C23CA73F554092204 /* KBPipelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B6A02B718905E8E7C463726 /* KBPipelineTests.swift */; };
 		84003123710E517BD6FCD2F0 /* DiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57C901AB4841ACACEBB1709 /* DiffEngine.swift */; };
@@ -58,7 +60,6 @@
 		D16BEB6F74764F6B073E7590 /* DiffEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C45826AE45C65796CCEA40B3 /* DiffEngineTests.swift */; };
 		D2F9C0255CEEAE045CB630DB /* SubmissionServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C431D63A72455BB3A4661ECC /* SubmissionServiceTests.swift */; };
 		D8E26C41DA6FC333BC4FED64 /* StoredSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF4F0C992FB292A44537A04D /* StoredSnapshot.swift */; };
-		DA1CC6A6A51098DA4AC8A9C3 /* base_Tahoe_26.5.1.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = 7AB873D23027E4DE2AFA6CB7 /* base_Tahoe_26.5.1.txt.gz */; };
 		DA7FF8038AE6D2E1EB962360 /* SnapshotRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74E1D922E36C27838EAAA810 /* SnapshotRunner.swift */; };
 		DB641ED5E5F4A74A7DFA9DC8 /* ExportFormat.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DB11945B31265402228A917 /* ExportFormat.swift */; };
 		DDA9BBB69F20F04F9A89B74F /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 0C93336F0A474BE93DF308C1 /* Sparkle */; };
@@ -69,7 +70,6 @@
 		F0117CDA3B3F3EB9E30E2707 /* SettingsPaneIconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458C8E9D2E3CAD28CC042E3B /* SettingsPaneIconProvider.swift */; };
 		F25E2322FE4DD805DBB1A76F /* ReleaseNotes.md in Resources */ = {isa = PBXBuildFile; fileRef = 6C95C8C7F8EC3EB8E036928F /* ReleaseNotes.md */; };
 		F47D72C2AF599F298153C92B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040F5608E284333E4CDB0C21 /* SettingsView.swift */; };
-		F6594C17115A34CE986B174D /* base_Sequoia_15.7.7.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = 9A62CC8B68E73050877CF1CF /* base_Sequoia_15.7.7.txt.gz */; };
 		F932C362BDFA26623A14BFB3 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E256CCC724BA590CC12FEDB /* AppModel.swift */; };
 		FA45E69608F29852F581E969 /* JournalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DC2A921ED003213349A822 /* JournalStore.swift */; };
 		FE14285D9EB25E8B55EB5212 /* PingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1874758C891BF8554EDD4FE8 /* PingService.swift */; };
@@ -100,6 +100,7 @@
 		1DC6C26E647502B005077209 /* UpdaterState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterState.swift; sourceTree = "<group>"; };
 		2F1789A22D8F676149B825D9 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		30017B093D6AC6D842717D78 /* SettingsPaneIcon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPaneIcon.swift; sourceTree = "<group>"; };
+		33768FEAFDEC45A5AEA8BEFE /* base_Tahoe_26.6.2.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_Tahoe_26.6.2.txt.gz; sourceTree = "<group>"; };
 		347BED5814A5D9C1944FE30E /* JournalStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalStoreTests.swift; sourceTree = "<group>"; };
 		458C8E9D2E3CAD28CC042E3B /* SettingsPaneIconProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPaneIconProvider.swift; sourceTree = "<group>"; };
 		4C0C61EA6C2B010EEC849475 /* JournalEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalEntry.swift; sourceTree = "<group>"; };
@@ -115,19 +116,18 @@
 		66A182A3E724717177EE351D /* ResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResultsView.swift; sourceTree = "<group>"; };
 		670839EDB85D0A075DD8E66F /* FormatValueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormatValueTests.swift; sourceTree = "<group>"; };
 		6ABD7B7F567D2F3E47E28D4B /* Snapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Snapshot.swift; sourceTree = "<group>"; };
+		6C775C67C084609F8FF8BD1C /* base_Sequoia_15.7.9.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_Sequoia_15.7.9.txt.gz; sourceTree = "<group>"; };
 		6C95C8C7F8EC3EB8E036928F /* ReleaseNotes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ReleaseNotes.md; sourceTree = "<group>"; };
 		6D626F6F285E0E2F63C84EF8 /* ExportNameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportNameTests.swift; sourceTree = "<group>"; };
 		74E1D922E36C27838EAAA810 /* SnapshotRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotRunner.swift; sourceTree = "<group>"; };
 		7623F1A934E389CBFD1CE75F /* UpdaterStateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterStateTests.swift; sourceTree = "<group>"; };
 		77124B45F467CD55260DF560 /* SetShot.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SetShot.entitlements; sourceTree = "<group>"; };
 		78E54FFE685F4C0170A297ED /* AboutPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutPanelView.swift; sourceTree = "<group>"; };
-		7AB873D23027E4DE2AFA6CB7 /* base_Tahoe_26.5.1.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_Tahoe_26.5.1.txt.gz; sourceTree = "<group>"; };
 		872734B24900BAE17D6A0324 /* BaseSnapshots */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BaseSnapshots; path = SetShot/Resources/BaseSnapshots; sourceTree = SOURCE_ROOT; };
 		884A5EDA61C452330F26ED01 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		8C893A2030276A4A2FE4EA80 /* KBFeedbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBFeedbackView.swift; sourceTree = "<group>"; };
 		8E20F91FDB20C007662B0264 /* FactoryReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryReset.swift; sourceTree = "<group>"; };
 		98C4B2DF407214C59E82FB25 /* SubmitAllPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmitAllPreviewView.swift; sourceTree = "<group>"; };
-		9A62CC8B68E73050877CF1CF /* base_Sequoia_15.7.7.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_Sequoia_15.7.7.txt.gz; sourceTree = "<group>"; };
 		9FB9705E796395269414C4D8 /* KBEntryDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBEntryDecodingTests.swift; sourceTree = "<group>"; };
 		A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = setshot.sh; sourceTree = "<group>"; };
 		B14C522DB332A096A903EB34 /* MusicKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MusicKit.framework; path = System/Library/Frameworks/MusicKit.framework; sourceTree = SDKROOT; };
@@ -266,8 +266,8 @@
 			isa = PBXGroup;
 			children = (
 				884A5EDA61C452330F26ED01 /* .gitkeep */,
-				9A62CC8B68E73050877CF1CF /* base_Sequoia_15.7.7.txt.gz */,
-				7AB873D23027E4DE2AFA6CB7 /* base_Tahoe_26.5.1.txt.gz */,
+				6C775C67C084609F8FF8BD1C /* base_Sequoia_15.7.9.txt.gz */,
+				33768FEAFDEC45A5AEA8BEFE /* base_Tahoe_26.6.2.txt.gz */,
 			);
 			path = BaseSnapshots;
 			sourceTree = "<group>";
@@ -319,7 +319,7 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		"TEMP_EB0FD629-20AF-43C7-8EA1-3076AD5916BB" /* setshots */ = {
+		"TEMP_D6ABBC6B-077C-4B85-9393-166B272FC33F" /* setshots */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -417,8 +417,8 @@
 				52F8DA0C6EAFD1D445DD474C /* Assets.xcassets in Resources */,
 				B45D0A7279309CB79EEB5996 /* BaseSnapshots in Resources */,
 				F25E2322FE4DD805DBB1A76F /* ReleaseNotes.md in Resources */,
-				F6594C17115A34CE986B174D /* base_Sequoia_15.7.7.txt.gz in Resources */,
-				DA1CC6A6A51098DA4AC8A9C3 /* base_Tahoe_26.5.1.txt.gz in Resources */,
+				0774A3AC686A783E7173DC34 /* base_Sequoia_15.7.9.txt.gz in Resources */,
+				784A6F3DE4900D48D9328899 /* base_Tahoe_26.6.2.txt.gz in Resources */,
 				8AFEF96A156F43C87BDC4252 /* setshot.sh in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
