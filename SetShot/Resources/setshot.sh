@@ -36,14 +36,14 @@ SCRIPT_NAME="$(basename "$0")"
 #
 # SETSHOT_BIN is injected by SnapshotRunner.swift when run from the app.
 # It is validated here; if absent or not executable, _flatten_plist_stdin is a no-op.
-# Batch flattening is only safe when the app injected SETSHOT_BIN: SnapshotRunner
-# copies this script out of the same bundle as the binary it names, so the two
-# always match and --flatten-plist-batch is guaranteed to exist. A binary found
-# by the standalone fallback below may predate that flag, and an unrecognised
-# argument would fall through to the SwiftUI lifecycle and hang, so standalone
-# runs keep the per-file path.
-_SETSHOT_BATCH=0
-if [ -n "${SETSHOT_BIN:-}" ] && [ -x "$SETSHOT_BIN" ]; then _SETSHOT_BATCH=1; fi
+# Whether the binary named by SETSHOT_BIN came from the same bundle as this script.
+# SnapshotRunner copies the script out of the bundle whose binary it names, so an
+# injected SETSHOT_BIN is guaranteed to understand the flags used below. A binary
+# found by the standalone fallback may predate any of them, and an unrecognised
+# argument falls through to the SwiftUI lifecycle and hangs rather than failing,
+# so every flag this script passes has to be gated on this.
+_SETSHOT_BIN_MATCHED=0
+if [ -n "${SETSHOT_BIN:-}" ] && [ -x "$SETSHOT_BIN" ]; then _SETSHOT_BIN_MATCHED=1; fi
 
 if [ -z "${SETSHOT_BIN:-}" ] || [ ! -x "$SETSHOT_BIN" ]; then
   SETSHOT_BIN=""
@@ -67,10 +67,10 @@ _flatten_plist_stdin() {
 # Flattens a list of plist paths read from stdin, emitting "<path> :: key = value".
 # One binary invocation handles the whole list; the walk covers ~500 files, and a
 # spawn per file costs far more than the parsing. Falls back to one invocation per
-# file when batch mode is unavailable (see _SETSHOT_BATCH above). Both paths emit
+# file when batch mode is unavailable (see _SETSHOT_BIN_MATCHED above). Both paths emit
 # the same bytes in the same order.
 _flatten_plist_list() {
-  if [ "$_SETSHOT_BATCH" = "1" ] && [ -n "$SETSHOT_BIN" ]; then
+  if [ "$_SETSHOT_BIN_MATCHED" = "1" ] && [ -n "$SETSHOT_BIN" ]; then
     "$SETSHOT_BIN" --flatten-plist-batch 2>/dev/null
   else
     while IFS= read -r f; do
@@ -1401,65 +1401,32 @@ JSEOF
     fi
 
     section "APPLICATION HANDLERS (default browser / mail client)"
-    # This file lives in ~/Library/Preferences, not ~/Library/Application Support.
-    # It was read from the wrong path, so this section emitted "(not found)" on every
-    # Mac and the awk summary below had never once run. The general ~/Library/
-    # Preferences scan does pick the file up, but LSHandlers[…] is noise-filtered,
-    # so the default browser and mail client were invisible through both paths.
+    # This section reported nothing usable for a long time: it read the plist from the
+    # wrong directory, and the general ~/Library/Preferences scan that did find the file
+    # has its LSHandlers[…] lines noise-filtered, so the default browser and mail client
+    # were invisible through both paths.
     LS_PLIST="$HOME/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist"
-    # Guard on the flattened output rather than on the file existing. A pristine
-    # system has the file but no handler overrides in it, so flatten_plist returns
-    # nothing -- and testing `-f` alone took the `then` branch and emitted a single
-    # blank line, skipping the sentinel below. The section came out entirely empty
-    # rather than saying it found nothing, which is what the base snapshots show.
+    # The raw dump is kept for reference; LSHandlers[…] is noise-filtered, so these
+    # lines never reach a comparison. The file exists only once a handler has been
+    # changed, so on a clean install there is nothing here to dump.
     _ls_flat=""
     [ -f "$LS_PLIST" ] && _ls_flat=$(flatten_plist "$LS_PLIST")
-    if [ -n "$_ls_flat" ]; then
-      # Emit stable "default-browser :: handler = ..." lines alongside the raw dump:
-      # the LSHandlers array index shifts whenever a handler is added, so the raw
-      # output cannot report a default reliably (and is noise-filtered for that
-      # reason). Derived from the flattened output rather than re-parsed from XML —
-      # the previous XML pass reset its state on the nested LSHandlerPreferredVersions
-      # dict and so never emitted anything, even once pointed at the right file.
-      echo "$_ls_flat"
-      echo "$_ls_flat" | awk '
-        BEGIN {
-          NAME["http"]   = "default-browser"
-          NAME["https"]  = "default-browser-https"
-          NAME["mailto"] = "default-mail-client"
-          NAME["webcal"] = "default-calendar-app"
-          NAME["feed"]   = "default-rss-reader"
-        }
-        # LSHandlerPreferredVersions holds a nested LSHandlerRoleAll whose value is
-        # a version marker, not a bundle ID.
-        /LSHandlerPreferredVersions/ { next }
-        match($0, /LSHandlers\[[0-9]+\]/) {
-          idx = substr($0, RSTART, RLENGTH)
-          val = $0; sub(/.* = /, "", val)
-          if ($0 ~ /\.LSHandlerURLScheme = /)   scheme[idx] = val
-          else if ($0 ~ /\.LSHandlerRoleAll = /)    role[idx] = val
-          else if ($0 ~ /\.LSHandlerRoleViewer = /) viewer[idx] = val
-        }
-        END {
-          for (i in scheme) {
-            s = scheme[i]
-            if (!(s in NAME)) continue
-            r = (i in role) ? role[i] : viewer[i]
-            if (r != "") handler[s] = r
-          }
-          # http and https are one control in System Settings, so reporting both
-          # meant two rows for every browser change. The https handler is emitted
-          # only when it disagrees, which is the case actually worth seeing.
-          if ("http" in handler)       print "default-browser :: handler = " handler["http"]
-          else if ("https" in handler) print "default-browser :: handler = " handler["https"]
-          if ("https" in handler && "http" in handler && handler["https"] != handler["http"])
-            print "default-browser-https :: handler = " handler["https"]
-          for (s in handler) {
-            if (s == "http" || s == "https") continue
-            print NAME[s] " :: handler = " handler[s]
-          }
-        }
-      '
+    [ -n "$_ls_flat" ] && echo "$_ls_flat"
+
+    # The reportable values come from LaunchServices via the binary, not from the
+    # plist above. The plist records only overrides, so a Mac that has never changed
+    # its default browser had no handler line at all -- the setting exists, macOS just
+    # never wrote it down. LaunchServices answers for the effective handler either way.
+    #
+    # It is also the single source for these lines on purpose: the plist stores bundle
+    # IDs lowercased ("company.thebrowser.browser") while LaunchServices returns them
+    # cased ("company.thebrowser.Browser"), so deriving them from both would report the
+    # same setting two ways.
+    _handlers=""
+    [ "$_SETSHOT_BIN_MATCHED" = "1" ] && [ -n "$SETSHOT_BIN" ] \
+      && _handlers=$("$SETSHOT_BIN" --default-handlers 2>/dev/null)
+    if [ -n "$_handlers" ]; then
+      echo "$_handlers"
     else
       echo "default-browser :: (not found)"
     fi

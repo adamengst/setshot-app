@@ -60,6 +60,17 @@ enum TestSupport {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
+        // Name the binary under test, the way SnapshotRunner does. Without this the
+        // script falls back to whatever is installed in /Applications, so a live
+        // capture exercised the released build rather than the one being tested --
+        // and any flag newer than that build hung it, because an unrecognised
+        // argument falls through to the SwiftUI lifecycle. Tests are app-hosted
+        // (TEST_HOST), so Bundle.main here is the freshly built SetShot.app.
+        var environment = ProcessInfo.processInfo.environment
+        if let binary = Bundle.main.executableURL?.path, binary.hasSuffix("/SetShot") {
+            environment["SETSHOT_BIN"] = binary
+        }
+        process.environment = environment
         process.standardOutput = handle
         process.standardError = FileHandle.nullDevice
         try process.run()
