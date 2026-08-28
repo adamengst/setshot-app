@@ -16,41 +16,24 @@ enum KnownIssues {
     /// Keys are section-name prefixes (section titles embed paths that change).
     static let sectionsWithUnparseableLines: [String: String] = [:]
 
-    /// Sections whose emit format changed after the base snapshots were captured.
-    /// The fixtures are frozen VM captures kept for users to compare against, not
-    /// test data, so they cannot be regenerated to match. These exemptions apply to
-    /// the fixtures only — the live snapshot is held to the current contract.
+    /// Sections exempted for the base-snapshot fixtures only; the live snapshot is
+    /// always held to the current contract.
+    ///
+    /// This list was long while the fixtures were June captures predating the format 2
+    /// changes. They have since been recaptured on current macOS, and every entry that
+    /// existed for a stale emit format is gone. What remains is not staleness: the
+    /// fixtures come from pristine VMs, and a section that legitimately has no data on
+    /// a clean install cannot be made to have any by recapturing.
+    ///
+    /// Nothing here is checked for staleness, unlike `sectionsWithUnparseableLines` and
+    /// `sectionsWithNoVisibleData` — an entry that stops being needed will sit here
+    /// silently disabling its checks, which is how the previous eight accumulated.
     static let legacyFixtureSections: [String: String] = [
-        "SYSTEM STATE":
-            "Fixtures predate the normalisation of SIP / Gatekeeper / FileVault / Firewall "
-            + "to `domain :: key = value`, and still contain the raw `systemsetup` "
-            + "\"You need administrator access\" lines.",
-
-        "WALLPAPER":
-            "Fixtures predate relabelling these lines from the Index.plist path to the "
-            + "`wallpaper` domain, so the old blanket noise pattern still removes them.",
-
         "APPLICATION HANDLERS":
-            "Fixtures were captured while this section read the wrong path, so they "
-            + "contain only its `(not found)` sentinel.",
-
-        "LAUNCH AGENTS & DAEMONS":
-            "Fixtures predate giving each item a value, so their lines have no `=`.",
-
-        "TIME MACHINE":
-            "Fixtures predate normalising tmutil's banner output to `destination[N].field`.",
-
-        "SYSTEM EXTENSIONS":
-            "Fixtures predate normalising systemextensionsctl output, so they contain its "
-            + "raw \"0 extension(s)\" header.",
-
-        "SYSTEM CONFIGURATION":
-            "Fixtures predate normalising the scutil DNS and proxy blocks and the "
-            + "networksetup service list.",
-
-        "CONFIGURATION PROFILES":
-            "Fixtures were captured while this section ran `profiles list -all`, so they "
-            + "contain its root-privileges refusal as a data line.",
+            "A pristine system records no LaunchServices handler overrides, so the "
+            + "fixtures carry only this section's `(not found)` sentinel. On a Mac that "
+            + "has ever changed a default browser or mail client the section has data, "
+            + "which is why the live snapshot is still held to it.",
     ]
 
     /// Sources that genuinely need root, so the app — which never elevates — cannot
