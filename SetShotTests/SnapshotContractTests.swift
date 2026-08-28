@@ -346,10 +346,18 @@ final class SnapshotContractTests: XCTestCase {
         // Line 2 is verbatim from a 2020 iMac on macOS 15.7. The type field before the
         // name is prose and repeats the device name, which is why the kind has to come
         // from the trailing bracket.
+        //
+        // Lines 3 and 4 are verbatim from a reader on macOS 15, and are the shape a
+        // modern VPN actually takes: the bundle ID appears in parentheses before the
+        // quoted name as well as in the trailing bracket. The name is still read from
+        // the first quoted string, so the extra parenthesised field does not disturb
+        // it. Two services exercise a domain carrying more than one row, which is the
+        // ordinary case once a Mac has both a mesh VPN and a commercial one.
         try """
             Available network connection services in the current set (*=enabled):
             * (Disconnected)   B44D65CF-5842-4E0A-BBD3-32BC90572082 PPP --> USB JTAG/serial debug unit "USB JTAG/serial debug unit"     [PPP:Modem]
-            * (Connected)      9E7F1A2B-1234-4567-89AB-CDEF012345AB VPN "Tailscale"     [VPN:com.tailscale.ipn.macsys]
+            * (Disconnected)   38FBB4F0-6E1A-4F2C-9A1B-77C0E1B9D3A2 VPN (io.tailscale.ipn.macsys) "Tailscale"                      [VPN:io.tailscale.ipn.macsys]
+            * (Disconnected)   9C2D77E5-1A44-4E8B-B3F1-2E5A6C9D0B41 VPN (ch.protonvpn.mac) "ProtonVPN"                      [VPN:ch.protonvpn.mac]
               (Connected)      1A2B3C4D-1234-4567-89AB-CDEF012345AB IPSec "Home"     [IPSec]
             * (Disconnected)   5555AAAA-1234-4567-89AB-CDEF012345AB PPP --> Ethernet "No Bracket"
             """.write(to: sampleURL, atomically: true, encoding: .utf8)
@@ -357,7 +365,8 @@ final class SnapshotContractTests: XCTestCase {
         let result = try TestSupport.run("/usr/bin/awk", ["-f", programURL.path, sampleURL.path])
         XCTAssertEqual(result.output.trimmingCharacters(in: .whitespacesAndNewlines), """
             netconnection :: USB JTAG/serial debug unit = enabled (PPP:Modem)
-            netconnection :: Tailscale = enabled (VPN:com.tailscale.ipn.macsys)
+            netconnection :: Tailscale = enabled (VPN:io.tailscale.ipn.macsys)
+            netconnection :: ProtonVPN = enabled (VPN:ch.protonvpn.mac)
             netconnection :: Home = disabled (IPSec)
             netconnection :: No Bracket = enabled
             """)
