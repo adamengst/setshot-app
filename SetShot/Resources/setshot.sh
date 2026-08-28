@@ -1338,12 +1338,18 @@ JSEOF
 
     section "SOUND (NVRAM)"
     # Play sound on startup is stored in NVRAM, not a plist. nvram prints
-    # "StartupMute<TAB>%01", which has neither `::` nor `=`, so the value was
-    # captured and then dropped by the diff parser — while the `||` fallback below
-    # emitted the right shape and was itself removed by a noise pattern. Both paths
-    # lost, which is why the KB entry for this setting never fired.
-    nvram StartupMute 2>/dev/null | awk -F'\t' '{print "nvram :: " $1 " = " $2}' \
-      || echo "nvram :: StartupMute = (not set)"
+    # "StartupMute<TAB>%01", which has neither `::` nor `=`, so the raw line was
+    # captured and then dropped by the diff parser, while the fallback that emitted
+    # the right shape was itself removed by a noise pattern. Both paths lost, which
+    # is why the KB entry for this setting never fired.
+    #
+    # The default has to come from `:-` rather than `||`: nvram exits non-zero when
+    # the variable is unset, but piping into awk makes the pipeline's status awk's
+    # own, which is zero. The `|| echo` therefore never ran, and the section was
+    # emitted completely empty on every Mac and VM where StartupMute has never been
+    # set -- including the VMs the base snapshots are captured in.
+    _startup_mute=$(nvram StartupMute 2>/dev/null | awk -F'\t' '{print $2}')
+    echo "nvram :: StartupMute = ${_startup_mute:-(not set)}"
 
     section "WALLPAPER (~/Library/Application Support/com.apple.wallpaper)"
     # Wallpaper selection stored here — not in ~/Library/Preferences.
