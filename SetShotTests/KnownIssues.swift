@@ -25,9 +25,9 @@ enum KnownIssues {
     /// fixtures come from pristine VMs, and a section that legitimately has no data on
     /// a clean install cannot be made to have any by recapturing.
     ///
-    /// Nothing here is checked for staleness, unlike `sectionsWithUnparseableLines` and
-    /// `sectionsWithNoVisibleData` — an entry that stops being needed will sit here
-    /// silently disabling its checks, which is how the previous eight accumulated.
+    /// `testKnownIssuesAreStillIssues` re-evaluates all three waived checks against the
+    /// fixtures, so an entry that stops being needed fails the suite rather than sitting
+    /// here disabling its checks — which is how the previous eight accumulated.
     static let legacyFixtureSections: [String: String] = [
         "APPLICATION HANDLERS":
             "A pristine system records no LaunchServices handler overrides, so the "

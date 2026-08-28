@@ -409,6 +409,37 @@ final class SnapshotContractTests: XCTestCase {
             }
         }
 
+        // legacyFixtureSections exempts the fixtures and nothing else, so unlike the
+        // two lists above it has to be judged against the fixtures. `judged` drops
+        // them whenever a live snapshot exists, and the live snapshot is never
+        // exempted by this list, so judging it there would call every entry stale.
+        //
+        // An entry earns its place only while some fixture section still trips one of
+        // the three checks it waives, so all three are re-evaluated here.
+        for (prefix, _) in KnownIssues.legacyFixtureSections {
+            var present = false
+            var stillNeeded = false
+            for analysis in analyses where !analysis.isLive {
+                for section in analysis.sections where section.name.hasPrefix(prefix) {
+                    present = true
+                    let mustHaveData = KnownIssues.sectionsThatMustHaveData
+                        .contains { section.name.hasPrefix($0) }
+                    let unparseable = !analysis.unparseableLines(in: section).isEmpty
+                    let invisible = !section.dataLines.isEmpty
+                        && analysis.visibleLines(in: section).isEmpty
+                    let missingData = mustHaveData && section.dataLines.isEmpty
+                    if unparseable || invisible || missingData { stillNeeded = true }
+                }
+            }
+            // A prefix matching no fixture section cannot be judged either way.
+            if present && !stillNeeded {
+                stale.append("""
+                    KnownIssues.legacyFixtureSections["\(prefix)"] — the fixtures now pass \
+                    every check it exempts.
+                    """)
+            }
+        }
+
         XCTAssertTrue(stale.isEmpty, """
             Fixed bugs still listed in KnownIssues. Delete these lines:
 
