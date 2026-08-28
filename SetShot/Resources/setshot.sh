@@ -1407,14 +1407,20 @@ JSEOF
     # Preferences scan does pick the file up, but LSHandlers[…] is noise-filtered,
     # so the default browser and mail client were invisible through both paths.
     LS_PLIST="$HOME/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist"
-    if [ -f "$LS_PLIST" ]; then
+    # Guard on the flattened output rather than on the file existing. A pristine
+    # system has the file but no handler overrides in it, so flatten_plist returns
+    # nothing -- and testing `-f` alone took the `then` branch and emitted a single
+    # blank line, skipping the sentinel below. The section came out entirely empty
+    # rather than saying it found nothing, which is what the base snapshots show.
+    _ls_flat=""
+    [ -f "$LS_PLIST" ] && _ls_flat=$(flatten_plist "$LS_PLIST")
+    if [ -n "$_ls_flat" ]; then
       # Emit stable "default-browser :: handler = ..." lines alongside the raw dump:
       # the LSHandlers array index shifts whenever a handler is added, so the raw
       # output cannot report a default reliably (and is noise-filtered for that
       # reason). Derived from the flattened output rather than re-parsed from XML —
       # the previous XML pass reset its state on the nested LSHandlerPreferredVersions
       # dict and so never emitted anything, even once pointed at the right file.
-      _ls_flat=$(flatten_plist "$LS_PLIST")
       echo "$_ls_flat"
       echo "$_ls_flat" | awk '
         BEGIN {
