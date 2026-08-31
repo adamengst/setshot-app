@@ -143,12 +143,11 @@ info "$(basename "$ZIP") — $ZIP_SIZE bytes"
 # finds itself translocated, but not landing there is better.
 
 step "Building the disk image"
-STAGE="$WORK/dmg-staging"
-mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/SetShot.app"
-ln -s /Applications "$STAGE/Applications"
-hdiutil create -volname "SetShot $VERSION" -srcfolder "$STAGE" \
-    -ov -format UDZO "$DMG" -quiet \
+# dmg/build-dmg.sh does the staging and lays the window out -- app on the left, arrow,
+# Applications on the right -- which needs Finder, and so needs this to be run where
+# Terminal has permission to control Finder. The layout is set on a writable image and
+# converted afterwards, so what ships is still a compressed read-only image.
+"$REPO_ROOT/dmg/build-dmg.sh" "$APP" "$DMG" "SetShot $VERSION" \
   || fail "Building the disk image failed"
 
 codesign --sign "Developer ID Application" --timestamp "$DMG" \
