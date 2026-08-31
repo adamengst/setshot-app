@@ -455,23 +455,15 @@ struct DiffEngine {
             .appendingPathComponent(UUID().uuidString + ".txt")
         FileManager.default.createFile(atPath: outputURL.path, contents: nil)
         defer { try? FileManager.default.removeItem(at: outputURL) }
-        return try await withCheckedThrowingContinuation { continuation in
-            do {
-                let outHandle = try FileHandle(forWritingTo: outputURL)
-                let process = Process()
-                process.executableURL = URL(fileURLWithPath: executable)
-                process.arguments = arguments
-                process.standardOutput = outHandle
-                process.standardError = FileHandle.nullDevice
-                process.terminationHandler = { _ in
-                    try? outHandle.close()
-                    let text = (try? String(contentsOf: outputURL, encoding: .utf8)) ?? ""
-                    continuation.resume(returning: text)
-                }
-                try process.run()
-            } catch {
-                continuation.resume(throwing: error)
-            }
+        let outHandle = try FileHandle(forWritingTo: outputURL)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: executable)
+        process.arguments = arguments
+        process.standardOutput = outHandle
+        process.standardError = FileHandle.nullDevice
+        return try await CancellableProcess.run(process) { _ in
+            try? outHandle.close()
+            return (try? String(contentsOf: outputURL, encoding: .utf8)) ?? ""
         }
     }
 }

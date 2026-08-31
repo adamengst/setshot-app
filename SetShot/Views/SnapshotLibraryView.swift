@@ -6,6 +6,8 @@ struct SnapshotLibraryView: View {
     @State private var selectedIDs: Set<String> = []
     @State private var isTakingSnapshot = false
     @State private var isComparing = false
+    /// The capture or comparison in flight, held so Esc can cancel it.
+    @State private var runningTask: Task<Void, Never>?
     @State private var errorMessage: String?
     @AppStorage("OldestFirst") private var oldestFirst = false
     private enum Tab { case snapshots, journal, settings, about }
@@ -183,7 +185,14 @@ struct SnapshotLibraryView: View {
                     .buttonStyle(.borderedProminent)
             }
             Spacer()
-            if selectedIDs.count < 2 {
+            if isBusy {
+                // While either spinner is turning this is the only place to say that
+                // the work can be stopped, so it replaces the selection summary and
+                // gives the shortcut back afterwards.
+                Text("Press Esc to cancel")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else if selectedIDs.count < 2 {
                 Text("Select snapshots to compare. Command-click explicitly selects Before; Shift-click selects After.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -207,6 +216,31 @@ struct SnapshotLibraryView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
+        .background(cancelShortcuts)
+    }
+
+    /// Esc, Command-period and Control-C, as hidden buttons.
+    ///
+    /// `.onKeyPress` would be the obvious way to do this but needs macOS 14, and the
+    /// deployment target is 13.0. A button carrying a `keyboardShortcut` works on 13
+    /// and routes through the responder chain, so the shortcut applies wherever focus
+    /// happens to be in the window. They are only present while work is in flight, so
+    /// Esc keeps its usual meaning the rest of the time.
+    @ViewBuilder
+    private var cancelShortcuts: some View {
+        if isBusy {
+            ZStack {
+                Button("Cancel", action: cancelRunningWork)
+                    .keyboardShortcut(.cancelAction)
+                Button("Cancel", action: cancelRunningWork)
+                    .keyboardShortcut(".", modifiers: .command)
+                Button("Cancel", action: cancelRunningWork)
+                    .keyboardShortcut("c", modifiers: .control)
+            }
+            .opacity(0)
+            .frame(width: 0, height: 0)
+            .accessibilityHidden(true)
+        }
     }
 
     // MARK: - Actions
@@ -235,13 +269,16 @@ struct SnapshotLibraryView: View {
 
     private func takeSnapshot() {
         isTakingSnapshot = true
-        Task {
+        runningTask = Task {
             do {
                 _ = try await appModel.takeSnapshot()
+            } catch is CancellationError {
+                // Cancelling is a choice, not a failure: no alert.
             } catch {
                 errorMessage = error.localizedDescription
             }
             isTakingSnapshot = false
+            runningTask = nil
         }
     }
 
@@ -275,15 +312,24 @@ struct SnapshotLibraryView: View {
 
     private func runComparison(before: StoredSnapshot, after: StoredSnapshot) {
         isComparing = true
-        Task {
+        runningTask = Task {
             do {
                 let id = try await appModel.compareForWindow(before: before, after: after)
                 openWindow(value: id)
+            } catch is CancellationError {
+                // No results window for a comparison the user abandoned.
             } catch {
                 errorMessage = error.localizedDescription
             }
             isComparing = false
+            runningTask = nil
         }
+    }
+
+    private var isBusy: Bool { isTakingSnapshot || isComparing }
+
+    private func cancelRunningWork() {
+        runningTask?.cancel()
     }
 }
 

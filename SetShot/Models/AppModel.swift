@@ -68,7 +68,18 @@ class AppModel: ObservableObject {
     func takeSnapshot() async throws -> StoredSnapshot {
         let previous = snapshots.sorted { $0.date < $1.date }.last
         let snapshot = try await SnapshotRunner().run()
+        // Checked before anything reaches the library, so cancelling during the
+        // capture itself -- much the longest part -- leaves nothing behind. The
+        // script's own temp directory is removed by SnapshotRunner's defer.
+        try Task.checkCancellation()
         let stored = try await store.save(snapshot.rawOutput, takenAt: snapshot.takenAt)
+        // Past this point the file exists, so cancelling has to remove it.
+        do {
+            try Task.checkCancellation()
+        } catch {
+            await deleteSnapshot(stored)
+            throw error
+        }
         snapshots = (try? await store.list()) ?? []
         if let previous {
             await updateCountsAndJournal(before: previous, after: stored)
@@ -76,6 +87,15 @@ class AppModel: ObservableObject {
         } else if let baseline = matchingBaseline() {
             await updateCountsAndJournal(before: baseline, after: stored, fromBaseline: true)
             snapshots = (try? await store.list()) ?? []
+        }
+        // The journal work above compares against the previous snapshot and can take
+        // as long as any other comparison, so cancelling during it also has to undo
+        // the saved snapshot rather than leaving a half-processed one behind.
+        do {
+            try Task.checkCancellation()
+        } catch {
+            await deleteSnapshot(stored)
+            throw error
         }
         return stored
     }
@@ -112,6 +132,9 @@ class AppModel: ObservableObject {
         let aSnap = Snapshot(takenAt: after.date, rawOutput: a)
         let result = try await DiffEngine().diff(before: bSnap, after: aSnap, kb: kb)
             .filteringHardware(hasBattery: SnapshotRunner.hasBattery)
+        // Comparing writes nothing to disk, so cancelling here only has to stop the
+        // journal being appended to for a comparison the user abandoned.
+        try Task.checkCancellation()
         journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after)
         return result
     }

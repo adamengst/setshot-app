@@ -46,12 +46,14 @@
 		84003123710E517BD6FCD2F0 /* DiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57C901AB4841ACACEBB1709 /* DiffEngine.swift */; };
 		8AFEF96A156F43C87BDC4252 /* setshot.sh in Resources */ = {isa = PBXBuildFile; fileRef = A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */; };
 		944E4312B5E0726F5FC7C28F /* SchedulerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 185A25C6B1C00220CA8814D3 /* SchedulerManager.swift */; };
+		94A65CBEE56EDCF695FCEAD0 /* CancellationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE458B21430FC4FCBA1B8DAB /* CancellationTests.swift */; };
 		95C5CDDED281EF140FE82644 /* FormatValueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 670839EDB85D0A075DD8E66F /* FormatValueTests.swift */; };
 		99665EABAE3F06D75AC129D0 /* SnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC736C8AACADAB2F87C0D4E /* SnapshotStore.swift */; };
 		9CEA9F118FEDBC40BF480122 /* KnowledgeBaseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0825F55073C20B963E5BBFAD /* KnowledgeBaseTests.swift */; };
 		A3F6C7C7AF192EB6D7C028A6 /* SubmitAllPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98C4B2DF407214C59E82FB25 /* SubmitAllPreviewView.swift */; };
 		A5906661B8264FCD5B817DE6 /* ReadyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1CCB5A46AF855D9998F53D5 /* ReadyView.swift */; };
 		A6113611CD45FF7B18276D89 /* KnownIssues.swift in Sources */ = {isa = PBXBuildFile; fileRef = D41FFDC505A10B96DF1A803B /* KnownIssues.swift */; };
+		A95BB27C039199527FF3E278 /* CancellableProcess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54A376FB493DB74AC0AD1F66 /* CancellableProcess.swift */; };
 		B45D0A7279309CB79EEB5996 /* BaseSnapshots in Resources */ = {isa = PBXBuildFile; fileRef = 872734B24900BAE17D6A0324 /* BaseSnapshots */; };
 		B74A01837CB74A030348BCF6 /* SubmissionValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D836DE53E5AF34A38E8F2873 /* SubmissionValidatorTests.swift */; };
 		C7451D4D8270DFC5253AD908 /* MarkdownExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E699EC4FFB8C95444A5FCB03 /* MarkdownExporterTests.swift */; };
@@ -110,6 +112,7 @@
 		53E06A63C729BADDD2983529 /* KnowledgeBase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnowledgeBase.swift; sourceTree = "<group>"; };
 		53E52B71DAE20C739CE609A8 /* SettingsPaneOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsPaneOrder.swift; sourceTree = "<group>"; };
 		53F8A1D0A17B7C3AC861E7A9 /* ReleaseNotesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReleaseNotesView.swift; sourceTree = "<group>"; };
+		54A376FB493DB74AC0AD1F66 /* CancellableProcess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellableProcess.swift; sourceTree = "<group>"; };
 		590C3CF672ED6999CE28820A /* AboutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutView.swift; sourceTree = "<group>"; };
 		59B5F566BCF5465D0E537F1E /* SnapshotLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotLibraryView.swift; sourceTree = "<group>"; };
 		5B6A02B718905E8E7C463726 /* KBPipelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBPipelineTests.swift; sourceTree = "<group>"; };
@@ -132,6 +135,7 @@
 		98C4B2DF407214C59E82FB25 /* SubmitAllPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmitAllPreviewView.swift; sourceTree = "<group>"; };
 		9FB9705E796395269414C4D8 /* KBEntryDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBEntryDecodingTests.swift; sourceTree = "<group>"; };
 		A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = setshot.sh; sourceTree = "<group>"; };
+		AE458B21430FC4FCBA1B8DAB /* CancellationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellationTests.swift; sourceTree = "<group>"; };
 		B14C522DB332A096A903EB34 /* MusicKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MusicKit.framework; path = System/Library/Frameworks/MusicKit.framework; sourceTree = SDKROOT; };
 		B1CCB5A46AF855D9998F53D5 /* ReadyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadyView.swift; sourceTree = "<group>"; };
 		B1F709629A970693935F4135 /* MarkdownExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownExporter.swift; sourceTree = "<group>"; };
@@ -277,6 +281,7 @@
 		9E972B6375B43AEA36F43CEE /* SetShotTests */ = {
 			isa = PBXGroup;
 			children = (
+				AE458B21430FC4FCBA1B8DAB /* CancellationTests.swift */,
 				C45826AE45C65796CCEA40B3 /* DiffEngineTests.swift */,
 				6D626F6F285E0E2F63C84EF8 /* ExportNameTests.swift */,
 				670839EDB85D0A075DD8E66F /* FormatValueTests.swift */,
@@ -300,6 +305,7 @@
 		D56AF0AE572B642D4FCF4FFB /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				54A376FB493DB74AC0AD1F66 /* CancellableProcess.swift */,
 				953DF68FD5E567A2D174C3C4 /* DefaultHandlers.swift */,
 				C57C901AB4841ACACEBB1709 /* DiffEngine.swift */,
 				F7A0EB091BBE2B5BE9042963 /* DiffExplainer.swift */,
@@ -322,7 +328,7 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		"TEMP_F99146F6-BD4A-4D3B-A5DF-E008522190F4" /* setshots */ = {
+		"TEMP_4C933943-10C2-46DE-BD7E-4B3B7DB2A2A9" /* setshots */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -436,6 +442,7 @@
 				47AC526F099DF9CF37278AEC /* AboutPanelView.swift in Sources */,
 				33054D82CADE5C8BECBF2B75 /* AboutView.swift in Sources */,
 				F932C362BDFA26623A14BFB3 /* AppModel.swift in Sources */,
+				A95BB27C039199527FF3E278 /* CancellableProcess.swift in Sources */,
 				177A74A9B34AA5B0A987A5D5 /* ContentView.swift in Sources */,
 				377F56FDC7B1F8E7E5EDF589 /* DefaultHandlers.swift in Sources */,
 				84003123710E517BD6FCD2F0 /* DiffEngine.swift in Sources */,
@@ -483,6 +490,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				94A65CBEE56EDCF695FCEAD0 /* CancellationTests.swift in Sources */,
 				D16BEB6F74764F6B073E7590 /* DiffEngineTests.swift in Sources */,
 				5228669CB62096C8FCB07F71 /* ExportNameTests.swift in Sources */,
 				95C5CDDED281EF140FE82644 /* FormatValueTests.swift in Sources */,
