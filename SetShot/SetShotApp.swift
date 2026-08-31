@@ -49,6 +49,16 @@ struct SetShotApp: App {
                 }
                 .disabled(!updaterState.canCheckForUpdates)
             }
+            // The View menu offers the user nothing here. Its toolbar items act on the
+            // only toolbar in the app -- the Export menu in a comparison window -- where
+            // hiding it removes the sole way to export with no visible way back, and
+            // "Customize Toolbar…" is inert because that toolbar has no customisable
+            // items. Suppressing both groups leaves AppKit's "Enter Full Screen", which
+            // the green traffic-light button already offers; AppDelegate removes what
+            // remains.
+            CommandGroup(replacing: .toolbar) { }
+            CommandGroup(replacing: .sidebar) { }
+
             CommandGroup(replacing: .help) {
                 Button("Release Notes") {
                     ReleaseNotesWindowController.shared.show()
@@ -236,6 +246,28 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             runBackgroundSnapshot()
         } else {
             UNUserNotificationCenter.current().delegate = self
+            // SwiftUI finishes building the main menu after this point, so the empty
+            // View menu does not exist yet.
+            DispatchQueue.main.async { Self.removeViewMenu() }
+        }
+    }
+
+    /// Removes the View menu once SwiftUI has emptied it.
+    ///
+    /// Found by the selector its remaining item carries rather than by the title
+    /// "View", which is localised -- a Japanese system titles it 表示. Only a menu
+    /// holding nothing but Enter Full Screen is removed, so if AppKit ever puts
+    /// something else there it survives and this becomes a no-op.
+    private static func removeViewMenu() {
+        guard let mainMenu = NSApp.mainMenu else { return }
+        let toggleFullScreen = #selector(NSWindow.toggleFullScreen(_:))
+        for item in mainMenu.items {
+            guard let submenu = item.submenu,
+                  submenu.items.contains(where: { $0.action == toggleFullScreen }),
+                  submenu.items.allSatisfy({ $0.isSeparatorItem || $0.action == toggleFullScreen })
+            else { continue }
+            mainMenu.removeItem(item)
+            return
         }
     }
 
