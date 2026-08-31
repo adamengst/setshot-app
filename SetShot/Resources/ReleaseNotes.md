@@ -24,7 +24,7 @@
 
 - **About shows when the build was made** — A beta keeps the same version and build number across every build of it, so two copies of 1.0b27 looked identical. About now shows the date the build was made, which is the thing to quote in a bug report.
 
-- **SetShot says when it is running from a temporary copy** — Unzip an app and open it where it landed, and macOS runs it from a randomly named copy it deletes afterwards rather than from the app itself. Scheduled snapshots cannot work from there, because the schedule records where SetShot is and that location stops existing, and updates cannot install either. SetShot now says so at launch and refuses to set up a schedule until it has been moved to Applications, instead of accepting one that would never run. Reported by Beatrix Willius.
+- **SetShot offers to move itself to Applications** — Unzip an app and open it where it landed, and macOS runs it from a randomly named copy it deletes afterwards rather than from the app itself. Scheduled snapshots cannot work from there, because the schedule records where SetShot is and that location stops existing, and updates cannot install either. SetShot now spots this at launch and offers to move itself to your Applications folder and reopen from there, so you need not drag anything. Until it has been moved, automatic snapshots and Check for Updates are switched off rather than appearing to work. Reported by Beatrix Willius.
 
 - **The built-in baselines are current** — The baselines a first snapshot is compared against have been recaptured on macOS 15.7.9 and 26.6.2. Comparing against one no longer reports differences that were only the older capture recording the same settings in an older way.
 

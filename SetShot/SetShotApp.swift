@@ -259,19 +259,76 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         }
     }
 
-    /// Says so when macOS is running SetShot from a translocated copy.
+    /// Offers to move SetShot into Applications when it is running translocated.
     ///
-    /// Worth interrupting for because both failures are silent: a schedule installed
-    /// from here reports success and then never runs, and updates cannot install. The
-    /// scheduler refuses outright; this is what explains why.
+    /// Sparkle's own handling of this states the problem and leaves the user to act;
+    /// most Mac apps that deal with it at all offer the move instead, which is the
+    /// thing the user wants either way. Moving relaunches from the new location and
+    /// quits this copy.
+    ///
+    /// Continuing is allowed on purpose. Snapshots and comparisons work perfectly well
+    /// translocated -- only scheduling and updating do not -- so shutting the app down
+    /// over it would be heavier than the problem.
     private static func warnIfTranslocated() {
         guard Translocation.isActive else { return }
+
         let alert = NSAlert()
         alert.messageText = "Move SetShot to your Applications folder"
         alert.informativeText = Translocation.advice
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
+        alert.addButton(withTitle: "Move to Applications Folder")  // default, first
+        alert.addButton(withTitle: "Continue Anyway")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        moveToApplications(replacingExisting: false)
+    }
+
+    private static func moveToApplications(replacingExisting: Bool) {
+        do {
+            let moved = try Translocation.moveToApplications(replacingExisting: replacingExisting)
+            relaunch(at: moved)
+        } catch Translocation.MoveFailure.alreadyThere(let existing) {
+            // Worth a second question rather than a refusal: an older copy in
+            // Applications is the ordinary case when someone is updating by hand.
+            let ask = NSAlert()
+            ask.messageText = "Replace the copy already in your Applications folder?"
+            ask.informativeText = "There is already a SetShot at \(existing.path). "
+                + "It will be moved to the Trash, so you can put it back if you need it."
+            ask.alertStyle = .warning
+            ask.addButton(withTitle: "Replace")
+            ask.addButton(withTitle: "Cancel")
+            guard ask.runModal() == .alertFirstButtonReturn else { return }
+            moveToApplications(replacingExisting: true)
+        } catch {
+            // Falling back to the manual instructions rather than leaving the user
+            // with only a failure: the drag still works when the move does not.
+            let failed = NSAlert()
+            failed.messageText = "SetShot could not move itself"
+            failed.informativeText = error.localizedDescription + "\n\n" + Translocation.advice
+            failed.alertStyle = .warning
+            failed.addButton(withTitle: "OK")
+            failed.runModal()
+        }
+    }
+
+    /// Opens the moved copy, then quits this one once it is actually running --
+    /// terminating first would leave nothing to hand off to.
+    private static func relaunch(at url: URL) {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration) { _, error in
+            DispatchQueue.main.async {
+                if let error {
+                    let alert = NSAlert()
+                    alert.messageText = "SetShot was moved but could not be reopened"
+                    alert.informativeText = "It is now at \(url.path). Open it from there.\n\n"
+                        + error.localizedDescription
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                }
+                NSApp.terminate(nil)
+            }
+        }
     }
 
     /// Hides the View menu.
