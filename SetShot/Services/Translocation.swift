@@ -99,13 +99,18 @@ enum Translocation {
         return destination
     }
 
+    /// Kept short on purpose. An alert cannot be widened -- AppKit sizes it and long
+    /// text simply wraps into a narrow column -- and the HIG asks for a title and a
+    /// sentence or two, not paragraphs. The buttons say what will happen, so this only
+    /// has to say why it is being asked.
     static let advice = """
         SetShot is running from a translocated copy that macOS made because it was \
         opened from where it was unzipped rather than from your Applications folder.
 
-        Scheduled snapshots cannot run from it, because the schedule would point at a \
-        folder macOS throws away after each launch, and updates cannot install.
-
-        Quit SetShot, drag it to your Applications folder, and open it again from there.
+        Scheduled snapshots cannot run and updates cannot install from there.
         """
+
+    /// Only for when the move fails and the drag is back on the user.
+    static let manualSteps =
+        "Quit SetShot, drag it to your Applications folder, and open it again from there."
 }

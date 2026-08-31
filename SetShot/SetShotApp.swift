@@ -304,7 +304,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             // with only a failure: the drag still works when the move does not.
             let failed = NSAlert()
             failed.messageText = "SetShot could not move itself"
-            failed.informativeText = error.localizedDescription + "\n\n" + Translocation.advice
+            failed.informativeText = error.localizedDescription + "\n\n" + Translocation.manualSteps
             failed.alertStyle = .warning
             failed.addButton(withTitle: "OK")
             failed.runModal()
