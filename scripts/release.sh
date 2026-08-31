@@ -69,8 +69,12 @@ info "version $VERSION and build $BUILD are unpublished"
 
 security find-identity -v -p codesigning | grep -q "Developer ID Application" \
   || fail "No Developer ID Application identity in the keychain"
-xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" --limit 1 >/dev/null 2>&1 \
-  || fail "Notarisation profile '$NOTARY_PROFILE' is not set up (xcrun notarytool store-credentials)"
+# `history` is the cheapest call that proves the stored credentials still work.
+# There is no local way to check: notarytool does not put the profile anywhere
+# `security` can find it. Worth the round trip, since the alternative is finding out
+# after a ten-minute archive.
+xcrun notarytool history --keychain-profile "$NOTARY_PROFILE" --output-format json >/dev/null 2>&1 \
+  || fail "Notarisation profile '$NOTARY_PROFILE' does not work (xcrun notarytool store-credentials)"
 command -v gh >/dev/null || fail "gh is not installed"
 gh auth status >/dev/null 2>&1 || fail "gh is not authenticated"
 info "signing identity, notary profile and gh all present"
