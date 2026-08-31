@@ -26,13 +26,12 @@ enum Translocation {
     }
 
     static let advice = """
-        SetShot is running from a temporary copy that macOS made because it was \
+        SetShot is running from a translocated copy that macOS made because it was \
         opened from where it was unzipped rather than from your Applications folder. \
-        That copy sits in a different place every time it launches.
 
         Scheduled snapshots cannot run from it, because the schedule would point at a \
-        folder macOS throws away, and updates cannot install.
+        folder macOS throws away after each launch, and updates cannot install.
 
-        Quit SetShot, drag it to your Applications folder, and open it from there.
+        Quit SetShot, drag it to your Applications folder, and open it again from there.
         """
 }

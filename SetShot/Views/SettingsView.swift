@@ -8,7 +8,7 @@ struct SettingsView: View {
     @AppStorage("SUEnableAutomaticChecks") private var autoCheckForUpdates = true
     @AppStorage("OldestFirst") private var oldestFirst = false
     @AppStorage("AutoDeleteEmptyScheduledSnapshots") private var autoDeleteEmpty = true
-    @State private var isEnabled = SchedulerManager.isInstalled
+    @State private var isEnabled = SchedulerManager.isInstalled && !Translocation.isActive
     @State private var fdaGranted: Bool? = nil
     @State private var musicStatus: MusicAuthorization.Status? = nil
     @State private var scheduleUnit: ScheduleUnit = Self.loadedUnit()
@@ -171,11 +171,24 @@ struct SettingsView: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
+            // Off and unavailable under translocation. A schedule records where
+            // SetShot is, and a translocated copy sits in a mount macOS discards, so
+            // the job would be written, report success, and never run. Refusing at
+            // the switch says so before the user tries, rather than after.
             Toggle("Take automatic snapshots", isOn: $isEnabled)
+                .disabled(Translocation.isActive)
                 .onChange(of: isEnabled) { enabled in
                     if enabled { requestNotificationPermission() }
                     toggleScheduler(enabled: enabled)
                 }
+
+            if Translocation.isActive {
+                Text("Unavailable because SetShot is running from a translocated copy. "
+                     + "Move it to your Applications folder and open it from there.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
             if isEnabled {
                 scheduleControls

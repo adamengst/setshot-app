@@ -334,7 +334,7 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		"TEMP_B4E59D52-E218-494B-9A23-38DBA521A493" /* setshots */ = {
+		"TEMP_231FD1B7-5EBB-4172-B38B-A6C4DC83CF48" /* setshots */ = {
 			isa = PBXGroup;
 			children = (
 			);

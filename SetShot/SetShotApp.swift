@@ -44,10 +44,14 @@ struct SetShotApp: App {
                 }
                 .keyboardShortcut(",", modifiers: .command)
 
+                // Also unavailable under translocation: Sparkle cannot replace an app
+                // running from a read-only mount at a path that is not where it lives,
+                // so the check would only ever end in a failure the user can do nothing
+                // about from here.
                 Button("Check for Updates…") {
                     updaterState.controller.updater.checkForUpdates()
                 }
-                .disabled(!updaterState.canCheckForUpdates)
+                .disabled(!updaterState.canCheckForUpdates || Translocation.isActive)
             }
             // The View menu offers the user nothing here. Its toolbar items act on the
             // only toolbar in the app -- the Export menu in a comparison window -- where
