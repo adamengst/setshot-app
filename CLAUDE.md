@@ -35,6 +35,22 @@ New submissions arrive as GitHub Issues in `adamengst/setshot-submissions` (priv
 
 ## Releasing a New Version
 
+`scripts/release.sh` does all of this. It reads the version from `project.yml`,
+refuses to start unless the tree is clean, on `main`, in step with origin, and the
+version and build are genuinely unpublished, then archives, notarises, staples,
+builds both the zip and a disk image, signs the zip for Sparkle, and — after asking
+— creates the GitHub release, adds the appcast entry and pushes it.
+
+    scripts/release.sh --dry-run    # build and notarise, stop before publishing
+    scripts/release.sh              # the same, then publish after confirming
+
+Bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `project.yml` and commit
+before running it. Signing keys stay in the keychain; nothing here needs them
+anywhere else.
+
+The steps below are what the script does, kept as the reference and as the fallback
+if it fails partway.
+
 ### Before archiving
 
 1. Check for pending KB submissions and process them first:
