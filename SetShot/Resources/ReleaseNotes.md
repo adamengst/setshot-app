@@ -24,6 +24,8 @@
 
 - **About shows when the build was made** — A beta keeps the same version and build number across every build of it, so two copies of 1.0b27 looked identical. About now shows the date the build was made, which is the thing to quote in a bug report.
 
+- **SetShot says when it is running from a temporary copy** — Unzip an app and open it where it landed, and macOS runs it from a randomly named copy it deletes afterwards rather than from the app itself. Scheduled snapshots cannot work from there, because the schedule records where SetShot is and that location stops existing, and updates cannot install either. SetShot now says so at launch and refuses to set up a schedule until it has been moved to Applications, instead of accepting one that would never run. Reported by Beatrix Willius.
+
 - **The built-in baselines are current** — The baselines a first snapshot is compared against have been recaptured on macOS 15.7.9 and 26.6.2. Comparing against one no longer reports differences that were only the older capture recording the same settings in an older way.
 
 - **Permission changes no longer bury a comparison** — Granting or revoking Full Disk Access or Media & Apple Music changes what SetShot can read, not what is set on your Mac. Revoking Full Disk Access used to report Time Machine as switched off and Mail's settings as wiped; turning off Media & Apple Music reported numerous Music and TV settings as deleted. SetShot now reports the permission change itself and says that anything appearing in only one snapshot reflects what it could read.

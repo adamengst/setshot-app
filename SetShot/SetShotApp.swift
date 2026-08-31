@@ -248,8 +248,26 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             UNUserNotificationCenter.current().delegate = self
             // SwiftUI finishes building the main menu after this point, so the empty
             // View menu does not exist yet.
-            DispatchQueue.main.async { Self.hideViewMenu() }
+            DispatchQueue.main.async {
+                Self.hideViewMenu()
+                Self.warnIfTranslocated()
+            }
         }
+    }
+
+    /// Says so when macOS is running SetShot from a translocated copy.
+    ///
+    /// Worth interrupting for because both failures are silent: a schedule installed
+    /// from here reports success and then never runs, and updates cannot install. The
+    /// scheduler refuses outright; this is what explains why.
+    private static func warnIfTranslocated() {
+        guard Translocation.isActive else { return }
+        let alert = NSAlert()
+        alert.messageText = "Move SetShot to your Applications folder"
+        alert.informativeText = Translocation.advice
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     /// Hides the View menu.

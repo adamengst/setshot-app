@@ -46,7 +46,17 @@ struct SchedulerManager {
         return nil
     }
 
+    /// Raised rather than writing a schedule that cannot survive the session.
+    enum SchedulerError: LocalizedError {
+        case translocated
+        var errorDescription: String? { Translocation.advice }
+    }
+
     static func install(schedule: SnapshotSchedule) throws {
+        // The plist records where SetShot is right now. Under translocation that is a
+        // path inside a mount macOS discards, so the job would be written, report
+        // success, and then silently never run again.
+        guard !Translocation.isActive else { throw SchedulerError.translocated }
         let executablePath = Bundle.main.executablePath!
         var plist: [String: Any] = [
             "Label": label,
