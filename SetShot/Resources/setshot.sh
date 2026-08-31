@@ -989,6 +989,30 @@ NOISE_PATTERN='(
 # Do NOT strip all spaces — that would break patterns containing literal spaces.
 NOISE_RE="$(echo "$NOISE_PATTERN" | sed 's/^[[:space:]]*//' | grep -v '^#' | tr -d '\n' | sed 's/|)/)/g')"
 
+# Applies NOISE_RE to stdin, across cores.
+#
+# The pattern is ~800 alternations and BSD grep scales badly with it: filtering a
+# first-snapshot-against-baseline diff (27k lines) took ~9s of the ~15s such a
+# comparison spent, while the same run with the filter skipped took 0.2s. The
+# filter is line-independent, so splitting the input across cores cuts it to under
+# two seconds.
+#
+# Chunks are numbered by `split` and their outputs concatenated in that order, so
+# the result is byte-identical to filtering in one pass. Falls back to a single
+# grep when a temp directory cannot be made.
+_filter_noise() {
+  local dir jobs
+  dir="$(mktemp -d 2>/dev/null)" || { grep -vE "$NOISE_RE" || true; return; }
+  jobs="$(sysctl -n hw.ncpu 2>/dev/null || echo 4)"
+  split -l 3000 - "$dir/chunk." 2>/dev/null
+  # Listed before any .out file exists, so the glob cannot pick up its own output.
+  find "$dir" -type f -name 'chunk.*' ! -name '*.out' 2>/dev/null \
+    | sort \
+    | xargs -P "$jobs" -I{} sh -c 'grep -vE "$1" "$2" > "$2.out" || true' _ "$NOISE_RE" {}
+  cat "$dir"/chunk.*.out 2>/dev/null
+  rm -rf "$dir"
+}
+
 # ── Device identity ───────────────────────────────────────────────────────────
 
 # What a snapshot's captured shape is. Bump this whenever a change to what is
@@ -2032,7 +2056,7 @@ do_diff() {
   else
     diff --unified=0 <(cat_snapshot "$before") <(cat_snapshot "$after") \
       | grep -vE '^@@' \
-      | grep -vE "$NOISE_RE" \
+      | _filter_noise \
       || true
   fi
 }
