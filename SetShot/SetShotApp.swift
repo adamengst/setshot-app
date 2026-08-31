@@ -207,9 +207,16 @@ private struct WindowFrameSaver: NSViewRepresentable {
                         window.setFrame(frame, display: false)
                     }
                 }
-                NSAnimationContext.runAnimationGroup { ctx in
-                    ctx.duration = 0.15
-                    window.animator().alphaValue = 1
+                // A translocated copy has an alert up asking whether to move itself.
+                // Fading in behind it only to vanish a moment later when the app hands
+                // off is the flash this avoids, so the window waits for the answer.
+                if AppDelegate.isTranslocationDecisionPending {
+                    AppDelegate.revealWhenDecided(window)
+                } else {
+                    NSAnimationContext.runAnimationGroup { ctx in
+                        ctx.duration = 0.15
+                        window.animator().alphaValue = 1
+                    }
                 }
                 readyToSave = true
             }
@@ -238,10 +245,46 @@ private struct StaleComparisonDismisser: NSViewRepresentable {
 class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool { true }
 
+    /// Held true from launch until the translocation alert has been answered.
+    ///
+    /// The main window is built and faded in while that alert is up, so without this
+    /// a copy that is about to move itself shows a Snapshots window that vanishes a
+    /// moment later as the app hands off -- which reads as a glitch. `WindowFrameSaver`
+    /// leaves the window invisible while this is set and hands it to
+    /// `revealWhenDecided`, and only Continue Anyway or a failed move brings it back.
+    ///
+    /// Set in `applicationWillFinishLaunching` because SwiftUI builds the window after
+    /// that returns, so it is already true the first time a window asks.
+    private(set) static var isTranslocationDecisionPending = false
+
+    private static var windowsAwaitingDecision: [NSWindow] = []
+
+    /// Holds a window back until the alert is answered, rather than fading it in.
+    static func revealWhenDecided(_ window: NSWindow) {
+        windowsAwaitingDecision.append(window)
+    }
+
+    /// Ends the wait. `reveal` is false only when the app is on its way out, having
+    /// moved itself and handed off to the copy in Applications.
+    private static func finishTranslocationDecision(reveal: Bool) {
+        isTranslocationDecisionPending = false
+        let held = windowsAwaitingDecision
+        windowsAwaitingDecision = []
+        guard reveal else { return }
+        for window in held {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.15
+                window.animator().alphaValue = 1
+            }
+        }
+    }
+
     func applicationWillFinishLaunching(_ notification: Notification) {
         if CommandLine.arguments.contains("--background-snapshot") {
             NSApp.setActivationPolicy(.prohibited)
+            return
         }
+        Self.isTranslocationDecisionPending = Translocation.isActive
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -278,7 +321,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
         alert.alertStyle = .warning
         alert.addButton(withTitle: "Move to Applications Folder")  // default, first
         alert.addButton(withTitle: "Continue Anyway")
-        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        guard alert.runModal() == .alertFirstButtonReturn else {
+            // Staying put, so the window it has been holding back is wanted.
+            finishTranslocationDecision(reveal: true)
+            return
+        }
 
         moveToApplications(replacingExisting: false)
     }
@@ -286,6 +333,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     private static func moveToApplications(replacingExisting: Bool) {
         do {
             let moved = try Translocation.moveToApplications(replacingExisting: replacingExisting)
+            // The window stays held back: this copy is only waiting for the one in
+            // Applications to come up before it quits, and showing a window on the way
+            // out is the flash this avoids. Every failure below leaves the app running
+            // where it is, so those all release it.
             relaunch(at: moved)
         } catch Translocation.MoveFailure.alreadyThere(let existing) {
             // Worth a second question rather than a refusal: an older copy in
@@ -297,7 +348,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             ask.alertStyle = .warning
             ask.addButton(withTitle: "Replace")
             ask.addButton(withTitle: "Cancel")
-            guard ask.runModal() == .alertFirstButtonReturn else { return }
+            guard ask.runModal() == .alertFirstButtonReturn else {
+                finishTranslocationDecision(reveal: true)
+                return
+            }
             moveToApplications(replacingExisting: true)
         } catch {
             // Falling back to the manual instructions rather than leaving the user
@@ -308,6 +362,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             failed.alertStyle = .warning
             failed.addButton(withTitle: "OK")
             failed.runModal()
+            finishTranslocationDecision(reveal: true)
         }
     }
 

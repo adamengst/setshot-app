@@ -96,7 +96,33 @@ enum Translocation {
         } catch {
             throw MoveFailure.failed(error.localizedDescription)
         }
+        clearQuarantine(at: destination)
         return destination
+    }
+
+    /// Removes the quarantine flag from the moved copy.
+    ///
+    /// Finder clears `com.apple.quarantine` when someone drags an app; `moveItem`
+    /// keeps it, and a bundle that still carries it is translocated again on the next
+    /// launch. Without this the move lands the app in Applications and leaves it in
+    /// the state the move was meant to fix, so the alert returns. Asking SetShot to
+    /// move itself is the same consent the drag encodes.
+    ///
+    /// The whole bundle is walked because the flag is applied to what was unzipped,
+    /// not only to the top of it. `XATTR_NOFOLLOW` keeps this on the symlinks a
+    /// framework bundle contains rather than what they point at.
+    ///
+    /// Failures are ignored on purpose: the move has already succeeded, and an app
+    /// that is still quarantined is no worse off than before it was moved.
+    static func clearQuarantine(at url: URL) {
+        let name = "com.apple.quarantine"
+        removexattr(url.path, name, XATTR_NOFOLLOW)
+        guard let contents = FileManager.default.enumerator(at: url,
+                                                            includingPropertiesForKeys: nil,
+                                                            options: []) else { return }
+        for case let item as URL in contents {
+            removexattr(item.path, name, XATTR_NOFOLLOW)
+        }
     }
 
     /// Kept short on purpose. An alert cannot be widened -- AppKit sizes it and long
@@ -107,7 +133,8 @@ enum Translocation {
         SetShot is running from a translocated copy that macOS made because it was \
         opened from where it was unzipped rather than from your Applications folder.
 
-        Scheduled snapshots cannot run and updates cannot install from there.
+        Running from a translocated copy disables automatic snapshots and Check for \
+        Updates.
         """
 
     /// Only for when the move fails and the drag is back on the user.
