@@ -248,36 +248,33 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             UNUserNotificationCenter.current().delegate = self
             // SwiftUI finishes building the main menu after this point, so the empty
             // View menu does not exist yet.
-            DispatchQueue.main.async { Self.removeViewMenu() }
+            DispatchQueue.main.async { Self.hideViewMenu() }
         }
     }
 
-    /// What AppKit contributes to the View menu once SwiftUI's toolbar and sidebar
-    /// groups are suppressed: full screen, and the window tabbing pair. SetShot uses
-    /// none of them -- full screen is on the green traffic-light button, and its
-    /// windows are a library and its comparisons, which nobody tabs.
-    private static let viewMenuSelectors: Set<Selector> = [
-        #selector(NSWindow.toggleFullScreen(_:)),
-        #selector(NSWindow.toggleTabBar(_:)),
-        #selector(NSWindow.toggleTabOverview(_:)),
-    ]
-
-    /// Removes the View menu once SwiftUI has emptied it.
+    /// Hides the View menu.
     ///
-    /// Found by the selectors its items carry rather than by the title "View", which
-    /// is localised -- a Japanese system titles it 表示. Only a menu made up entirely
-    /// of the items above is removed, so if AppKit ever puts something else there the
-    /// menu survives and this becomes a no-op rather than hiding a real command.
-    private static func removeViewMenu() {
+    /// It cannot be found by its contents. SwiftUI leaves it holding a single
+    /// separator, and AppKit fills in Show Tab Bar, Show All Tabs and Enter Full
+    /// Screen only while the menu is being tracked -- calling `update()` does not
+    /// bring them forward. Nor by its title, which is localised: a Japanese system
+    /// titles it 表示.
+    ///
+    /// The lone separator is the signature. A menu whose only content is a separator
+    /// holds no commands, and nothing else here looks like that -- every other menu
+    /// is populated by this point (App 11 items, File 4, Edit 16, Window 4, Help 1),
+    /// so a menu carrying real commands is never caught by this.
+    ///
+    /// Hidden rather than removed because removing does not hold: SwiftUI puts the
+    /// menu back, and the bar ends up showing an empty View again. `isHidden` sticks.
+    private static func hideViewMenu() {
         guard let mainMenu = NSApp.mainMenu else { return }
         for item in mainMenu.items {
             guard let submenu = item.submenu,
-                  submenu.items.contains(where: { $0.action.map(viewMenuSelectors.contains) ?? false }),
-                  submenu.items.allSatisfy({
-                      $0.isSeparatorItem || ($0.action.map(viewMenuSelectors.contains) ?? false)
-                  })
+                  submenu.items.count == 1,
+                  submenu.items[0].isSeparatorItem
             else { continue }
-            mainMenu.removeItem(item)
+            item.isHidden = true
             return
         }
     }
