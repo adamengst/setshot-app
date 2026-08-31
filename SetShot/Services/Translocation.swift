@@ -27,7 +27,7 @@ enum Translocation {
 
     static let advice = """
         SetShot is running from a translocated copy that macOS made because it was \
-        opened from where it was unzipped rather than from your Applications folder. \
+        opened from where it was unzipped rather than from your Applications folder.
 
         Scheduled snapshots cannot run from it, because the schedule would point at a \
         folder macOS throws away after each launch, and updates cannot install.
