@@ -19,22 +19,15 @@ enum KnownIssues {
     /// Sections exempted for the base-snapshot fixtures only; the live snapshot is
     /// always held to the current contract.
     ///
-    /// This list was long while the fixtures were June captures predating the format 2
-    /// changes. They have since been recaptured on current macOS, and every entry that
-    /// existed for a stale emit format is gone. What remains is not staleness: the
-    /// fixtures come from pristine VMs, and a section that legitimately has no data on
-    /// a clean install cannot be made to have any by recapturing.
+    /// Empty, and worth keeping that way. It held eight entries while the fixtures
+    /// were June captures predating the format 2 emit changes, and one more while a
+    /// pristine VM had no default-handler data to report -- which turned out to be a
+    /// gap in what SetShot read, not a property of the fixtures.
     ///
-    /// `testKnownIssuesAreStillIssues` re-evaluates all three waived checks against the
-    /// fixtures, so an entry that stops being needed fails the suite rather than sitting
-    /// here disabling its checks — which is how the previous eight accumulated.
-    static let legacyFixtureSections: [String: String] = [
-        "APPLICATION HANDLERS":
-            "A pristine system records no LaunchServices handler overrides, so the "
-            + "fixtures carry only this section's `(not found)` sentinel. On a Mac that "
-            + "has ever changed a default browser or mail client the section has data, "
-            + "which is why the live snapshot is still held to it.",
-    ]
+    /// `testKnownIssuesAreStillIssues` re-evaluates all three waived checks against
+    /// the fixtures, so an entry that stops being needed fails the suite rather than
+    /// sitting here disabling its checks.
+    static let legacyFixtureSections: [String: String] = [:]
 
     /// Sources that genuinely need root, so the app — which never elevates — cannot
     /// read them. These are limitations rather than bugs: each now emits a sentinel
