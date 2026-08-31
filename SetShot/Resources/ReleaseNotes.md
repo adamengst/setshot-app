@@ -12,6 +12,20 @@
 
 - **More settings tracked** — Default Web browser and email client, launch agents and daemons, DNS servers, proxies and network services, Time Machine destinations, system extensions, configuration profiles, and whether the startup chime plays.
 
+- **Snapshots are much faster** — A snapshot took around four and a half seconds and now takes under one. SetShot reads about 500 preference files, and it had been launching a fresh copy of itself for each one — nearly a thousand processes to read a megabyte and a half of settings. It reads them all in one pass now. The gain is larger on slower Macs, where starting a process costs more.
+
+- **Comparisons are much faster** — Comparing a first snapshot against the built-in baseline took about fifteen seconds, and the filtering stage of that has gone from nine seconds to under two. The list of things SetShot ignores as noise has grown to some 800 patterns, and checking every line against all of them in one pass was most of the wait; it now runs across all of your Mac's cores.
+
+- **Capturing and comparing can be cancelled** — Press Escape, Command-period or Control-C while Capturing or Comparing is showing and SetShot stops. Nothing is left behind: no half-written snapshot in the list, no entry in the Journal, and no results window for a comparison you abandoned. The area between the buttons says so while the work is running. Suggested by Beatrix Willius.
+
+- **The View menu is gone** — It offered only Show Tab Bar, Show All Tabs and Enter Full Screen. SetShot has no tabs, and full screen is on the green button in the title bar, so the menu never did anything worth having. Suggested by Beatrix Willius.
+
+- **A new app icon**
+
+- **About shows when the build was made** — A beta keeps the same version and build number across every build of it, so two copies of 1.0b27 looked identical. About now shows the date the build was made, which is the thing to quote in a bug report.
+
+- **The built-in baselines are current** — The baselines a first snapshot is compared against have been recaptured on macOS 15.7.9 and 26.6.2. Comparing against one no longer reports differences that were only the older capture recording the same settings in an older way.
+
 - **Permission changes no longer bury a comparison** — Granting or revoking Full Disk Access or Media & Apple Music changes what SetShot can read, not what is set on your Mac. Revoking Full Disk Access used to report Time Machine as switched off and Mail's settings as wiped; turning off Media & Apple Music reported numerous Music and TV settings as deleted. SetShot now reports the permission change itself and says that anything appearing in only one snapshot reflects what it could read.
 
 - **Comparisons across versions are flagged** — Snapshots now record which capture format they used. Comparing a snapshot taken by b26 or earlier against a newer one shows a note explaining that some of the changes are the older snapshot recording the same settings in an older way, rather than anything on your Mac changing. Your existing snapshots still compare against each other normally.
@@ -49,6 +63,8 @@
 - **Fixed: unplugging looked like the wallpaper changed** — While a laptop runs on battery, macOS swaps a dynamic desktop or aerial for a still image and switches back on the power adapter, rewriting the system default wallpaper each way. That default is only the fallback for a display with no wallpaper of its own, so nothing on screen changed, but three entries were reported every time the power cord moved. It is now left out when every display has its own wallpaper, and still reported on a Mac that relies on the fallback.
 
 - **Fixed: a Time Machine disk unmounting looked like a settings change** — Where a backup disk happens to be mounted is state, not a setting, but unplugging one reported the mount point vanishing and coming back. A destination genuinely being added or removed still shows.
+
+- **Fixed: audio plug-ins produced tens of thousands of spurious changes** — On a Mac with Audio Unit plug-ins installed, macOS keeps a cache describing what each one can do, and rescanning the plug-ins renumbers the whole file. One reader's first comparison reported 33,000 changes, and all but a few thousand were that cache. None of it is a setting, and it is now ignored. Reported by a user.
 
 - **Knowledge base updates** — Around 130 new entries covering privacy permissions, security status, wallpaper, network configuration and background items. Corrected the battery indicator values, which were mislabeled; the Notification Center sort order and Stage Manager grouping, which pointed at controls that either do not exist or only appear when Stage Manager is on; the Lock Screen password hint, which is a switch rather than a retry count in macOS 15; and menu bar clock and battery entries that showed no icon. Described the system font settings, Finder's Quit menu item, grammatical gender, the Spoken Content voice, the TV app appearance, and the Mail sender-domain list; suppressed noise from analytics timestamps, transient Finder view settings, per-Space wallpaper duplication and several daemon flags. Restructured the energy settings so each one is recorded per power profile, and retired the twenty-six duplicate entries that reported the same setting from a second source.
 
