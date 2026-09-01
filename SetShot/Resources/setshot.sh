@@ -850,6 +850,13 @@ NOISE_PATTERN='(
   spotlightknowledge.*:: stateDump\.lastEvaluationTimestamp\s*=|
   mobilephone.*:: PNRltc\s*=|
 
+  # Audio Unit component cache kept by the pro audio apps. Each installed plug-in
+  # writes a block of keys under a four-four-four component id -- bus counts, channel
+  # layouts, architectures -- describing what it can do, not anything anyone set. A
+  # first launch of MainStage submitted 227 of these in a single comparison.
+  # Issues #236-#249 in setshot-submissions.
+  (MainStageApp|logic|garageband).*:: [A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}\.|
+
   # Cache / internal-state domains (high entry counts, no user settings)
   EmojiCache.*::|
   sociallayerd.*::|
