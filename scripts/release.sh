@@ -201,14 +201,58 @@ URL="https://github.com/$GITHUB_REPO/releases/download/$TAG/SetShot-$VERSION.zip
 
 VERSION="$VERSION" BUILD="$BUILD" PUB_DATE="$PUB_DATE" URL="$URL" \
 ED_SIGNATURE="$ED_SIGNATURE" ZIP_SIZE="$ZIP_SIZE" python3 - <<'PY'
-import os
+import html, os, re
 version, build = os.environ["VERSION"], os.environ["BUILD"]
+
+# ── Release notes for Sparkle ─────────────────────────────────────────────────
+#
+# Sparkle shows an item's <description> in the update window, and shows nothing at
+# all without one -- which is why the window used to be bare. It displays the notes
+# for the version it is offering and does not gather up the ones in between, so a
+# user two releases behind would otherwise never see the middle one. Every version
+# goes in instead, newest first, which is complete whatever they are upgrading from.
+#
+# Only the newest item carries them. Sparkle never reads an older item's notes, and
+# leaving a copy on each would add the whole file to the feed again every release.
+def notes_to_html(md):
+    out = ['<style>body{font:13px -apple-system,sans-serif;margin:0;padding:12px}'
+           'h2{font-size:15px;margin:16px 0 6px}h2:first-child{margin-top:0}'
+           'li{margin-bottom:8px;line-height:1.45}ul{padding-left:20px;margin:0}'
+           'code{font:12px ui-monospace,monospace}</style>']
+    bullets = []
+    def flush():
+        if bullets:
+            out.append("<ul>" + "".join(f"<li>{b}</li>" for b in bullets) + "</ul>")
+            bullets.clear()
+    for line in md.splitlines():
+        line = line.rstrip()
+        if line.startswith("## "):
+            flush()
+            out.append(f"<h2>{html.escape(line[3:])}</h2>")
+        elif line.startswith("- "):
+            body = html.escape(line[2:])
+            body = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", body)
+            body = re.sub(r"`(.+?)`", r"<code>\1</code>", body)
+            bullets.append(body)
+        elif line:
+            flush()
+            out.append(f"<p>{html.escape(line)}</p>")
+    flush()
+    return "\n".join(out)
+
+notes = notes_to_html(open("SetShot/Resources/ReleaseNotes.md").read())
+# A literal ]]> would close the CDATA section early; split it across two sections.
+notes = notes.replace("]]>", "]]]]><![CDATA[>")
+
 item = f"""        <item>
             <title>SetShot {version}</title>
             <pubDate>{os.environ["PUB_DATE"]}</pubDate>
             <sparkle:version>{build}</sparkle:version>
             <sparkle:shortVersionString>{version}</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
+            <description><![CDATA[
+{notes}
+]]></description>
             <enclosure
                 url="{os.environ["URL"]}"
                 sparkle:edSignature="{os.environ["ED_SIGNATURE"]}"
@@ -219,6 +263,9 @@ item = f"""        <item>
 """
 path = "appcast.xml"
 text = open(path).read()
+# Drop the notes from the items already there -- only the newest needs them. The
+# twelve-space indent is what keeps this off the channel's own <description>.
+text = re.sub(r"\n {12}<description>.*?</description>", "", text, flags=re.DOTALL)
 # Newest first, so the new item goes immediately before the current top one.
 marker = "        <item>"
 index = text.index(marker)
