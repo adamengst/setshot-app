@@ -686,11 +686,32 @@ private struct ComparisonWindowPositioner: NSViewRepresentable {
                     $0 !== window && $0.isVisible && !$0.isMiniaturized && $0.title == "SetShot"
                 }) else { return }
 
-                // Position first — after this, window.screen reflects the destination display.
-                let startPoint = Self.nextCascadePoint ?? NSPoint(x: main.frame.maxX + 8, y: main.frame.maxY)
-                Self.nextCascadePoint = window.cascadeTopLeft(from: startPoint)
-
                 let titleBarHeight = window.frame.height - (window.contentView?.bounds.height ?? window.frame.height)
+
+                // Position first — after this, window.screen reflects the destination display.
+                //
+                // Stepped by hand rather than with cascadeTopLeft(from:), whose vertical step is
+                // smaller than a title bar: each new window covered the title of the one behind
+                // it, leaving a stack of comparisons that could not be told apart without moving
+                // them. A step of one title bar is the least that keeps every window behind
+                // readable, and the same step sideways keeps the diagonal AppKit's own cascade
+                // has.
+                //
+                // Measured from the view holding the traffic lights rather than from
+                // titleBarHeight above. These windows span their content under the title bar, so
+                // subtracting the content view — and contentRect(forFrameRect:), which reports
+                // the same thing — yields zero, which is why the first attempt at this left every
+                // window sitting exactly on the one before it. The title bar container is still
+                // there and still the right height either way, and it grows to include the
+                // toolbar row, which is where these windows put the title, so the step follows
+                // whatever has to stay visible.
+                let cascadeStep = window.standardWindowButton(.closeButton)?
+                    .superview?.bounds.height ?? 28
+
+                let startPoint = Self.nextCascadePoint ?? NSPoint(x: main.frame.maxX + 8, y: main.frame.maxY)
+                window.setFrameTopLeftPoint(startPoint)
+                Self.nextCascadePoint = NSPoint(x: startPoint.x + cascadeStep,
+                                                y: startPoint.y - cascadeStep)
 
                 if let screen = window.screen ?? NSScreen.main {
                     let sf = screen.visibleFrame
