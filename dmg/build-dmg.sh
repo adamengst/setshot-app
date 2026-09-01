@@ -41,11 +41,22 @@ hdiutil create -volname "$VOLNAME" -srcfolder "$STAGE" -ov -format UDRW -quiet "
 # Mounted where Finder can see it: the layout is set by telling Finder about
 # `disk "<volume name>"`, and -nobrowse hides the volume from Finder entirely, so the
 # script cannot then address what it just mounted. -noautoopen keeps a window from
-# springing up in the user's face while this runs.
-hdiutil attach "$RW" -noverify -noautoopen -quiet
-MOUNT="/Volumes/$VOLNAME"
+# springing up in the face of whoever is running this.
+#
+# The mount point is read back rather than assumed to be /Volumes/<volume name>. If a
+# volume of that name is already mounted -- a previous run that did not clean up, or a
+# disk image someone left open -- macOS mounts this one as "<name> 1" instead. Assuming
+# the plain path then pointed Finder at a volume that was not there and left the real
+# one mounted afterwards, because the cleanup detached the path that never existed.
+MOUNT="$(hdiutil attach "$RW" -noverify -noautoopen -plist \
+  | plutil -extract system-entities json -o - - \
+  | python3 -c 'import json,sys; print(next(e["mount-point"] for e in json.load(sys.stdin) if e.get("mount-point")))')"
+[ -d "$MOUNT" ] || { echo "Could not determine where the image mounted"; exit 1; }
+# Finder is told the name it actually got, which is what makes a collision harmless.
+FINDER_VOL="$(basename "$MOUNT")"
+[ "$FINDER_VOL" = "$VOLNAME" ] || echo "    note: mounted as \"$FINDER_VOL\" (a volume named \"$VOLNAME\" was already mounted)"
 
-osascript - "$VOLNAME" "$WIDTH" "$((HEIGHT + TITLEBAR))" "$ICON_SIZE" \
+osascript - "$FINDER_VOL" "$WIDTH" "$((HEIGHT + TITLEBAR))" "$ICON_SIZE" \
              "$APP_X" "$APP_Y" "$APPS_X" "$APPS_Y" "$(basename "$APP")" <<'APPLESCRIPT'
 on run argv
   set {vol, w, h, iconSize, ax, ay, px, py, appName} to argv
