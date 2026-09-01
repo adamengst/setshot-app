@@ -340,13 +340,6 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		"TEMP_0E028D87-7FA6-44FC-9350-18AFACE846A5" /* setshots */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = setshots;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
