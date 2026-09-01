@@ -314,10 +314,27 @@ func wallpaperDescription(key: String) -> String? {
 /// Display UUIDs and bundle identifiers resolve to names where possible. Both are
 /// identity rather than settings, and both fall back to the raw value: a snapshot
 /// outlives a monitor, and an app can be uninstalled.
+/// "first", "second", ... falling back to "#11" once words stop being easier to read
+/// than the number. Only used for array indices, which are rarely large.
+func ordinal(_ position: Int) -> String {
+    let words = ["first", "second", "third", "fourth", "fifth",
+                 "sixth", "seventh", "eighth", "ninth", "tenth"]
+    guard position >= 1 else { return "#\(position)" }
+    return position <= words.count ? words[position - 1] : "#\(position)"
+}
+
 func rowSubject(entry: KBEntry, key: String) -> String? {
     guard let prefix = entry.keyPrefix else { return nil }   // exact match: description is specific
     var subject = key.hasPrefix(prefix) ? String(key.dropFirst(prefix.count)) : key
     guard !subject.isEmpty else { return nil }
+
+    // A key_prefix ending in "[" leaves the array index behind, so the subject arrives
+    // as "0]" -- a fragment of the key rather than anything a reader can act on. An
+    // ordinal answers the question they actually have, which is which one of these a
+    // row is about. Indices are zero-based, so [0] is the first.
+    if subject.hasSuffix("]"), let index = Int(subject.dropLast()), index >= 0 {
+        subject = ordinal(index + 1)
+    }
 
     if let range = subject.range(of: #"[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}"#,
                                  options: [.regularExpression, .caseInsensitive]),

@@ -400,3 +400,49 @@ final class FormatValueTests: XCTestCase {
         XCTAssertEqual(formatValue("false"), "Off")
     }
 }
+
+// MARK: - Array-index subjects
+
+/// A key_prefix ending in "[" used to leave the raw index on the end of the
+/// description ("… — 0]"), which reads as a fragment of the key rather than saying
+/// which of several rows this is.
+final class OrdinalSubjectTests: XCTestCase {
+
+    private func entry(prefix: String, description: String) -> KBEntry {
+        KBEntry(id: "t", domain: "d", key: "", source: "s", valueType: "string",
+                description: description, uiLocation: nil, uiLocationOverrides: nil,
+                settingsURL: nil, noise: false, noiseReason: nil, minMacOS: nil, notes: nil,
+                aiGenerated: false, contributedByIssue: nil, valueMap: nil, keyPrefix: prefix,
+                iconBundleID: nil, implicitDefault: nil, requiresHardware: nil)
+    }
+
+    func testAnIndexBecomesAnOrdinalPlacedByTheDescription() {
+        let e = entry(prefix: "nameserver[", description: "The {subject} DNS server.")
+        XCTAssertEqual(rowDescription(entry: e, key: "nameserver[0]"), "The first DNS server.")
+        XCTAssertEqual(rowDescription(entry: e, key: "nameserver[1]"), "The second DNS server.")
+        XCTAssertEqual(rowDescription(entry: e, key: "nameserver[2]"), "The third DNS server.")
+    }
+
+    func testAnIndexBecomesAnOrdinalWhenAppended() {
+        let e = entry(prefix: "applications[", description: "An app the firewall allows.")
+        XCTAssertEqual(rowDescription(entry: e, key: "applications[0]"),
+                       "An app the firewall allows — first")
+    }
+
+    func testLargeIndicesFallBackToANumber() {
+        XCTAssertEqual(ordinal(10), "tenth")
+        XCTAssertEqual(ordinal(11), "#11")
+    }
+
+    /// Non-numeric subjects are untouched: most key_prefix entries name an app or a
+    /// volume, and turning those into ordinals would lose the only useful part.
+    ///
+    /// The bundle id is deliberately one no Mac has installed. rowSubject resolves an
+    /// installed one to the app's name, which is right for the app and wrong for a test
+    /// that would then pass or fail depending on what the machine happens to have.
+    func testNonNumericSubjectsAreUnchanged() {
+        let e = entry(prefix: "app-bindings.", description: "Assigned desktop.")
+        XCTAssertEqual(rowDescription(entry: e, key: "app-bindings.com.example.not-installed"),
+                       "Assigned desktop — com.example.not-installed")
+    }
+}
