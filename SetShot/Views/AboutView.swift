@@ -92,7 +92,7 @@ private let aboutHelpContent: [HelpContent] = [
     .title("About SetShot"),
     .intro("Have you ever thought a macOS update changed some setting silently? Or have you spelunked through System Settings and wondered later what you clicked? With SetShot, you can find out what settings have changed over time, making it easy to see what you've done and revert inadvertent changes."),
     .intro("SetShot lets you capture a complete snapshot of your Mac's settings at any point in time so you can compare any two snapshots and see exactly what changed, in plain English. Each recognized change comes with a description, its location in System Settings, and \u{2014} where possible \u{2014} a button that opens the exact pane directly."),
-    .intro("TL;DR: To use SetShot, click **Take Snapshot**, make some changes in System Settings, take another snapshot, select both snapshots, and click **Compare**. For full background and detailed instructions, read on."),
+    .intro("**TL;DR:** To use SetShot, click **Take Snapshot**, make some changes in System Settings, take another snapshot, select both snapshots, and click **Compare**. For full background and detailed instructions, read on."),
 
     .section("SetShot Views"),
     .paragraph("SetShot has four views, accessed by clicking the buttons at the top of the window:"),
@@ -490,7 +490,7 @@ struct AboutView: View {
                           id: "n-intro-0")
             HelpParagraph("SetShot lets you capture a complete snapshot of your Mac's settings at any point in time so you can compare any two snapshots and see exactly what changed, in plain English. Each recognized change comes with a description, its location in System Settings, and \u{2014} where possible \u{2014} a button that opens the exact pane directly.",
                           id: "n-intro-1")
-            HelpParagraph("TL;DR: To use SetShot, click **Take Snapshot**, make some changes in System Settings, take another snapshot, select both snapshots, and click **Compare**. For full background and detailed instructions, read on.",
+            HelpParagraph("**TL;DR:** To use SetShot, click **Take Snapshot**, make some changes in System Settings, take another snapshot, select both snapshots, and click **Compare**. For full background and detailed instructions, read on.",
                           id: "n-intro-2")
         }
     }
