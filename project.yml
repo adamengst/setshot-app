@@ -25,7 +25,14 @@ targets:
     platform: macOS
     deploymentTarget: "13.0"
     sources:
-      - SetShot
+      # Resources/setshots is excluded because running setshot.sh standalone -- which
+      # the test suite does -- writes its snapshots next to the script and leaves the
+      # directory behind. xcodegen would otherwise make a group for it with a freshly
+      # generated identifier each run, so every build dirtied the project and the next
+      # release failed its own clean-tree check.
+      - path: SetShot
+        excludes:
+          - "Resources/setshots"
       - path: SetShot/Resources/BaseSnapshots
         type: folder
     dependencies:
