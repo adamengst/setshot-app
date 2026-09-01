@@ -838,6 +838,18 @@ NOISE_PATTERN='(
   remindd.*babysitter.*:: RefreshingWaiters\.|
   Mixpanel.*::|
 
+  # macOS 27 (beta). New domains that churn on their own; every one of these arrived
+  # as a submission from someone running the beta, where they are all a diff reports
+  # nothing useful about. Issues #226, #227, #228 in setshot-submissions.
+  GamePolicyAgent.*:: gameMetadataHintsCache\[|
+  GameOverlayUI.*:: lastBootstrapDate\s*=|
+  configurationprofiles.*:: LastDailyReportAttemptDate\s*=|
+  AuthenticationServicesCore.*:: WBS.*LastUpdate(Time)?\s*=|
+  MenuBarAgent.*:: MenuBarAnalytics\.|
+  spotlightknowledge.*:: hdbCutover\.|
+  spotlightknowledge.*:: stateDump\.lastEvaluationTimestamp\s*=|
+  mobilephone.*:: PNRltc\s*=|
+
   # Cache / internal-state domains (high entry counts, no user settings)
   EmojiCache.*::|
   sociallayerd.*::|
