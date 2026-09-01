@@ -6,10 +6,18 @@ import XCTest
 /// never returns and the spinner turns until the script finishes on its own.
 final class CancellationTests: XCTestCase {
 
+    /// Scripts this process started, not every one on the machine.
+    ///
+    /// Counting them all made this fail whenever another suite happened to be taking a
+    /// snapshot at the same moment -- SnapshotContractTests does -- because xcodebuild
+    /// runs test classes in parallel. It passed or failed on scheduling luck, and adding
+    /// an unrelated test class was enough to tip it into failing every time. What the
+    /// test is actually about is whether the child it started outlived its cancellation,
+    /// so the parent pid is the right filter.
     private func runningSetshotScripts() -> Int {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/bin/ps")
-        p.arguments = ["-Ao", "command"]
+        p.arguments = ["-Ao", "ppid=,command="]
         let pipe = Pipe()
         p.standardOutput = pipe
         p.standardError = FileHandle.nullDevice
@@ -17,7 +25,12 @@ final class CancellationTests: XCTestCase {
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         p.waitUntilExit()
         let text = String(data: data, encoding: .utf8) ?? ""
-        return text.split(separator: "\n").filter { $0.contains("setshot.sh") }.count
+        let me = ProcessInfo.processInfo.processIdentifier
+        return text.split(separator: "\n").filter { line in
+            guard line.contains("setshot.sh") else { return false }
+            let ppid = Int32(line.drop { $0 == " " }.prefix { $0.isNumber }) ?? -1
+            return ppid == me
+        }.count
     }
 
     func testCancellingACaptureStopsItPromptly() async throws {
