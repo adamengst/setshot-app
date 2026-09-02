@@ -203,6 +203,26 @@ struct DiffEngine {
                 if pair.domain == "Music" && pair.key == "available" { return false }
                 return (pair.before ?? "").isEmpty || (pair.after ?? "").isEmpty
             }
+
+            // The permission SetShot holds is recorded twice: once as the marker above,
+            // and once as SetShot's own row in the TCC database like any other app. Both
+            // describe the same grant, so reporting both says one change twice.
+            //
+            // Which one survived used to depend on the direction. Granting access creates
+            // the TCC row, so it arrives with nothing on its earlier side and the removal
+            // above takes it, leaving one row; revoking flips an existing row from Allowed
+            // to Denied, which has both sides and stays, leaving two. Dropping SetShot's
+            // own row here makes both directions report one, and it is the marker that
+            // remains -- it has a value on both sides whichever way the permission moved.
+            //
+            // Only SetShot's row. Every other app's Media & Apple Music grant is a setting
+            // in its own right and is reported.
+            if let ownBundleID = Bundle.main.bundleIdentifier {
+                pairs.removeAll { pair in
+                    pair.domain.hasPrefix("TCC-")
+                        && pair.key == "kTCCServiceMediaLibrary/\(ownBundleID)"
+                }
+            }
         }
 
         // An absent value means the snapshot predates TCC capture entirely, which is

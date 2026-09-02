@@ -588,4 +588,56 @@ final class DiffEngineTests: XCTestCase {
             """, kb: kb)
         XCTAssertFalse(DiffEngine.isFullReversal(of: bc, reversing: ab))
     }
+
+    // MARK: - Media & Apple Music reported once
+
+    /// SetShot's own Media & Apple Music grant is recorded twice: as the Music ::
+    /// available marker, and as SetShot's row in the TCC database like any other app.
+    /// Reporting both said one change twice, and which one survived depended on the
+    /// direction -- a user saw one row granting and two revoking.
+
+    private func mediaKB() -> KnowledgeBase {
+        KnowledgeBase(entries: [
+            makeEntry(domain: "Music", key: "available"),
+            makeEntry(domain: "TCC-user", keyPrefix: "kTCCServiceMediaLibrary/"),
+        ], version: 1, updatedAt: nil)
+    }
+
+    private var ownBundleID: String { Bundle.main.bundleIdentifier ?? "com.tidbits.SetShot" }
+
+    func testRevokingMediaAccessReportsOneChangeNotTwo() {
+        let result = engine().parse(diffOutput: """
+            -Music :: available = 1
+            +Music :: available = 0
+            -TCC-user :: kTCCServiceMediaLibrary/\(ownBundleID) = 2
+            +TCC-user :: kTCCServiceMediaLibrary/\(ownBundleID) = 0
+            """, kb: mediaKB())
+        XCTAssertEqual(result.recognized.count, 1,
+                       "Revoking should report the marker alone, not it and SetShot's TCC row")
+        XCTAssertEqual(result.recognized.first?.diff.domain, "Music")
+    }
+
+    func testGrantingMediaAccessAlsoReportsOneChange() {
+        let result = engine().parse(diffOutput: """
+            -Music :: available = 0
+            +Music :: available = 1
+            +TCC-user :: kTCCServiceMediaLibrary/\(ownBundleID) = 2
+            """, kb: mediaKB())
+        XCTAssertEqual(result.recognized.count, 1,
+                       "Granting should report the marker alone, as it already did")
+        XCTAssertEqual(result.recognized.first?.diff.domain, "Music")
+    }
+
+    /// Only SetShot's own row is folded in. Another app gaining or losing the same
+    /// permission is a setting in its own right.
+    func testAnotherAppsMediaAccessIsStillReported() {
+        let result = engine().parse(diffOutput: """
+            -Music :: available = 1
+            +Music :: available = 0
+            -TCC-user :: kTCCServiceMediaLibrary/com.example.OtherApp = 2
+            +TCC-user :: kTCCServiceMediaLibrary/com.example.OtherApp = 0
+            """, kb: mediaKB())
+        XCTAssertEqual(result.recognized.count, 2,
+                       "Another app's grant should survive alongside the marker")
+    }
 }
