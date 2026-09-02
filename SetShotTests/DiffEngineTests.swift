@@ -640,4 +640,49 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.recognized.count, 2,
                        "Another app's grant should survive alongside the marker")
     }
+
+    // MARK: - A TCC service that gained the app it names
+
+    private func automationKB() -> KnowledgeBase {
+        KnowledgeBase(entries: [makeEntry(domain: "TCC-user",
+                                          keyPrefix: "kTCCServiceAppleEvents/")],
+                      version: 1, updatedAt: nil)
+    }
+    private let oldShape = """
+        TCC :: available = 1
+        TCC-user :: kTCCServiceAppleEvents/com.example.Alpha = 2
+        """
+    private let newShape = """
+        TCC :: available = 1
+        TCC-user :: kTCCServiceAppleEvents/com.example.Alpha/com.apple.finder = 2
+        TCC-user :: kTCCServiceAppleEvents/com.example.Alpha/com.apple.Safari = 2
+        """
+
+    /// Comparing across the capture change, every grant in that service looks new. They
+    /// are left out and explained rather than reported as permissions someone granted.
+    func testGrantsAreNotReportedAsNewAcrossTheCaptureChange() {
+        let result = engine().parse(diffOutput: """
+            -TCC-user :: kTCCServiceAppleEvents/com.example.Alpha = 2
+            +TCC-user :: kTCCServiceAppleEvents/com.example.Alpha/com.apple.finder = 2
+            +TCC-user :: kTCCServiceAppleEvents/com.example.Alpha/com.apple.Safari = 2
+            """, kb: automationKB(), beforeSnapshot: oldShape, afterSnapshot: newShape)
+        XCTAssertTrue(result.recognized.isEmpty,
+                      "Grants that only changed shape should not be reported as changes")
+        XCTAssertNotNil(result.limitedAccessWarning, "The reader should be told why they are absent")
+        XCTAssertEqual(result.limitedAccessWarning?.contains("AppleEvents"), true)
+    }
+
+    /// Two captures from the same version compare as usual — the detection must not
+    /// linger once both sides name the app.
+    func testAGenuineChangeStillShowsBetweenTwoNewSnapshots() {
+        let after = newShape.replacingOccurrences(
+            of: "kTCCServiceAppleEvents/com.example.Alpha/com.apple.Safari = 2",
+            with: "kTCCServiceAppleEvents/com.example.Alpha/com.apple.Safari = 0")
+        let result = engine().parse(diffOutput: """
+            -TCC-user :: kTCCServiceAppleEvents/com.example.Alpha/com.apple.Safari = 2
+            +TCC-user :: kTCCServiceAppleEvents/com.example.Alpha/com.apple.Safari = 0
+            """, kb: automationKB(), beforeSnapshot: newShape, afterSnapshot: after)
+        XCTAssertEqual(result.recognized.count, 1, "Revoking one grant should still report")
+        XCTAssertNil(result.limitedAccessWarning)
+    }
 }

@@ -446,3 +446,63 @@ final class OrdinalSubjectTests: XCTestCase {
                        "Assigned desktop — com.example.not-installed")
     }
 }
+
+// MARK: - Grants that name a second app
+
+/// Automation and the file provider grants record which app is being controlled, so the
+/// key holds two identifiers and, for a file provider, a per-install one as well.
+/// Rendered raw they read as a single long name — "Automation access for
+/// com.apple.Terminal/com.apple.finder" looks like one app, not one app controlling
+/// another.
+final class TwoPartGrantSubjectTests: XCTestCase {
+
+    private func entry(_ prefix: String,
+                       description: String = "Automation access for {subject}") -> KBEntry {
+        KBEntry(id: "t", domain: "TCC-user", key: "", source: "tcc", valueType: "int",
+                description: description, uiLocation: nil,
+                uiLocationOverrides: nil, settingsURL: nil, noise: false, noiseReason: nil,
+                minMacOS: nil, notes: nil, aiGenerated: false, contributedByIssue: nil,
+                valueMap: nil, keyPrefix: prefix, iconBundleID: nil, implicitDefault: nil,
+                requiresHardware: nil)
+    }
+
+    func testTheDescriptionPlacesBothAppsInItsOwnWords() {
+        let e = entry("kTCCServiceAppleEvents/",
+                      description: "Automation access for {subject} to control {target}")
+        let rendered = rowDescription(
+            entry: e, key: "kTCCServiceAppleEvents/com.example.Alpha/com.example.Beta")
+        XCTAssertEqual(rendered,
+                       "Automation access for com.example.Alpha to control com.example.Beta")
+    }
+
+    /// An older snapshot names only the app holding the permission. The clause that would
+    /// have named the other one is dropped rather than left dangling.
+    func testTheTargetClauseGoesWhenThereIsNoSecondApp() {
+        let e = entry("kTCCServiceAppleEvents/",
+                      description: "Automation access for {subject} to control {target}")
+        let rendered = rowDescription(entry: e, key: "kTCCServiceAppleEvents/com.example.Alpha")
+        XCTAssertEqual(rendered, "Automation access for com.example.Alpha")
+    }
+
+    /// A file provider grant carries an identifier for the specific provider instance.
+    /// It says nothing a reader can use and should not reach the description.
+    func testThePerInstallIdentifierIsDropped() {
+        let e = entry("kTCCServiceFileProviderDomain/")
+        let rendered = rowDescription(
+            entry: e,
+            key: "kTCCServiceFileProviderDomain/com.example.Alpha/"
+               + "com.apple.CloudDocs.iCloudDriveFileProvider/090F3707-CDE4-42F1-A322-A2ECFC24648A")
+        XCTAssertFalse(rendered.contains("090F3707"),
+                       "The per-install identifier should be dropped: \(rendered)")
+    }
+
+    /// A client can be an executable path rather than a bundle id; splitting one on its
+    /// slashes would scatter it across arrows.
+    func testAPathClientIsLeftWhole() {
+        let e = entry("kTCCServiceAppleEvents/")
+        let rendered = rowDescription(
+            entry: e, key: "kTCCServiceAppleEvents//usr/local/bin/some-helper")
+        XCTAssertTrue(rendered.contains("/usr/local/bin/some-helper"),
+                      "A path client should survive intact: \(rendered)")
+    }
+}

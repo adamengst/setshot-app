@@ -232,6 +232,55 @@ struct DiffEngine {
             }
         }
 
+        // A TCC service that gained the app it names between the two captures.
+        //
+        // Automation records one grant per controlled app, and the capture used to record
+        // only the app doing the controlling: six grants for one app read identically and
+        // a comparison keyed them together, so revoking one of them reported nothing. The
+        // capture now names both, which changes every one of those keys -- against a
+        // snapshot taken before that, each grant looks newly added.
+        //
+        // Detected from the keys themselves rather than by bumping the snapshot format,
+        // which would make every earlier snapshot an older format for every purpose over
+        // one service's shape. This corrects itself: once both captures name the app, the
+        // depths match and none of this runs.
+        func tccKeyDepths(_ snapshot: String) -> [String: Set<Int>] {
+            var depths: [String: Set<Int>] = [:]
+            for line in snapshot.split(separator: "\n") where line.contains(" :: kTCCService") {
+                guard let sep = line.range(of: " :: "),
+                      let eq = line.range(of: " = ", range: sep.upperBound..<line.endIndex)
+                else { continue }
+                let key = line[sep.upperBound..<eq.lowerBound]
+                let parts = key.split(separator: "/", omittingEmptySubsequences: false)
+                guard let service = parts.first else { continue }
+                depths[String(service), default: []].insert(parts.count)
+            }
+            return depths
+        }
+        var reshapedServices: Set<String> = []
+        if !beforeSnapshot.isEmpty && !afterSnapshot.isEmpty {
+            let before = tccKeyDepths(beforeSnapshot), after = tccKeyDepths(afterSnapshot)
+            for (service, beforeDepths) in before {
+                guard let afterDepths = after[service] else { continue }
+                if beforeDepths.isDisjoint(with: afterDepths) { reshapedServices.insert(service) }
+            }
+        }
+        if !reshapedServices.isEmpty {
+            let names = reshapedServices.map { $0.replacingOccurrences(of: "kTCCService", with: "") }
+                .sorted().joined(separator: ", ")
+            tccVisibilityWarning = "SetShot now records which app each of these permissions lets "
+                + "another app reach — \(names) — where before it recorded only the app holding "
+                + "the permission. Those entries therefore look new when an older snapshot is on "
+                + "the other side, and are left out of these results. Two snapshots taken by this "
+                + "version compare normally."
+            pairs.removeAll { pair in
+                guard pair.domain.hasPrefix("TCC-") else { return false }
+                guard let service = pair.key.split(separator: "/").first,
+                      reshapedServices.contains(String(service)) else { return false }
+                return (pair.before ?? "").isEmpty || (pair.after ?? "").isEmpty
+            }
+        }
+
         // An absent value means the snapshot predates TCC capture entirely, which is
         // the same situation as not being able to read the databases — so treat it as
         // "not readable" rather than skipping the check. Without this, comparing any

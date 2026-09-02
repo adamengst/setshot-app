@@ -1623,17 +1623,29 @@ JSEOF
     # the snapshot — a comparison would otherwise report them as deleted.
     echo "Music :: available = ${SETSHOT_CHECK_MUSIC:-0}"
 
+    # indirect_object_identifier is the app being controlled, and without it a grant
+    # cannot be told from its siblings: Automation gives one row per target, so six
+    # entries for one app all read the same and a comparison keys them together --
+    # revoking one of them reported nothing. It is set for Automation and for the file
+    # provider grants (iCloud Drive, Dropbox, Google Drive) and holds UNUSED elsewhere,
+    # which is left off so every other service keeps the key it already had.
+    TCC_SELECT="service || '/' || client ||
+        CASE WHEN indirect_object_identifier IS NOT NULL
+              AND indirect_object_identifier NOT IN ('UNUSED', '')
+             THEN '/' || indirect_object_identifier ELSE '' END
+        || ' = ' || auth_value"
+
     if [ -r "$USER_TCC" ]; then
       sqlite3 "$USER_TCC" \
-        "SELECT 'TCC-user :: ' || service || '/' || client || ' = ' || auth_value
-         FROM access ORDER BY service, client;" 2>/dev/null \
+        "SELECT 'TCC-user :: ' || $TCC_SELECT
+         FROM access ORDER BY service, client, indirect_object_identifier;" 2>/dev/null \
         || echo "TCC-user :: (query failed)"
     fi
 
     if [ -r "$SYS_TCC" ]; then
       sqlite3 "$SYS_TCC" \
-        "SELECT 'TCC-system :: ' || service || '/' || client || ' = ' || auth_value
-         FROM access ORDER BY service, client;" 2>/dev/null \
+        "SELECT 'TCC-system :: ' || $TCC_SELECT
+         FROM access ORDER BY service, client, indirect_object_identifier;" 2>/dev/null \
         || echo "TCC-system :: (query failed)"
     fi
 

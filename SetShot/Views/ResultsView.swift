@@ -341,13 +341,53 @@ func rowSubject(entry: KBEntry, key: String) -> String? {
        let name = displayName(forUUID: String(subject[range])) {
         subject.replaceSubrange(range, with: name)
     }
-    if !subject.contains("/"), !subject.contains(" "), subject.contains("."),
-       let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: subject) {
-        var name = FileManager.default.displayName(atPath: url.path)
-        if name.hasSuffix(".app") { name = String(name.dropLast(4)) }
-        if !name.isEmpty { subject = name }
-    }
+    // A TCC grant that names a second app -- Automation, and the file provider grants --
+    // arrives as "client/target", and a file provider adds a per-install identifier on
+    // the end. Run together with slashes it reads as one long name: "Automation access
+    // for com.apple.Terminal/com.apple.finder" looks like a single app rather than one
+    // app being allowed to control another.
+    //
+    // Split, name what can be named, drop the identifier, and join with an arrow, so it
+    // reads "Terminal → Finder". A client can itself be a path rather than a bundle id,
+    // so a component holding a path separator is left whole rather than split further.
+    subject = grantComponents(subject).first ?? subject
+    if let name = appName(forBundleIdentifier: subject) { subject = name }
     return subject
+}
+
+/// The second app a grant names: the one being controlled for Automation, the provider
+/// for a cloud file grant. Nil when the key names only the app holding the permission.
+///
+/// Descriptions place it themselves through {target}, so the wording between the two —
+/// "to control", "in" — lives in the knowledge base rather than here, where changing it
+/// would need a release.
+func rowTarget(entry: KBEntry, key: String) -> String? {
+    guard let prefix = entry.keyPrefix, key.hasPrefix(prefix) else { return nil }
+    let rest = grantComponents(String(key.dropFirst(prefix.count)))
+    guard rest.count > 1 else { return nil }
+    return rest.dropFirst().joined(separator: " ")
+}
+
+/// Splits "client/target" into its parts, naming what can be named and dropping the
+/// per-install identifier a cloud file grant carries. A client can itself be an
+/// executable path, so anything starting with a separator is left whole.
+private func grantComponents(_ subject: String) -> [String] {
+    guard subject.contains("/"), !subject.hasPrefix("/") else { return [subject] }
+    return subject.split(separator: "/").compactMap { part -> String? in
+        if part.range(of: #"^[0-9A-Fa-f-]{16,}$"#, options: .regularExpression) != nil { return nil }
+        return appName(forBundleIdentifier: String(part)) ?? String(part)
+    }
+}
+
+/// The name macOS shows for an installed app, or nil when the identifier names nothing
+/// installed -- an app can be uninstalled while its grants remain.
+private func appName(forBundleIdentifier id: String) -> String? {
+    guard !id.contains("/"), !id.contains(" "), id.contains("."),
+          let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id)
+    else { return nil }
+    var name = FileManager.default.displayName(atPath: url.path)
+    if name.hasSuffix(".app") { name = String(name.dropLast(4)) }
+    return name.isEmpty ? nil : name
 }
 
 /// The description shown for a recognized row.
@@ -378,7 +418,15 @@ func rowDescription(entry: KBEntry, key: String) -> String {
     // A description can place the subject itself, for entries that read better as
     // "Camera access for Safari" than as a sentence with the app appended.
     if base.contains("{subject}") {
-        return base.replacingOccurrences(of: "{subject}", with: subject)
+        var text = base.replacingOccurrences(of: "{subject}", with: subject)
+        if let target = rowTarget(entry: entry, key: key) {
+            text = text.replacingOccurrences(of: "{target}", with: target)
+        } else if let clause = text.range(of: #" [a-z ]*\{target\}"#, options: .regularExpression) {
+            // No second app: drop the clause that would have named it rather than
+            // leaving "to control" trailing with nothing after it.
+            text.removeSubrange(clause)
+        }
+        return text
     }
     return "\(base.hasSuffix(".") ? String(base.dropLast()) : base) — \(subject)"
 }
