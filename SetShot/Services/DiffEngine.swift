@@ -264,14 +264,8 @@ struct DiffEngine {
                 // The privacy databases are read as a whole or not at all, so every row
                 // in them is about what could be read whichever side it sits on.
                 if pair.domain.hasPrefix("TCC-") { return true }
-                // Still unscoped, unlike the media removal above, and for the same reason
-                // that one was wrong: it drops settings the permission does not gate.
-                // Full Disk Access gates more than the TCC databases -- revoking it made
-                // Time Machine read as switched off and Mail's settings as wiped -- but
-                // nothing enumerates what, and guessing is what caused the media bug.
-                // Needs two captures, the permission on and off, to derive the list the
-                // way the media one was checked.
-                return (pair.before ?? "").isEmpty || (pair.after ?? "").isEmpty
+                guard (pair.before ?? "").isEmpty || (pair.after ?? "").isEmpty else { return false }
+                return Self.fullDiskAccessGatedDomainsInclude(pair.domain)
             }
             }
         }
@@ -441,6 +435,38 @@ struct DiffEngine {
             guard let bcDiff = bcMap[key] else { return false }
             return bcDiff.afterValue == abDiff.beforeValue
         }
+    }
+
+    /// The domains Full Disk Access gates.
+    ///
+    /// Read off two captures 33 seconds apart on one Mac, the permission granted for the
+    /// first and revoked for the second and nothing else touched: fourteen domains
+    /// disappeared entirely, 1273 lines, with none appearing and none partially read.
+    /// The alternative was to guess, and guessing at the equivalent list for Media &
+    /// Apple Music is what put settings it does not gate -- hot corners, Dock
+    /// magnification -- behind a permission toggle.
+    ///
+    /// This is one Mac's answer. A domain that gates on some other Mac and is missing
+    /// here will read as a settings change when the permission moves, which is the old
+    /// symptom confined to that domain rather than applied to the whole comparison. Add
+    /// to it from the same experiment rather than from reasoning about what sounds
+    /// protected.
+    static func fullDiskAccessGatedDomainsInclude(_ domain: String) -> Bool {
+        // Focus is captured from ~/Library/DoNotDisturb/DB and carries that as its domain.
+        let gated: Set<String> = [
+            "DB",
+            "com.apple.AddressBook",
+            "com.apple.MobileSMS",
+            "com.apple.MobileSMS.CKDNDList",
+            "com.apple.TimeMachine",
+            "com.apple.airport.preferences",
+            "com.apple.homed",
+            "com.apple.homed.notbackedup",
+            "com.apple.madrid",
+            "com.apple.mail-shared",
+            "com.apple.messages.pinning",
+        ]
+        return gated.contains(domain)
     }
 
     /// The domains Media & Apple Music gates, mirroring _MUSIC_RE in setshot.sh — the

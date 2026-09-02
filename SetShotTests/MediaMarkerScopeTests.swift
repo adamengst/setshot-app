@@ -118,4 +118,51 @@ final class MediaMarkerScopeTests: XCTestCase {
             \(lostUnrelated.sorted().prefix(12).joined(separator: "\n"))
             """)
     }
+
+    // MARK: - Full Disk Access
+
+    /// The same check for the other permission, against two captures taken with it
+    /// granted and revoked and nothing else changed.
+    func testTheFullDiskAccessMarkerDoesNotHideUnrelatedSettings() throws {
+        let env = ProcessInfo.processInfo.environment
+        guard let onPath = env["SETSHOT_FDA_ON"], let offPath = env["SETSHOT_FDA_OFF"] else {
+            throw XCTSkip("Set SETSHOT_FDA_ON and SETSHOT_FDA_OFF to two snapshot paths")
+        }
+        let kb = KnowledgeBase(entries: try TestSupport.requireKnowledgeBase(),
+                               version: 0, updatedAt: nil)
+        let fdaOn = try TestSupport.gunzip(URL(fileURLWithPath: onPath))
+        let fdaOff = try TestSupport.gunzip(URL(fileURLWithPath: offPath))
+        let major = fdaOn.contains("macOS: 26.") ? "Tahoe" : "Sequoia"
+        let bases = (try? FileManager.default.contentsOfDirectory(
+            at: TestSupport.baseSnapshotsDir, includingPropertiesForKeys: nil)) ?? []
+        let baseURL = try XCTUnwrap(bases.first { $0.lastPathComponent.contains(major) })
+        let base = try TestSupport.gunzip(baseURL)
+
+        func rows(_ after: String) throws -> [(domain: String, text: String)] {
+            let diff = try TestSupport.runScriptDiff(before: base, after: after)
+            let result = DiffEngine().parse(diffOutput: diff, kb: kb,
+                                            beforeSnapshot: base, afterSnapshot: after)
+            return result.recognized.map {
+                ($0.diff.domain, "\($0.diff.domain) :: \($0.diff.key)")
+            }
+        }
+
+        let withAccess = try rows(fdaOn)
+        let withoutAccess = try rows(fdaOff)
+        let keptKeys = Set(withoutAccess.map(\.text))
+        // A row that vanished in a domain the permission does not gate is the bug.
+        let wronglyLost = withAccess.filter {
+            !keptKeys.contains($0.text)
+                && !$0.domain.hasPrefix("TCC-")
+                && !DiffEngine.fullDiskAccessGatedDomainsInclude($0.domain)
+        }
+
+        XCTAssertTrue(wronglyLost.isEmpty, """
+            \(withAccess.count) recognized rows with Full Disk Access, \(withoutAccess.count) \
+            without. \(wronglyLost.count) that vanished are in domains the permission does \
+            not gate.
+
+            \(Set(wronglyLost.map(\.domain)).sorted().prefix(12).joined(separator: "\n"))
+            """)
+    }
 }
