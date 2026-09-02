@@ -184,6 +184,13 @@ struct DiffEngine {
         // burying whatever actually changed. Report the capability change instead.
         var tccVisibilityWarning: String?
 
+        /// A pair that exists on one side only, in a domain Media & Apple Music gates.
+        /// Anything else is a difference in the settings and is left alone.
+        func isMediaVisibilityArtefact(_ pair: Pair) -> Bool {
+            guard (pair.before ?? "").isEmpty || (pair.after ?? "").isEmpty else { return false }
+            return Self.mediaGatedDomainsInclude(pair.domain)
+        }
+
         // Media & Apple Music gates the media domains the same way Full Disk Access
         // gates the privacy databases: without it those domains are skipped and their
         // settings vanish from the snapshot. Both sides must carry the marker — a
@@ -201,7 +208,7 @@ struct DiffEngine {
                 + "SetShot could read rather than anything that changed."
             pairs.removeAll { pair in
                 if pair.domain == "Music" && pair.key == "available" { return false }
-                return (pair.before ?? "").isEmpty || (pair.after ?? "").isEmpty
+                return isMediaVisibilityArtefact(pair)
             }
 
             // The permission SetShot holds is recorded twice: once as the marker above,
@@ -254,7 +261,16 @@ struct DiffEngine {
             // change has a value on both sides and is kept.
             pairs.removeAll { pair in
                 if pair.domain == "TCC" && pair.key == "available" { return false }
+                // The privacy databases are read as a whole or not at all, so every row
+                // in them is about what could be read whichever side it sits on.
                 if pair.domain.hasPrefix("TCC-") { return true }
+                // Still unscoped, unlike the media removal above, and for the same reason
+                // that one was wrong: it drops settings the permission does not gate.
+                // Full Disk Access gates more than the TCC databases -- revoking it made
+                // Time Machine read as switched off and Mail's settings as wiped -- but
+                // nothing enumerates what, and guessing is what caused the media bug.
+                // Needs two captures, the permission on and off, to derive the list the
+                // way the media one was checked.
                 return (pair.before ?? "").isEmpty || (pair.after ?? "").isEmpty
             }
             }
@@ -425,6 +441,27 @@ struct DiffEngine {
             guard let bcDiff = bcMap[key] else { return false }
             return bcDiff.afterValue == abDiff.beforeValue
         }
+    }
+
+    /// The domains Media & Apple Music gates, mirroring _MUSIC_RE in setshot.sh — the
+    /// list the capture itself uses to decide what to skip without that permission.
+    /// MediaGatedDomainsTests runs every domain in the baselines past both and fails if
+    /// they disagree, because two copies of one list drift silently otherwise.
+    ///
+    /// Derived from the permission rather than from the snapshots being compared.
+    /// Looking at which domains vanished between the two seems equivalent and is not:
+    /// against a bundled baseline, 504 domains are present on an ordinary Mac and absent
+    /// from the VM the baseline came from, and treating those as unreadable suppresses
+    /// settings no permission gates.
+    static func mediaGatedDomainsInclude(_ domain: String) -> Bool {
+        let d = domain.lowercased()
+        guard d.hasPrefix("com.apple.") else { return false }
+        let rest = String(d.dropFirst("com.apple.".count))
+        let exact = ["music", "itunes", "itunesx", "icloud.music", "homesharing",
+                     "cloudmusic", "applemediaservices", "personalaudio", "tv", "podcasts"]
+        if exact.contains(where: { rest == $0 || rest.hasPrefix($0 + ".") }) { return true }
+        // The open-ended alternatives in _MUSIC_RE: amp/AMP…, itunes…, media….
+        return rest.hasPrefix("amp") || rest.hasPrefix("itunes") || rest.hasPrefix("media")
     }
 
     private func normalizeDomain(_ raw: String) -> String {
