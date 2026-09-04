@@ -351,22 +351,25 @@ struct DiffEngine {
             }
         }
 
-        // A wallpaper choice names its image with either Configuration.assetID (an
-        // aerial or dynamic desktop) or Files[N].relative (a picture), never both.
-        // Replacing one kind with the other therefore arrived as two rows for one
-        // wallpaper — the old identifier disappearing and the new one appearing,
-        // each with a blank on the other side. They are paired back into the single
-        // change they describe, keeping the row that says what the wallpaper is now
-        // and giving it the identifier the old one carried.
+        // A wallpaper choice names its content in exactly one of several shapes, and
+        // which one depends on what was chosen: Configuration.assetID for an aerial or
+        // dynamic desktop, Files[N].relative for a picture or a third-party .saver
+        // bundle, Configuration.style for one of the built-in screen savers,
+        // Configuration.module.relative for a screen saver supplied by a bundle.
+        // Replacing one kind with another therefore arrived as two rows for one
+        // choice — the old identifier disappearing and the new one appearing, each
+        // with a blank on the other side. They are paired back into the single change
+        // they describe, keeping the row that says what the choice is now and giving
+        // it the identifier the old one carried.
         //
         // Runs before the per-Space collapse so a pair always comes from one Space's
         // own record: matching across Spaces would have to guess which Space's old
-        // wallpaper the new one replaced. A solid colour uses a third shape
+        // wallpaper the new one replaced. A solid colour uses a further shape
         // (Configuration.backgroundColor) and is not paired.
         var imageRowsByChoice: [String: [Int]] = [:]
         for (i, pair) in pairs.enumerated() where pair.domain == "wallpaper" {
             guard let leaf = pair.key.range(
-                of: #"\.(Configuration\.assetID|Files\[\d+\]\.relative)$"#,
+                of: #"\.(Configuration\.assetID|Configuration\.style|Configuration\.module\.relative|Files\[\d+\]\.relative)$"#,
                 options: .regularExpression) else { continue }
             imageRowsByChoice[String(pair.key[..<leaf.lowerBound]), default: []].append(i)
         }
@@ -383,11 +386,74 @@ struct DiffEngine {
             if vanished(first), appeared(second) { old = first; new = second }
             else if vanished(second), appeared(first) { old = second; new = first }
             else { continue }
-            pairs[new].before = pairs[old].before
+            // Configuration.style is an index into the built-in screen savers, and
+            // nothing in the snapshot says which one it names. Carrying the number
+            // across would put "0" on the left of the arrow; saying what kind of
+            // thing it was at least reads.
+            pairs[new].before = pairs[old].key.hasSuffix(".Configuration.style")
+                ? "a built-in screen saver" : pairs[old].before
             pairedAway.insert(old)
         }
         if !pairedAway.isEmpty {
             pairs = pairs.enumerated().filter { !pairedAway.contains($0.offset) }.map(\.element)
+        }
+
+        // Wallpaper settings live at one of two scopes: AllSpacesAndDisplays while
+        // every display shares a choice, and Spaces.<space>.Displays.<display> once
+        // they have their own. Turning off "same on all displays" moves every value
+        // from the first to the second, and each move arrived as two rows — one
+        // saying the shared value went away, one saying the same value appeared for a
+        // display — for a display whose wallpaper a user watching the screen would say
+        // had not changed at all.
+        //
+        // Both halves are dropped when the effective value is the same on both sides.
+        // What survives is the row for a display that landed on something different,
+        // and, going the other way, the row saying every display now shares one
+        // choice — the change the user made.
+        func wallpaperLeaf(_ key: String) -> String? {
+            for prefix in [#"^AllSpacesAndDisplays\."#,
+                           #"^Spaces\.[^.]*\.Displays\.[^.]*\."#] {
+                if let r = key.range(of: prefix, options: .regularExpression) {
+                    return String(key[r.upperBound...])
+                }
+            }
+            return nil
+        }
+        /// The shared value a leaf held in one snapshot, for comparing against what a
+        /// per-display row now says.
+        func sharedWallpaperValues(in snapshot: String) -> [String: String] {
+            guard !snapshot.isEmpty else { return [:] }
+            var found: [String: String] = [:]
+            for line in snapshot.components(separatedBy: "\n")
+            where line.hasPrefix("wallpaper :: AllSpacesAndDisplays.") {
+                let body = line.dropFirst("wallpaper :: ".count)
+                guard let split = body.range(of: " = "),
+                      let leaf = wallpaperLeaf(String(body[..<split.lowerBound]))
+                else { continue }
+                found[leaf] = String(body[split.upperBound...])
+            }
+            return found
+        }
+        let sharedBefore = sharedWallpaperValues(in: beforeSnapshot)
+        let sharedAfter = sharedWallpaperValues(in: afterSnapshot)
+        let perDisplayAppeared = pairs.contains { pair in
+            pair.domain == "wallpaper" && pair.key.hasPrefix("Spaces.")
+                && (pair.before ?? "").isEmpty && !(pair.after ?? "").isEmpty
+        }
+        pairs.removeAll { pair in
+            guard pair.domain == "wallpaper" else { return false }
+            let before = pair.before ?? "", after = pair.after ?? ""
+            // The shared value going away while displays take over. What each display
+            // landed on is reported by its own row.
+            if pair.key.hasPrefix("AllSpacesAndDisplays."),
+               !before.isEmpty, after.isEmpty, perDisplayAppeared { return true }
+            guard pair.key.hasPrefix("Spaces."), let leaf = wallpaperLeaf(pair.key)
+            else { return false }
+            // A display inheriting what it already had, either as it stops sharing or
+            // as it starts.
+            if before.isEmpty, !after.isEmpty { return sharedBefore[leaf] == after }
+            if after.isEmpty, !before.isEmpty { return sharedAfter[leaf] == before }
+            return false
         }
 
         // "Show on all Spaces" writes the same wallpaper into every Space, so one

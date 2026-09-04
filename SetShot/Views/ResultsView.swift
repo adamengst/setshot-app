@@ -365,7 +365,11 @@ func rowTarget(entry: KBEntry, key: String) -> String? {
     guard let prefix = entry.keyPrefix, key.hasPrefix(prefix) else { return nil }
     let rest = grantComponents(String(key.dropFirst(prefix.count)))
     guard rest.count > 1 else { return nil }
-    return rest.dropFirst().joined(separator: " ")
+    // A grant names at most two things: the app holding it and the app or provider it
+    // reaches. Anything after those is the per-install identifier of one particular
+    // account with that provider — "gdrive-106741850554591477322" — which names
+    // nothing a reader would recognise.
+    return rest[1]
 }
 
 /// Splits "client/target" into its parts, naming what can be named and dropping the
@@ -375,8 +379,38 @@ private func grantComponents(_ subject: String) -> [String] {
     guard subject.contains("/"), !subject.hasPrefix("/") else { return [subject] }
     return subject.split(separator: "/").compactMap { part -> String? in
         if part.range(of: #"^[0-9A-Fa-f-]{16,}$"#, options: .regularExpression) != nil { return nil }
-        return appName(forBundleIdentifier: String(part)) ?? String(part)
+        return appName(forBundleIdentifier: String(part))
+            ?? fileProviderName(String(part))
+            ?? String(part)
     }
+}
+
+/// Apple's own file providers are extensions inside a system framework rather than
+/// apps, so nothing installed carries their identifier and LaunchServices cannot
+/// name them.
+private let appleFileProviderNames = [
+    "com.apple.CloudDocs.iCloudDriveFileProvider": "iCloud Drive",
+    "com.apple.CloudDocs.iCloudDriveFileProviderManaged": "iCloud Drive",
+    "com.apple.FileProvider.LocalStorage": "On My Mac",
+]
+
+/// The app behind a file provider, for the grants under Files from cloud providers.
+///
+/// A provider is an extension bundled inside its app — "com.getdropbox.dropbox"
+/// ships "com.getdropbox.dropbox.fileprovider" — and an extension's identifier is
+/// not something LaunchServices will resolve. Dropping trailing components until one
+/// names an installed app finds Dropbox and Google Drive without knowing anything
+/// about either. Two are enough for the shapes seen so far, and stopping there keeps
+/// the search from reaching a company-wide prefix that happens to be some other app.
+private func fileProviderName(_ identifier: String) -> String? {
+    if let known = appleFileProviderNames[identifier] { return known }
+    var candidate = Substring(identifier)
+    for _ in 0..<2 {
+        guard let dot = candidate.lastIndex(of: ".") else { return nil }
+        candidate = candidate[..<dot]
+        if let name = appName(forBundleIdentifier: String(candidate)) { return name }
+    }
+    return nil
 }
 
 /// The name macOS shows for an installed app, or nil when the identifier names nothing
@@ -649,7 +683,7 @@ private struct RecognizedRow: View {
                         .controlSize(.small)
                     }
                     Spacer(minLength: 8)
-                    if feedbackSubmittedIDs.contains(entry.id) {
+                    if feedbackSubmittedIDs.contains(feedbackToken) {
                         Label("Feedback Sent", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.secondary)
                             .font(.caption)
@@ -658,7 +692,7 @@ private struct RecognizedRow: View {
                             .controlSize(.small)
                             .sheet(isPresented: $showFeedback) {
                                 KBFeedbackView(entry: entry, diff: diff, isPresented: $showFeedback) {
-                                    onMarkFeedbackSubmitted(entry.id)
+                                    onMarkFeedbackSubmitted(feedbackToken)
                                 }
                             }
                     }
@@ -669,6 +703,12 @@ private struct RecognizedRow: View {
         .background(Color.secondary.opacity(0.08))
         .cornerRadius(8)
     }
+
+    /// One knowledge base entry covers many rows — every app holding a permission,
+    /// every cloud provider one app can reach — and feedback is submitted about the
+    /// row, carrying its own key. Marking the entry as submitted therefore put
+    /// "Feedback Sent" on every row sharing it, including ones nothing was said about.
+    private var feedbackToken: String { "\(entry.id)\u{0}\(diff.domain)\u{0}\(diff.key)" }
 
     private func validatedSettingsURL(_ raw: String?) -> URL? {
         guard let raw,

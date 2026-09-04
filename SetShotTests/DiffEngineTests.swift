@@ -309,6 +309,94 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.recognized.count, 2)
     }
 
+    // MARK: - A screen saver changing which shape names it
+
+    func testABuiltInScreenSaverReplacedByABundleIsOneChange() {
+        // A built-in screen saver is recorded as Configuration.style, a .saver bundle
+        // as Configuration.module.relative, so swapping one for the other arrived as
+        // two rows: a number vanishing and a path appearing.
+        let idle = "Spaces.AAAAAAAA-1111-2222-3333-444444444444.Displays."
+            + "37D8832A-2D66-02CA-B9F7-8F30A301B230.Idle.Content.Choices[0]"
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: \(idle).Configuration.style = False
+            +wallpaper :: \(idle).Configuration.module.relative = file:///x/infinidream.saver
+            """, kb: spacesKB())
+        XCTAssertEqual(result.recognized.count, 1)
+        let row = result.recognized[0].diff
+        XCTAssertTrue(row.key.hasSuffix("Configuration.module.relative"))
+        XCTAssertEqual(row.afterValue, "file:///x/infinidream.saver")
+        XCTAssertEqual(row.beforeValue, "a built-in screen saver",
+                       "The style index names nothing on its own, so the number would be noise.")
+    }
+
+    // MARK: - Wallpaper settings moving between scopes
+
+    /// Turning off "same on all displays" moves every value from
+    /// AllSpacesAndDisplays to one branch per display. Reported literally, a Mac with
+    /// three displays turned one user action into a dozen rows, most of them saying a
+    /// display had gained the wallpaper it was already showing.
+    private static let sharedWallpaperSnapshot = """
+        wallpaper :: AllSpacesAndDisplays.Desktop.Content.Choices[0].Configuration.placement = True
+        wallpaper :: AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative = file:///old.jpg
+        """
+
+    private func scopeKB() -> KnowledgeBase {
+        KnowledgeBase(entries: [
+            makeEntry(domain: "wallpaper", keyPrefix: "AllSpacesAndDisplays."),
+            makeEntry(domain: "wallpaper", keyPrefix: "Spaces."),
+        ], version: 1, updatedAt: nil)
+    }
+
+    func testADisplayKeepingItsWallpaperThroughTheMoveReportsNothing() {
+        let perDisplay = "Spaces..Displays.\(Self.displayA).Desktop.Content.Choices[0]"
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative = file:///old.jpg
+            +wallpaper :: \(perDisplay).Files[0].relative = file:///old.jpg
+            """, kb: scopeKB(),
+            beforeSnapshot: Self.sharedWallpaperSnapshot, afterSnapshot: "")
+        XCTAssertEqual(result.recognized.count, 0, """
+            The display is showing the same picture before and after; only where the \
+            setting is recorded changed.
+            """)
+    }
+
+    func testADisplayLandingOnSomethingElseStillReports() {
+        let perDisplay = "Spaces..Displays.\(Self.displayA).Desktop.Content.Choices[0]"
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative = file:///old.jpg
+            +wallpaper :: \(perDisplay).Files[0].relative = file:///new.jpg
+            """, kb: scopeKB(),
+            beforeSnapshot: Self.sharedWallpaperSnapshot, afterSnapshot: "")
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertTrue(result.recognized[0].diff.key.hasPrefix("Spaces."),
+                      "The row that survives should be the one saying what the display shows now.")
+    }
+
+    func testTheSharedWallpaperGoingAwayOnItsOwnStillReports() {
+        // Nothing appears per display, so this is a wallpaper being removed rather
+        // than one moving scope.
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative = file:///old.jpg
+            """, kb: scopeKB(),
+            beforeSnapshot: Self.sharedWallpaperSnapshot, afterSnapshot: "")
+        XCTAssertEqual(result.recognized.count, 1)
+    }
+
+    func testDisplaysGivingUpTheirOwnWallpaperForASharedOneReportOnce() {
+        // The reverse move. The per-display rows say each display lost the picture it
+        // is still showing; the row worth keeping is the one saying they now share it.
+        let perDisplay = "Spaces..Displays.\(Self.displayA).Desktop.Content.Choices[0]"
+        let after = """
+            wallpaper :: AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative = file:///old.jpg
+            """
+        let result = engine().parse(diffOutput: """
+            -wallpaper :: \(perDisplay).Files[0].relative = file:///old.jpg
+            +wallpaper :: AllSpacesAndDisplays.Desktop.Content.Choices[0].Files[0].relative = file:///old.jpg
+            """, kb: scopeKB(), beforeSnapshot: "", afterSnapshot: after)
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertTrue(result.recognized[0].diff.key.hasPrefix("AllSpacesAndDisplays."))
+    }
+
     // MARK: - Per-Space wallpaper collapse
 
     private static let displayA = "37D8832A-2D66-02CA-B9F7-8F30A301B230"

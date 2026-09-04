@@ -252,6 +252,33 @@ final class FormatValueTests: XCTestCase {
                        "Camera access for Safari")
     }
 
+    func testACloudFileGrantNamesTheProviderRatherThanItsExtension() {
+        // The provider is an app extension, and its identifier is not something
+        // LaunchServices resolves. Apple's own live in a system framework and are not
+        // apps at all, so they are named outright.
+        var e = prefixEntry("kTCCServiceFileProviderDomain/")
+        e = KBEntry(id: e.id, domain: e.domain, key: e.key, source: e.source,
+                    valueType: e.valueType, description: "Access for {subject} to files in {target}",
+                    uiLocation: nil, uiLocationOverrides: nil, settingsURL: nil,
+                    noise: false, noiseReason: nil, minMacOS: nil, notes: nil,
+                    aiGenerated: false, contributedByIssue: nil, valueMap: nil,
+                    keyPrefix: e.keyPrefix, iconBundleID: nil, implicitDefault: nil,
+                    requiresHardware: nil)
+        let key = "kTCCServiceFileProviderDomain/com.apple.Safari"
+            + "/com.apple.CloudDocs.iCloudDriveFileProvider/090F3707-CDE4-42F1-A322-A2ECFC24648A"
+        XCTAssertEqual(rowTarget(entry: e, key: key), "iCloud Drive")
+    }
+
+    func testAGrantDropsThePerInstallIdentifierWhateverItsShape() {
+        // Dropbox's is a UUID and gets dropped as one; Google's is "gdrive-" and a
+        // string of digits, which no UUID rule catches. Both name one account with
+        // that provider rather than anything a reader would recognise.
+        let e = prefixEntry("kTCCServiceFileProviderDomain/")
+        let key = "kTCCServiceFileProviderDomain/com.apple.Safari"
+            + "/com.example.provider.fpext/gdrive-106741850554591477322"
+        XCTAssertEqual(rowTarget(entry: e, key: key), "com.example.provider.fpext")
+    }
+
     func testPlaceholderIsRemovedWhenThereIsNoSubject() {
         // An exact-match entry has no subject, and a stray {subject} must not show.
         let e = KBEntry(id: "t", domain: "d", key: "k", source: "s", valueType: "string",

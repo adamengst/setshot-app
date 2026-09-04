@@ -165,4 +165,54 @@ final class MediaMarkerScopeTests: XCTestCase {
             \(Set(wronglyLost.map(\.domain)).sorted().prefix(12).joined(separator: "\n"))
             """)
     }
+
+    // MARK: - Diagnostic
+
+    /// Prints what the engine makes of one comparison. Not an assertion about
+    /// behaviour — it fails on purpose so the numbers reach the log.
+    func testReportOneComparison() throws {
+        let env = ProcessInfo.processInfo.environment
+        guard let beforePath = env["SETSHOT_BEFORE"], let afterPath = env["SETSHOT_AFTER"] else {
+            throw XCTSkip("Set SETSHOT_BEFORE and SETSHOT_AFTER")
+        }
+        let kb = KnowledgeBase(entries: try TestSupport.requireKnowledgeBase(),
+                               version: 0, updatedAt: nil)
+        func read(_ p: String) throws -> String {
+            p.hasSuffix(".gz") ? try TestSupport.gunzip(URL(fileURLWithPath: p))
+                               : try String(contentsOfFile: p, encoding: .utf8)
+        }
+        let before = try read(beforePath), after = try read(afterPath)
+        let diff = try TestSupport.runScriptDiff(before: before, after: after)
+        let r = DiffEngine().parse(diffOutput: diff, kb: kb,
+                                   beforeSnapshot: before, afterSnapshot: after)
+        var byDomain: [String: Int] = [:]
+        for u in r.unrecognized { byDomain[u.domain, default: 0] += 1 }
+        let top = byDomain.sorted { $0.value > $1.value }.prefix(15)
+            .map { "  \($0.value)\t\($0.key)" }.joined(separator: "\n")
+        let keys = r.unrecognized.map { "  \($0.domain) :: \($0.key) = \($0.beforeValue)|\($0.afterValue)" }
+            .sorted().joined(separator: "\n")
+        let rec = r.recognized.map {
+            "  [\($0.entry.id)] \($0.diff.domain) :: \($0.diff.key)\n     "
+                + rowDescription(entry: $0.entry, key: $0.diff.key)
+                + "\n     " + formatValue($0.diff.beforeValue, key: $0.diff.key, valueMap: $0.entry.valueMap, detail: $0.diff.beforeDetail)
+                + "  ->  " + formatValue($0.diff.afterValue, key: $0.diff.key, valueMap: $0.entry.valueMap, detail: $0.diff.afterDetail)
+        }.sorted().joined(separator: "\n")
+        let oneSided = r.unrecognized.filter { $0.beforeValue.isEmpty || $0.afterValue.isEmpty }
+        XCTFail("""
+            REPORT
+            recognized:   \(r.recognized.count)
+            unrecognized: \(r.unrecognized.count) (overflow \(r.unrecognizedOverflow))
+            noise:        \(r.noise.count)
+            one-sided among unrecognized: \(oneSided.count)
+
+            unrecognized by domain:
+            \(top)
+
+            KEYS
+            \(keys)
+
+            RECOGNIZED
+            \(rec)
+            """)
+    }
 }
