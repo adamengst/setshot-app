@@ -1032,6 +1032,47 @@ _filter_noise() {
   rm -rf "$dir"
 }
 
+# Drops the pairs where a value only changed how it is written down.
+#
+# Integer and floating-point 0 and 1 used to be captured as False and True, so a
+# snapshot taken before that changed says True where one taken after says 1. The
+# two are the same value, and reporting several hundred of them as changes would
+# bury whatever else moved between the snapshots. A key with one line on each side
+# whose values agree once True and 1 are read as the same number is removed.
+#
+# Requiring exactly one line per side keeps this away from arrays, where several
+# lines share a key and matching them up would be guesswork.
+_drop_bool_recodings() {
+  awk '
+    function norm(v) {
+      if (v == "True"  || v == "1") return "1"
+      if (v == "False" || v == "0") return "0"
+      return "\001" v
+    }
+    {
+      line[NR] = $0
+      if (($0 ~ /^-/ || $0 ~ /^\+/) && index($0, " = ") > 0) {
+        side = substr($0, 1, 1)
+        body = substr($0, 2)
+        p = index(body, " = ")
+        k = substr(body, 1, p - 1)
+        v = norm(substr(body, p + 3))
+        if (side == "-") { minus[k]++; minusAt[k] = NR; minusVal[k] = v }
+        else             { plus[k]++;  plusAt[k]  = NR; plusVal[k]  = v }
+      }
+    }
+    END {
+      for (k in minus) {
+        if (minus[k] == 1 && plus[k] == 1 && minusVal[k] == plusVal[k]) {
+          drop[minusAt[k]] = 1
+          drop[plusAt[k]]  = 1
+        }
+      }
+      for (i = 1; i <= NR; i++) if (!(i in drop)) print line[i]
+    }
+  '
+}
+
 # ── Device identity ───────────────────────────────────────────────────────────
 
 # What a snapshot's captured shape is. Bump this whenever a change to what is
@@ -1046,6 +1087,14 @@ _filter_noise() {
 #      <display>; SIP/Gatekeeper/FileVault/Firewall and nvram normalised;
 #      launch agents, Time Machine, system extensions and network config
 #      given key = value form; default browser http/https merged
+#
+# Not bumped when the flattener stopped writing integer and floating-point 0 and 1
+# as False and True, which changes what about two thousand lines of a snapshot say.
+# A bump warns the user that a comparison is untrustworthy, and this one is not: the
+# two forms are the same values, `_drop_bool_recodings` removes the pairs where only
+# the spelling differs, and DiffEngine's own comparison reads True and 1 as one
+# number. Two snapshots taken a minute apart, one with each flattener, differed on
+# 4,137 lines and reported none of them.
 SNAPSHOT_FORMAT=2
 
 SETSHOT_PREF_DOMAIN="com.tidbits.setshot"
@@ -2088,6 +2137,7 @@ do_diff() {
     diff --unified=0 <(cat_snapshot "$before") <(cat_snapshot "$after") \
       | grep -vE '^@@' \
       | _filter_noise \
+      | _drop_bool_recodings \
       || true
   fi
 }

@@ -25,11 +25,15 @@ struct MarkdownExporter {
                        before: item.diff.beforeValue.isEmpty ? "(none)"
                            : formatValue(item.diff.beforeValue, key: item.diff.key,
                                          valueMap: item.entry.valueMap,
-                                         detail: item.diff.beforeDetail),
+                                         detail: item.diff.beforeDetail,
+                                         valueType: item.entry.valueType,
+                                         counterpart: item.diff.afterValue),
                        after: item.diff.afterValue.isEmpty ? "(none)"
                            : formatValue(item.diff.afterValue, key: item.diff.key,
                                          valueMap: item.entry.valueMap,
-                                         detail: item.diff.afterDetail),
+                                         detail: item.diff.afterDetail,
+                                         valueType: item.entry.valueType,
+                                         counterpart: item.diff.beforeValue),
                        note: nil)
         }
         return out
@@ -56,9 +60,11 @@ struct MarkdownExporter {
                                                                        : entry.entryDescription,
                            location: entry.uiLocation,
                            before: entry.oldValue.isEmpty ? "(none)"
-                               : formatValue(entry.oldValue, key: entry.key, valueMap: nil),
+                               : formatValue(entry.oldValue, key: entry.key, valueMap: nil,
+                                             counterpart: entry.newValue),
                            after: entry.newValue.isEmpty ? "(none)"
-                               : formatValue(entry.newValue, key: entry.key, valueMap: nil),
+                               : formatValue(entry.newValue, key: entry.key, valueMap: nil,
+                                             counterpart: entry.oldValue),
                            note: entry.userNote)
             }
         }

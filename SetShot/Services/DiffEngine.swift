@@ -450,9 +450,15 @@ struct DiffEngine {
             guard pair.key.hasPrefix("Spaces."), let leaf = wallpaperLeaf(pair.key)
             else { return false }
             // A display inheriting what it already had, either as it stops sharing or
-            // as it starts.
-            if before.isEmpty, !after.isEmpty { return sharedBefore[leaf] == after }
-            if after.isEmpty, !before.isEmpty { return sharedAfter[leaf] == before }
+            // as it starts. Compared through semanticValue so a snapshot written
+            // before the flattener stopped writing 1 as True still matches one
+            // written after: wallpaper placement is an integer.
+            if before.isEmpty, !after.isEmpty {
+                return sharedBefore[leaf].map { semanticValue($0) == semanticValue(after) } ?? false
+            }
+            if after.isEmpty, !before.isEmpty {
+                return sharedAfter[leaf].map { semanticValue($0) == semanticValue(before) } ?? false
+            }
             return false
         }
 

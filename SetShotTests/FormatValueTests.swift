@@ -279,6 +279,44 @@ final class FormatValueTests: XCTestCase {
         XCTAssertEqual(rowTarget(entry: e, key: key), "com.example.provider.fpext")
     }
 
+    // MARK: - Numbers that are not switches
+
+    func testAFloatingPointSettingLandingOnOneStaysANumber() {
+        // Mouse tracking speed set to exactly 1 read as "On" next to the 0.6875 it
+        // changed from. Every floating-point setting in the knowledge base is a
+        // measurement — a speed, a volume, a delay — so the type settles it.
+        XCTAssertEqual(formatValue("1", valueType: "float"), "1")
+        XCTAssertEqual(formatValue("0", valueType: "float"), "0")
+    }
+
+    func testAnIntegerSettingIsStillTreatedAsASwitch() {
+        // Integers are recorded for plenty of switches, so the type alone proves
+        // nothing and the coercion stays.
+        XCTAssertEqual(formatValue("1", valueType: "int"), "On")
+    }
+
+    func testAValueChangingFromAMagnitudeIsNotASwitch() {
+        // "0.69 → On" is a row where the coercion has visibly gone wrong, whatever
+        // the knowledge base says about the type.
+        XCTAssertEqual(formatValue("1", counterpart: "0.6875"), "1")
+        XCTAssertEqual(formatValue("1", counterpart: "2"), "1")
+    }
+
+    func testASwitchIsUnaffectedByTheOtherSideOfTheArrow() {
+        XCTAssertEqual(formatValue("1", counterpart: "0"), "On")
+        XCTAssertEqual(formatValue("0", counterpart: "True"), "Off")
+        XCTAssertEqual(formatValue("1", counterpart: "Never"), "On")
+    }
+
+    func testAnOlderSnapshotsTrueIsReadBackAsTheNumberItWas() {
+        // Before the flattener stopped writing 0 and 1 as False and True, a tracking
+        // speed of exactly 1 was stored as True, and nothing in the snapshot says it
+        // was ever a number. Showing the number beats showing "True".
+        XCTAssertEqual(formatValue("True", valueType: "float"), "1")
+        XCTAssertEqual(formatValue("False", valueType: "float"), "0")
+        XCTAssertEqual(formatValue("True", counterpart: "0.6875"), "1")
+    }
+
     func testPlaceholderIsRemovedWhenThereIsNoSubject() {
         // An exact-match entry has no subject, and a stray {subject} must not show.
         let e = KBEntry(id: "t", domain: "d", key: "k", source: "s", valueType: "string",
@@ -318,9 +356,10 @@ final class FormatValueTests: XCTestCase {
 
     func testPlacementValuesReadAsTheirSettingsNames() throws {
         // Read off four snapshots taken one per change, Fill → Fit → Stretch → Center.
-        // 1 arrives as "True" because the flattener coerces integer 1 to a boolean;
-        // formatValue normalises it back before the map lookup, which is what lets a
-        // map keyed on integers work at all.
+        // Both forms of 1 have to work: snapshots taken before the flattener stopped
+        // writing integer 1 as True still say True, and formatValue normalises that
+        // back before the map lookup, which is what lets a map keyed on integers work
+        // for either.
         let entries = try TestSupport.requireKnowledgeBase()
         let kb = KnowledgeBase(entries: entries, version: 0, updatedAt: nil)
         let key = "Spaces.B91CBB8D-60AD-49CD-BE1E-36DA590B78FC.Displays."

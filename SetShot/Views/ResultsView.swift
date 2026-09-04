@@ -184,8 +184,8 @@ func unrecognizedRowText(rawLine: String, before: String, after: String, key: St
     ns.append(NSAttributedString(string: rawLine, attributes: [
         .font: mono, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: para(8),
     ]))
-    let b = before.isEmpty ? "(none)" : formatValue(before, key: key)
-    let a = after.isEmpty  ? "(none)" : formatValue(after,  key: key)
+    let b = before.isEmpty ? "(none)" : formatValue(before, key: key, counterpart: after)
+    let a = after.isEmpty  ? "(none)" : formatValue(after,  key: key, counterpart: before)
     ns.append(NSAttributedString(string: "\n" + b,
         attributes: [.font: mono, .foregroundColor: NSColor.systemOrange]))
     ns.append(NSAttributedString(string: "  \u{2192}  ",
@@ -514,7 +514,8 @@ func recognizedRowText(description: String, location: String?, old: String, new:
 }
 
 func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil,
-                 detail: String? = nil) -> String {
+                 detail: String? = nil, valueType: String? = nil,
+                 counterpart: String? = nil) -> String {
     if let map = valueMap {
         // Resolve dynamic system values for Finder new window target. These read the
         // machine's own identity, which the snapshot does not record.
@@ -566,15 +567,37 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
             if !name.isEmpty { return name }
         }
     }
+    // 0 and 1 mean On and Off for a switch and nothing of the kind for a magnitude,
+    // and the snapshot records both as bare numbers. Three things say which this is.
+    //
     // A value_map that gives 0 or 1 a label of its own — "Never" for a sleep timer,
     // "Text fields and lists only" for full keyboard access — is describing a
-    // magnitude or a set of choices, not a switch. Coercing an unmapped value there
-    // reported a one-minute display sleep as "On". The fallback below is for values
-    // with no map to speak of.
+    // magnitude or a set of choices. Coercing an unmapped value there reported a
+    // one-minute display sleep as "On".
     let mapDescribesAScale = valueMap.map {
         ($0["0"] != nil && $0["0"] != "Off") || ($0["1"] != nil && $0["1"] != "On")
     } ?? false
-    if !mapDescribesAScale {
+    // A value_type that can only hold a number. Integers are recorded for plenty of
+    // switches, so only the floating-point types are taken as proof; every entry
+    // carrying one is a tracking speed, a volume or a delay.
+    let typeIsAMagnitude = ["float", "real", "double"].contains(valueType?.lowercased() ?? "")
+    // And what stands on the other side of the arrow. A row reading "0.69 → On" or
+    // "2 → On" is one where the coercion has visibly gone wrong: whatever the
+    // setting is, it is being measured rather than switched.
+    let counterpartIsAMagnitude = counterpart.map {
+        Double($0) != nil && $0 != "0" && $0 != "1"
+    } ?? false
+    if mapDescribesAScale || typeIsAMagnitude || counterpartIsAMagnitude {
+        // Snapshots taken before the flattener stopped writing 0 and 1 as False and
+        // True hold True where a number belongs, and which it was cannot be recovered
+        // from the snapshot. Reading them back as the numbers they were beats showing
+        // a tracking speed as "True".
+        switch raw.lowercased() {
+        case "true":  return "1"
+        case "false": return "0"
+        default: break
+        }
+    } else {
         switch raw.lowercased() {
         case "true", "yes", "1": return "On"
         case "false", "no", "0": return "Off"
@@ -670,9 +693,11 @@ private struct RecognizedRow: View {
                     description: rowDescription(entry: entry, key: diff.key),
                     location: uiLocation,
                     old: formatValue(diff.beforeValue, key: diff.key,
-                                     valueMap: entry.valueMap, detail: diff.beforeDetail),
+                                     valueMap: entry.valueMap, detail: diff.beforeDetail,
+                                     valueType: entry.valueType, counterpart: diff.afterValue),
                     new: formatValue(diff.afterValue, key: diff.key,
-                                     valueMap: entry.valueMap, detail: diff.afterDetail)
+                                     valueMap: entry.valueMap, detail: diff.afterDetail,
+                                     valueType: entry.valueType, counterpart: diff.beforeValue)
                 )
                 Spacer()
                 VStack(alignment: .center, spacing: 0) {

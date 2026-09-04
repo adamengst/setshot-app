@@ -52,12 +52,16 @@ enum PlistFlattener {
     // "<path> :: " in batch mode, where it replaces the script's `sed` prefix.
     static func flatten(_ obj: Any, prefix: String, line: String, into out: inout String) {
         if let n = obj as? NSNumber {
-            // CFBoolean check distinguishes a true bool from an integer 1/0.
+            // Only a real boolean is written as True/False. Integer and
+            // floating-point 0 and 1 used to be written that way too, which made a
+            // mouse tracking speed of exactly 1 indistinguishable from a switch being
+            // on, and a gesture setting whose values run 0 to 3 read as if it had two.
+            //
+            // Snapshots taken before this still say True where one says 1, so the
+            // format is unchanged and comparisons across the two agree: the diff
+            // treats True and 1 as the same value, and so does the script's own diff.
             if CFGetTypeID(n as CFTypeRef) == CFBooleanGetTypeID() {
                 out += "\(line)\(prefix) = \(n.boolValue ? "True" : "False")\n"
-            } else if let i = n as? Int, i == 0 || i == 1 {
-                // Normalize integer 0/1 to False/True (matches Python behavior).
-                out += "\(line)\(prefix) = \(i == 1 ? "True" : "False")\n"
             } else if let i = n as? Int {
                 out += "\(line)\(prefix) = \(i)\n"
             } else {

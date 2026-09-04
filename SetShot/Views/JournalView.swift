@@ -13,9 +13,12 @@ struct JournalView: View {
         guard !searchQuery.isEmpty else { return appModel.journal }
         let q = searchQuery.lowercased()
         return appModel.journal.filter {
-            let valueMap = appModel.kb.entry(forDomain: $0.domain, key: $0.key)?.valueMap
-            let oldFormatted = formatValue($0.oldValue, key: $0.key, valueMap: valueMap)
-            let newFormatted = formatValue($0.newValue, key: $0.key, valueMap: valueMap)
+            let kbEntry = appModel.kb.entry(forDomain: $0.domain, key: $0.key)
+            let valueMap = kbEntry?.valueMap
+            let oldFormatted = formatValue($0.oldValue, key: $0.key, valueMap: valueMap,
+                                           valueType: kbEntry?.valueType, counterpart: $0.newValue)
+            let newFormatted = formatValue($0.newValue, key: $0.key, valueMap: valueMap,
+                                           valueType: kbEntry?.valueType, counterpart: $0.oldValue)
             return $0.entryDescription.lowercased().contains(q) ||
                 $0.key.lowercased().contains(q) ||
                 ($0.uiLocation?.lowercased().contains(q) ?? false) ||
@@ -245,8 +248,10 @@ private struct JournalRow: View {
         let location = kbEntry?.uiLocation ?? entry.uiLocation
         let settingsURL = validatedSettingsURL(kbEntry?.settingsURL ?? entry.settingsURL)
         let valueMap = kbEntry?.valueMap
-        let oldFormatted = formatValue(entry.oldValue, key: entry.key, valueMap: valueMap)
-        let newFormatted = formatValue(entry.newValue, key: entry.key, valueMap: valueMap)
+        let oldFormatted = formatValue(entry.oldValue, key: entry.key, valueMap: valueMap,
+                                       valueType: kbEntry?.valueType, counterpart: entry.newValue)
+        let newFormatted = formatValue(entry.newValue, key: entry.key, valueMap: valueMap,
+                                       valueType: kbEntry?.valueType, counterpart: entry.oldValue)
 
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top, spacing: 12) {

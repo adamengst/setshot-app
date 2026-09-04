@@ -194,8 +194,12 @@ final class MediaMarkerScopeTests: XCTestCase {
         let rec = r.recognized.map {
             "  [\($0.entry.id)] \($0.diff.domain) :: \($0.diff.key)\n     "
                 + rowDescription(entry: $0.entry, key: $0.diff.key)
-                + "\n     " + formatValue($0.diff.beforeValue, key: $0.diff.key, valueMap: $0.entry.valueMap, detail: $0.diff.beforeDetail)
-                + "  ->  " + formatValue($0.diff.afterValue, key: $0.diff.key, valueMap: $0.entry.valueMap, detail: $0.diff.afterDetail)
+                + "\n     " + formatValue($0.diff.beforeValue, key: $0.diff.key, valueMap: $0.entry.valueMap,
+                                            detail: $0.diff.beforeDetail, valueType: $0.entry.valueType,
+                                            counterpart: $0.diff.afterValue)
+                + "  ->  " + formatValue($0.diff.afterValue, key: $0.diff.key, valueMap: $0.entry.valueMap,
+                                         detail: $0.diff.afterDetail, valueType: $0.entry.valueType,
+                                         counterpart: $0.diff.beforeValue)
         }.sorted().joined(separator: "\n")
         let oneSided = r.unrecognized.filter { $0.beforeValue.isEmpty || $0.afterValue.isEmpty }
         XCTFail("""
