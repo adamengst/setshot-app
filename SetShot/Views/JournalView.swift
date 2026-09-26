@@ -255,7 +255,12 @@ private struct JournalRow: View {
 
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .top, spacing: 12) {
-                SettingsPaneIcon(settingsURL: kbEntry?.settingsURL ?? entry.settingsURL, domain: entry.domain, iconBundleID: kbEntry?.iconBundleID)
+                SettingsPaneIcon(settingsURL: kbEntry?.settingsURL ?? entry.settingsURL,
+                                 domain: entry.domain,
+                                 iconBundleID: handlerIconBundleID(key: entry.key,
+                                                                   before: entry.oldValue,
+                                                                   after: entry.newValue)
+                                     ?? kbEntry?.iconBundleID)
                     .padding(.top, 2)
                 HStack(alignment: .top, spacing: 8) {
                     recognizedRowText(

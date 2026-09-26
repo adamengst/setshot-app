@@ -424,6 +424,20 @@ private func appName(forBundleIdentifier id: String) -> String? {
     return name.isEmpty ? nil : name
 }
 
+/// A default-handler row names an app in its own value — the browser, mail client
+/// or RSS reader the choice landed on — and that app's icon says more than the pane
+/// the choice is made in. Some of these have no pane at all: an RSS reader is chosen
+/// by the reader itself, so the row had nothing to draw.
+///
+/// LaunchServices lowercases these identifiers, which NSWorkspace resolves anyway.
+func handlerIconBundleID(key: String, before: String, after: String) -> String? {
+    guard key == "handler" else { return nil }
+    let value = after.isEmpty ? before : after
+    guard !value.isEmpty, value.contains("."), !value.contains("/"), !value.contains(" ")
+    else { return nil }
+    return value
+}
+
 /// The description shown for a recognized row.
 ///
 /// An entry matching one exact key describes itself. An entry covering many keys
@@ -686,7 +700,11 @@ private struct RecognizedRow: View {
         let uiLocation = entry.effectiveUILocation(macOSMajor: Self.macOSMajor)
 
         HStack(alignment: .top, spacing: 12) {
-            SettingsPaneIcon(settingsURL: entry.settingsURL, domain: diff.domain, iconBundleID: entry.iconBundleID)
+            SettingsPaneIcon(settingsURL: entry.settingsURL, domain: diff.domain,
+                             iconBundleID: handlerIconBundleID(key: diff.key,
+                                                               before: diff.beforeValue,
+                                                               after: diff.afterValue)
+                                 ?? entry.iconBundleID)
                 .padding(.top, 2)
             HStack(alignment: .top, spacing: 8) {
                 recognizedRowText(

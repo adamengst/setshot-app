@@ -279,6 +279,32 @@ final class FormatValueTests: XCTestCase {
         XCTAssertEqual(rowTarget(entry: e, key: key), "com.example.provider.fpext")
     }
 
+    // MARK: - Icons for default-handler rows
+
+    func testADefaultHandlerRowDrawsTheAppItNamed() {
+        // The RSS reader row had no pane and no icon bundle, because an RSS reader is
+        // chosen by the reader itself rather than in System Settings. Its value names
+        // the app, which is the better icon anyway.
+        XCTAssertEqual(handlerIconBundleID(key: "handler", before: "com.apple.safari",
+                                           after: "com.apple.news"), "com.apple.news")
+    }
+
+    func testAHandlerThatWasRemovedFallsBackToWhatItWas() {
+        XCTAssertEqual(handlerIconBundleID(key: "handler", before: "com.apple.mail", after: ""),
+                       "com.apple.mail")
+    }
+
+    func testOnlyHandlerRowsAreTreatedThisWay() {
+        XCTAssertNil(handlerIconBundleID(key: "NSGlassTintAmount", before: "0", after: "1"))
+    }
+
+    func testAValueThatIsNotABundleIdentifierIsNotUsed() {
+        // A path, a sentence, or anything without a dot names no app.
+        XCTAssertNil(handlerIconBundleID(key: "handler", before: "", after: "/usr/bin/open"))
+        XCTAssertNil(handlerIconBundleID(key: "handler", before: "", after: "Some App"))
+        XCTAssertNil(handlerIconBundleID(key: "handler", before: "", after: "none"))
+    }
+
     // MARK: - Numbers that are not switches
 
     func testAFloatingPointSettingLandingOnOneStaysANumber() {
