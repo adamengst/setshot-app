@@ -1635,9 +1635,28 @@ JSEOF
     if ! profiles show 2>/dev/null | grep -q profileIdentifier; then
       echo "profiles :: (no profiles installed for this user)"
     fi
-    ls /Library/Managed\ Preferences 2>/dev/null | while IFS= read -r f; do
-      echo "managedpreferences :: ${f} = present"
-    done
+    # /Library/Managed Preferences holds a plist per machine-wide managed domain,
+    # and a subdirectory per managed user holding that user's. Listing the directory
+    # and calling every entry a domain reported the subdirectories too, so a Mac with
+    # a second account emitted that account's short name as though it were a setting
+    # being managed. Only this user's domains and the machine-wide ones affect what
+    # this snapshot records, and another account's name is not ours to report.
+    _managed_domains() {
+      local d
+      for d in "/Library/Managed Preferences" "/Library/Managed Preferences/$(id -un)"; do
+        [ -d "$d" ] || continue
+        ls "$d" 2>/dev/null | while IFS= read -r f; do
+          case "$f" in
+            *.plist) echo "managedpreferences :: ${f%.plist} = managed" ;;
+          esac
+        done
+      done
+    }
+    if [ -n "$(_managed_domains)" ]; then
+      _managed_domains | sort -u
+    else
+      echo "managedpreferences :: (no managed preference domains)"
+    fi
 
     section "LAUNCH AGENTS & DAEMONS"
     # Emitted as "<dir> :: <filename>" with no `=`, so an installed launch agent or
