@@ -128,7 +128,7 @@ actor SnapshotStore {
         return try? JSONDecoder().decode(SnapshotMeta.self, from: data)
     }
 
-    // Derives "macOS Sequoia 15.7.7 baseline defaults" from "base_Sequoia_15.7.7.txt.gz"
+    // Derives "macOS 15.7.7 Sequoia baseline defaults" from "base_Sequoia_15.7.7.txt.gz"
     private nonisolated func baseLabel(for filename: String) -> String? {
         var name = filename
         guard name.hasPrefix("base_") else { return nil }
@@ -137,7 +137,7 @@ actor SnapshotStore {
         else if name.hasSuffix(".txt") { name = String(name.dropLast(4)) }
         let parts = name.split(separator: "_", maxSplits: 1)
         guard parts.count == 2 else { return nil }
-        return "macOS \(spacedName(parts[0])) \(parts[1]) baseline defaults"
+        return "macOS \(parts[1]) \(spacedName(parts[0])) baseline defaults"
     }
 
     /// "GoldenGate" -> "Golden Gate". A release whose name is two words cannot carry

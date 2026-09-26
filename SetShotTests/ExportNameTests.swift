@@ -37,8 +37,8 @@ final class ExportNameTests: XCTestCase {
     func testExportLabelKeepsNamesTheUserGave() {
         XCTAssertEqual(snapshot(date: jan2, customLabel: "before round 1").exportLabel,
                        "before round 1")
-        XCTAssertEqual(snapshot(date: jan2, baseName: "macOS Sequoia 15.7.7 baseline defaults").exportLabel,
-                       "macOS Sequoia 15.7.7 baseline defaults")
+        XCTAssertEqual(snapshot(date: jan2, baseName: "macOS 15.7.7 Sequoia baseline defaults").exportLabel,
+                       "macOS 15.7.7 Sequoia baseline defaults")
     }
 
     func testComputerNameIsUsableInAFilename() {
