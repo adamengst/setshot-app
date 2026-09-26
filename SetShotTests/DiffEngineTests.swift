@@ -309,6 +309,42 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.recognized.count, 2)
     }
 
+    // MARK: - A setting whose key disappears
+
+    /// Some controls delete their key rather than writing the default back: Keep
+    /// Conversations set to Forever removes AgentSessionPersistenceTTL, and turning
+    /// the menu bar background off removes SLSMenuBarUseBlurredAppearance. An entry
+    /// can say what is in force when nothing is written, and that has to apply to
+    /// whichever side is empty — the row read "30 Days → (none)" when what happened
+    /// was "30 Days → Forever".
+    private func defaultingKB() -> KnowledgeBase {
+        var e = makeEntry(domain: "com.example", key: "TTL")
+        e = KBEntry(id: e.id, domain: e.domain, key: e.key, source: e.source,
+                    valueType: e.valueType, description: e.description,
+                    uiLocation: e.uiLocation, uiLocationOverrides: nil, settingsURL: nil,
+                    noise: false, noiseReason: nil, minMacOS: nil, notes: nil,
+                    aiGenerated: false, contributedByIssue: nil, valueMap: nil,
+                    keyPrefix: nil, iconBundleID: nil, implicitDefault: "Forever",
+                    requiresHardware: nil)
+        return KnowledgeBase(entries: [e], version: 1, updatedAt: nil)
+    }
+
+    func testAKeyDisappearingReadsAsTheDefaultComingBack() {
+        let result = engine().parse(diffOutput: "-com.example :: TTL = 2592000\n",
+                                    kb: defaultingKB())
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertEqual(result.recognized[0].diff.beforeValue, "2592000")
+        XCTAssertEqual(result.recognized[0].diff.afterValue, "Forever")
+    }
+
+    func testAKeyAppearingStillReadsAsLeavingTheDefault() {
+        let result = engine().parse(diffOutput: "+com.example :: TTL = 2592000\n",
+                                    kb: defaultingKB())
+        XCTAssertEqual(result.recognized.count, 1)
+        XCTAssertEqual(result.recognized[0].diff.beforeValue, "Forever")
+        XCTAssertEqual(result.recognized[0].diff.afterValue, "2592000")
+    }
+
     // MARK: - A screen saver changing which shape names it
 
     func testABuiltInScreenSaverReplacedByABundleIsOneChange() {

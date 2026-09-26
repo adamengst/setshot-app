@@ -492,13 +492,20 @@ struct DiffEngine {
             }
             guard !isUID(before) && !isUID(after) else { continue }
             if let entry = kb.entry(forDomain: p.domain, key: p.key) {
+                // A key that is absent means the setting is at whatever macOS does when
+                // nothing is written, and an entry can say what that is. It applies to
+                // either side: some controls delete their key rather than write the
+                // default back, so turning Keep Conversations to Forever, or the menu
+                // bar background off, removes it — and the row read "30 Days → (none)"
+                // when what happened was "30 Days → Forever".
                 let effectiveBefore = before.isEmpty ? (entry.implicitDefault ?? "") : before
+                let effectiveAfter = after.isEmpty ? (entry.implicitDefault ?? "") : after
                 var diffLine = DiffLine(
                     domain: p.domain,
                     key: p.key,
                     source: inferSource(rawDomain: p.rawDomain),
                     beforeValue: effectiveBefore,
-                    afterValue: after,
+                    afterValue: effectiveAfter,
                     macOSVersion: macOSVersion,
                     rawLine: "\(p.rawDomain) :: \(p.key)"
                 )
