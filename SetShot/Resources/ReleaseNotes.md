@@ -1,3 +1,31 @@
+## 1.0b28
+
+- **macOS 27 Golden Gate is supported** — SetShot ships with a Golden Gate baseline alongside the Sequoia and Tahoe ones, so a first comparison on macOS 27 has something current to compare against. More to the point, upgrading to Golden Gate used to bury you: a Sequoia snapshot against a macOS 27 one reported 145 unrecognized changes, 144 of them keys the new system had added — a Spotlight indexing timestamp for every System Settings pane, Apple Intelligence onboarding versions, migration markers, daemon start times. That is now 5, and a routine comparison between two macOS 27 snapshots went from 50 to 3.
+
+- **Wallpapers no longer flood a comparison** — Two things made wallpaper the noisiest section in SetShot. Turning off "same on all displays" moves every value from one shared record to one per display, and each move arrived as two rows: the shared value going away and the same value appearing for a display that had been showing it all along. And creating a Space writes that Space a complete wallpaper record, so six new Spaces produced 29 rows about pictures nobody had changed. Both are gone. What survives is the display that landed on something different. A Mac with three displays went from 19 wallpaper rows to 8 in one case and from 29 to 2 in the other.
+
+- **Numbers are no longer shown as On or Off** — Every setting holding 0 or 1 was recorded as a switch, whatever it was. Mouse tracking speed set to exactly 1 was reported as "On" next to the 0.6875 it changed from; the Magic Mouse gesture settings, whose values run 0 to 3, read as if they had two. Snapshots now keep numbers as numbers. Old snapshots still compare cleanly against new ones — SetShot reads the two forms as the same value — so nothing you have already captured is stranded.
+
+- **Settings that switch off by deleting their key read correctly** — Several macOS 27 settings write a value when on and remove the key entirely when off, rather than writing zero. Keep Conversations set to Forever, the menu bar background, the icon and widget style, the folder colour. A comparison showed those as changing to nothing. They now read as what they went back to: "30 Days → Forever".
+
+- **Text you typed no longer reaches a snapshot** — Spotlight keeps the text of requests you composed and did not send, and the music recognition service keeps an access token. Both were being captured, which meant both could travel in an export or a submission. Neither is recorded now.
+
+- **Fixed: another account's name was reported as a setting** — On a Mac with a second managed user, SetShot listed that account's short name as though it were a preference domain under management. It now reads the managed domains themselves, yours and the machine-wide ones, and says so when there are none.
+
+- **Permissions are attributed properly** — A comparison now says which app an Automation grant lets control which other app, rather than running both names together. Grants for files in a cloud provider name the provider — iCloud Drive, Dropbox, Google Drive — instead of the identifier of the extension behind it. And SetShot's own Media & Apple Music grant is reported once rather than twice.
+
+- **Fixed: granting or revoking a permission hid unrelated settings** — Comparing the same Mac against the same baseline two minutes apart, with only Media & Apple Music changed, took 332 recognized changes down to 38. Full Disk Access did the same. Both suppressions now reach only the domains those permissions gate, measured rather than assumed. Thanks to Mark Nagata for the comparison that exposed it.
+
+- **Fixed: Submit Feedback marked rows you had not commented on** — One knowledge base entry covers many rows — every app holding a permission, every cloud provider one app can reach — and submitting feedback about one row marked all of them as sent.
+
+- **Rows for the default browser, mail client and RSS reader show that app's icon** — They had no icon at all, because the choice is made in the app rather than in System Settings, so there was no pane to take one from.
+
+- **Submissions record which version made them** — A submission now carries the SetShot build and knowledge base version, so a report of something already fixed can be told apart from something new without guessing.
+
+- **Baselines are named version first** — "macOS 27.0 Golden Gate" rather than "macOS Golden Gate 27.0", which sorts and scans better.
+
+- **A great deal more is described** — The knowledge base has gone from version 176 to 231. Among it: every Magic Mouse setting, worked out by watching each control; the Menu Bar modules, whose numbers turn out to be two settings packed together rather than the list of choices they had been described as; the macOS 27 Appearance settings for Liquid Glass, icon style and folder colour; and the Analytics & Improvements switches, one of which was described as its neighbour. Seven entries named a domain that does not hold their key, which meant five accessibility settings were reported as unrecognized and one was silently suppressed. Settings whose System Settings pane has been renamed — Siri's has had four names in four releases — now say the right one for the macOS you are running.
+
 ## 1.0b27
 
 - **SetShot offers to move itself to Applications** — If you unzip SetShot and open it from the Downloads folder, macOS runs it from a randomly named copy that it deletes afterward — this "translocation" increases security. Neither automatic snapshots nor updates can work from a translocated copy, so SetShot now spots this at launch and offers to move itself to your Applications folder and reopen from there. Until it has been moved, automatic snapshots and Check for Updates are switched off rather than appearing to work. Thanks to Beatrix Willius for the suggestion.
