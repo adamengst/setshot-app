@@ -462,6 +462,49 @@ struct DiffEngine {
             return false
         }
 
+        // Creating a Space writes it a complete wallpaper record, and its identifier is
+        // new, so every line of that record reads as a setting that appeared. Six new
+        // Spaces between two snapshots twelve days apart produced twenty-nine rows,
+        // none of which was anything anyone set — the new Spaces had simply inherited
+        // what their display was already showing.
+        //
+        // A Space is not something a wallpaper is chosen for, which is why identical
+        // rows across Spaces already collapse. This is the same idea for a Space that
+        // exists on only one side: if the display already had this value under some
+        // other Space, nothing about that display changed.
+        func wallpaperByDisplay(in snapshot: String) -> [String: Set<String>] {
+            guard !snapshot.isEmpty else { return [:] }
+            var found: [String: Set<String>] = [:]
+            for line in snapshot.components(separatedBy: "\n")
+            where line.hasPrefix("wallpaper :: Spaces.") {
+                let body = line.dropFirst("wallpaper :: ".count)
+                guard let split = body.range(of: " = ") else { continue }
+                let key = String(body[..<split.lowerBound])
+                // Drop the Space, keep the display and the leaf.
+                let withoutSpace = key.replacingOccurrences(
+                    of: #"^Spaces\.[^.]*\."#, with: "", options: .regularExpression)
+                found[withoutSpace, default: []].insert(String(body[split.upperBound...]))
+            }
+            return found
+        }
+        let displayWallpaperBefore = wallpaperByDisplay(in: beforeSnapshot)
+        let displayWallpaperAfter = wallpaperByDisplay(in: afterSnapshot)
+        pairs.removeAll { pair in
+            guard pair.domain == "wallpaper", pair.key.hasPrefix("Spaces.") else { return false }
+            let before = pair.before ?? "", after = pair.after ?? ""
+            let withoutSpace = pair.key.replacingOccurrences(
+                of: #"^Spaces\.[^.]*\."#, with: "", options: .regularExpression)
+            // A Space that appeared, showing what the display already showed.
+            if before.isEmpty, !after.isEmpty {
+                return displayWallpaperBefore[withoutSpace]?.contains(after) ?? false
+            }
+            // A Space that went away, leaving the display showing the same thing.
+            if after.isEmpty, !before.isEmpty {
+                return displayWallpaperAfter[withoutSpace]?.contains(before) ?? false
+            }
+            return false
+        }
+
         // "Show on all Spaces" writes the same wallpaper into every Space, so one
         // change arrived as one row per Space — five identical "Wallpaper on Built-in
         // Display" rows for a single wallpaper. A Space is not something the wallpaper

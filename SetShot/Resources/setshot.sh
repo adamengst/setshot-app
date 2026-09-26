@@ -770,6 +770,7 @@ NOISE_PATTERN='(
   alf.*:: applications\[[0-9]+\]\.(alias|reqdata)\s*=|
   wallpaper :: Displays\.|
   wallpaper :: .*\.Configuration\.backgroundColor\.|
+  wallpaper :: .*\.EncodedOptionValues\.values\.color\.|
   wallpaper :: .*\s=\s\$null$|
   wallpaper :: .*\.Configuration\s*=\s*<binary|
   wallpaper :: .*\.Provider\s*=|

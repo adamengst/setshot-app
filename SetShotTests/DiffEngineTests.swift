@@ -345,6 +345,64 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.recognized[0].diff.afterValue, "2592000")
     }
 
+    // MARK: - A Space being created
+
+    /// Creating a Space writes it a whole wallpaper record under a new identifier, so
+    /// every line reads as something that appeared. Six new Spaces between two
+    /// snapshots produced twenty-nine rows, none of them anything anyone set.
+    private static let spaceA = "AAAAAAAA-1111-2222-3333-444444444444"
+    private static let spaceB = "BBBBBBBB-1111-2222-3333-444444444444"
+
+    private func snapshotWithWallpaper(space: String, display: String, value: String) -> String {
+        "wallpaper :: Spaces.\(space).Displays.\(display)"
+            + ".Desktop.Content.Choices[0].Configuration.url.relative = \(value)"
+    }
+
+    func testANewSpaceInheritingTheDisplaysWallpaperReportsNothing() {
+        let before = snapshotWithWallpaper(space: Self.spaceA, display: Self.displayA,
+                                           value: "file:///same.jpg")
+        let key = "Spaces.\(Self.spaceB).Displays.\(Self.displayA)"
+            + ".Desktop.Content.Choices[0].Configuration.url.relative"
+        let result = engine().parse(diffOutput: "+wallpaper :: \(key) = file:///same.jpg\n",
+                                    kb: spacesKB(), beforeSnapshot: before, afterSnapshot: "")
+        XCTAssertEqual(result.recognized.count, 0, """
+            The display was already showing this picture under another Space, so nothing \
+            about what is on screen changed.
+            """)
+    }
+
+    func testANewSpaceWithADifferentWallpaperStillReports() {
+        let before = snapshotWithWallpaper(space: Self.spaceA, display: Self.displayA,
+                                           value: "file:///old.jpg")
+        let key = "Spaces.\(Self.spaceB).Displays.\(Self.displayA)"
+            + ".Desktop.Content.Choices[0].Configuration.url.relative"
+        let result = engine().parse(diffOutput: "+wallpaper :: \(key) = file:///new.jpg\n",
+                                    kb: spacesKB(), beforeSnapshot: before, afterSnapshot: "")
+        XCTAssertEqual(result.recognized.count, 1)
+    }
+
+    func testASpaceGoingAwayIsNotReportedWhenTheDisplayKeepsTheWallpaper() {
+        let after = snapshotWithWallpaper(space: Self.spaceA, display: Self.displayA,
+                                          value: "file:///same.jpg")
+        let key = "Spaces.\(Self.spaceB).Displays.\(Self.displayA)"
+            + ".Desktop.Content.Choices[0].Configuration.url.relative"
+        let result = engine().parse(diffOutput: "-wallpaper :: \(key) = file:///same.jpg\n",
+                                    kb: spacesKB(), beforeSnapshot: "", afterSnapshot: after)
+        XCTAssertEqual(result.recognized.count, 0)
+    }
+
+    func testANewSpaceOnADifferentDisplayIsNotTreatedAsInherited() {
+        // Same value, but the display that had it is not the one that gained it.
+        let other = "5E3571FF-033C-4BD8-A9CB-C8F33B34BBD2"
+        let before = snapshotWithWallpaper(space: Self.spaceA, display: other,
+                                           value: "file:///same.jpg")
+        let key = "Spaces.\(Self.spaceB).Displays.\(Self.displayA)"
+            + ".Desktop.Content.Choices[0].Configuration.url.relative"
+        let result = engine().parse(diffOutput: "+wallpaper :: \(key) = file:///same.jpg\n",
+                                    kb: spacesKB(), beforeSnapshot: before, afterSnapshot: "")
+        XCTAssertEqual(result.recognized.count, 1)
+    }
+
     // MARK: - A screen saver changing which shape names it
 
     func testABuiltInScreenSaverReplacedByABundleIsOneChange() {
