@@ -15,6 +15,25 @@ actor SubmissionService {
 
     private let workerURL = URL(string: "https://setshot-submission.the-account-of-adam-engst.workers.dev")!
 
+    /// Which SetShot wrote the snapshot, and which knowledge base classified it.
+    ///
+    /// Without these a submission cannot be told apart from one the current release
+    /// already suppresses, and the queue fills with the same keys from people who
+    /// have not updated: fourteen of twenty-seven open submissions were two
+    /// AuthenticationServices timestamps that b27 has filtered at capture since the
+    /// day it shipped.
+    private var appVersion: String {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(short) (\(build))"
+    }
+
+    private var kbVersion: String {
+        let v = UserDefaults.standard.integer(forKey: "kb_version")
+        return v > 0 ? String(v) : "none"
+    }
+
     func submit(_ diff: DiffLine, feedback: UserFeedback? = nil) async throws {
         try await post(payload(for: diff, feedback: feedback))
     }
@@ -39,7 +58,9 @@ actor SubmissionService {
             "source": diff.source,
             "before_value": diff.beforeValue.isEmpty ? "(not set)" : diff.beforeValue,
             "after_value": diff.afterValue.isEmpty ? "(not set)" : diff.afterValue,
-            "macos_version": diff.macOSVersion
+            "macos_version": diff.macOSVersion,
+            "app_version": appVersion,
+            "kb_version": kbVersion
         ]
         if let fb = feedback {
             if let cat = fb.category { p["feedback_category"] = cat.rawValue }
@@ -64,6 +85,8 @@ actor SubmissionService {
             "current_settings_url":   entry.settingsURL ?? "",
             "current_icon_bundle_id": entry.iconBundleID ?? "",
             "macos_version":          diff.macOSVersion,
+            "app_version":            appVersion,
+            "kb_version":             kbVersion,
             "issues":                 issues.map(\.rawValue).joined(separator: ",")
         ]
         let trimmed = notes.trimmingCharacters(in: .whitespacesAndNewlines)

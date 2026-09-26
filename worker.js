@@ -117,7 +117,8 @@ export default {
       const now = new Date().toISOString();
       const macosVersion = body[0].macos_version;
       const domains = [...new Set(body.map(i => i.domain))].join(', ');
-      const issueTitle = `[Batch Submission] ${body.length} entries — macOS ${macosVersion}`;
+      const appVersion = body[0].app_version ? `, SetShot ${body[0].app_version}` : '';
+      const issueTitle = `[Batch Submission] ${body.length} entries — macOS ${macosVersion}${appVersion}`;
 
       const sections = body.map(item => {
         const submission = { ...item, submitted_at: now, status: 'pending' };
@@ -142,11 +143,14 @@ export default {
         before_value: body.before_value,
         after_value: body.after_value,
         macos_version: body.macos_version,
+        app_version: body.app_version,
+        kb_version: body.kb_version,
         submitted_at: new Date().toISOString(),
         status: 'pending'
       };
 
-      const issueTitle = `[Submission] ${body.domain} :: ${body.key}`;
+      const appVersion = body.app_version ? ` — SetShot ${body.app_version}` : '';
+      const issueTitle = `[Submission] ${body.domain} :: ${body.key}${appVersion}`;
       let issueBody = '```json\n' + JSON.stringify(submission, null, 2) + '\n```';
       if (body.feedback_category || body.feedback_notes) {
         const categoryLabel = body.feedback_category === 'expected_change'
@@ -226,6 +230,7 @@ async function handleKBFeedback(body, ip, env) {
 **Current settings URL:** ${body.current_settings_url || '(none)'}
 **Current icon bundle:** ${body.current_icon_bundle_id || '(none)'}
 **macOS:** ${body.macos_version}
+**SetShot:** ${body.app_version || '(not reported)'}, knowledge base ${body.kb_version || '(not reported)'}
 
 ## Issues Reported
 ${checkboxes}
