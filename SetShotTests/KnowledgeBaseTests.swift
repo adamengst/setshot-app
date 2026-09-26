@@ -89,4 +89,41 @@ final class KnowledgeBaseTests: XCTestCase {
         let kb = KnowledgeBase(entries: [entry], version: 1, updatedAt: nil)
         XCTAssertTrue(kb.entry(forDomain: "com.apple.dock", key: "someTransientKey")?.noise == true)
     }
+
+    // MARK: - Locations that changed with the macOS version
+
+    /// Siri's pane was Siri & Spotlight through macOS 15, Apple Intelligence & Siri
+    /// in 26, and Siri in 27. Three names means two overrides, and the answer must
+    /// not depend on which order they were written in.
+    private func siriEntry(overrides: [UILocationOverride]) -> KBEntry {
+        KBEntry(id: "t", domain: "d", key: "k", source: "s", valueType: "string",
+                description: "Test", uiLocation: "System Settings → Siri → Ask Siri",
+                uiLocationOverrides: overrides, settingsURL: nil, noise: false,
+                noiseReason: nil, minMacOS: nil, notes: nil, aiGenerated: false,
+                contributedByIssue: nil, valueMap: nil, keyPrefix: nil,
+                iconBundleID: nil, implicitDefault: nil, requiresHardware: nil)
+    }
+
+    func testTheTightestOverrideWinsWhicheverOrderTheyAreIn() {
+        let ascending = [
+            UILocationOverride(beforeMacOSMajor: 26,
+                                       uiLocation: "System Settings → Siri & Spotlight → Ask Siri"),
+            UILocationOverride(beforeMacOSMajor: 27,
+                                       uiLocation: "System Settings → Apple Intelligence & Siri → Ask Siri"),
+        ]
+        for overrides in [ascending, ascending.reversed()] {
+            let e = siriEntry(overrides: Array(overrides))
+            XCTAssertEqual(e.effectiveUILocation(macOSMajor: 15),
+                           "System Settings → Siri & Spotlight → Ask Siri")
+            XCTAssertEqual(e.effectiveUILocation(macOSMajor: 26),
+                           "System Settings → Apple Intelligence & Siri → Ask Siri")
+            XCTAssertEqual(e.effectiveUILocation(macOSMajor: 27),
+                           "System Settings → Siri → Ask Siri")
+        }
+    }
+
+    func testNoOverridesLeavesTheLocationAlone() {
+        XCTAssertEqual(siriEntry(overrides: []).effectiveUILocation(macOSMajor: 15),
+                       "System Settings → Siri → Ask Siri")
+    }
 }

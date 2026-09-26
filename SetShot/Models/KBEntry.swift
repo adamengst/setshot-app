@@ -49,12 +49,19 @@ struct KBEntry: Codable, Identifiable {
         case requiresHardware = "requires_hardware"
     }
 
+    /// Where this setting lives on a given macOS, which is not always where it lives
+    /// now: Siri's pane was Siri & Spotlight through macOS 15, Apple Intelligence &
+    /// Siri in 26, and Siri in 27.
+    ///
+    /// Each override says which version it stops applying before, and the tightest
+    /// one wins — the smallest `beforeMacOSMajor` this Mac still falls under. Taking
+    /// whichever came first in the array instead made the answer depend on the order
+    /// they happened to be written in, so a Mac on 15 could be told about the 26
+    /// pane.
     func effectiveUILocation(macOSMajor: Int) -> String? {
-        if let overrides = uiLocationOverrides {
-            for override in overrides where macOSMajor < override.beforeMacOSMajor {
-                return override.uiLocation
-            }
-        }
-        return uiLocation
+        let applicable = (uiLocationOverrides ?? [])
+            .filter { macOSMajor < $0.beforeMacOSMajor }
+            .min { $0.beforeMacOSMajor < $1.beforeMacOSMajor }
+        return applicable?.uiLocation ?? uiLocation
     }
 }
