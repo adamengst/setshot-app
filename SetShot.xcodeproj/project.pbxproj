@@ -76,6 +76,7 @@
 		E401DA3BE1DDFBA099217586 /* KBEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4812AB60001E9D6F2D98CAF /* KBEntry.swift */; };
 		E52858FCA732E1E1D292B888 /* MusicKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B14C522DB332A096A903EB34 /* MusicKit.framework */; };
 		E77D478F90D0A824480273CE /* KBEntryDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FB9705E796395269414C4D8 /* KBEntryDecodingTests.swift */; };
+		F007D604FFFCE6C336FB1D87 /* base_GoldenGate_27.0.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = DE6C0A550A20F68C5D94CAB9 /* base_GoldenGate_27.0.txt.gz */; };
 		F0117CDA3B3F3EB9E30E2707 /* SettingsPaneIconProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 458C8E9D2E3CAD28CC042E3B /* SettingsPaneIconProvider.swift */; };
 		F25E2322FE4DD805DBB1A76F /* ReleaseNotes.md in Resources */ = {isa = PBXBuildFile; fileRef = 6C95C8C7F8EC3EB8E036928F /* ReleaseNotes.md */; };
 		F47D72C2AF599F298153C92B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 040F5608E284333E4CDB0C21 /* SettingsView.swift */; };
@@ -167,6 +168,7 @@
 		D41FFDC505A10B96DF1A803B /* KnownIssues.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnownIssues.swift; sourceTree = "<group>"; };
 		D836DE53E5AF34A38E8F2873 /* SubmissionValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmissionValidatorTests.swift; sourceTree = "<group>"; };
 		DB8E7ECF5F89426B390E5B4E /* JournalHTMLExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalHTMLExporter.swift; sourceTree = "<group>"; };
+		DE6C0A550A20F68C5D94CAB9 /* base_GoldenGate_27.0.txt.gz */ = {isa = PBXFileReference; lastKnownFileType = archive.gzip; path = base_GoldenGate_27.0.txt.gz; sourceTree = "<group>"; };
 		E2668D3A288EB70D68063779 /* HTMLExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTMLExporter.swift; sourceTree = "<group>"; };
 		E388D72395C6EBFAE503B89A /* SnapshotRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapshotRunnerTests.swift; sourceTree = "<group>"; };
 		E699EC4FFB8C95444A5FCB03 /* MarkdownExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownExporterTests.swift; sourceTree = "<group>"; };
@@ -286,6 +288,7 @@
 			isa = PBXGroup;
 			children = (
 				884A5EDA61C452330F26ED01 /* .gitkeep */,
+				DE6C0A550A20F68C5D94CAB9 /* base_GoldenGate_27.0.txt.gz */,
 				6C775C67C084609F8FF8BD1C /* base_Sequoia_15.7.9.txt.gz */,
 				33768FEAFDEC45A5AEA8BEFE /* base_Tahoe_26.6.2.txt.gz */,
 			);
@@ -440,6 +443,7 @@
 				52F8DA0C6EAFD1D445DD474C /* Assets.xcassets in Resources */,
 				B45D0A7279309CB79EEB5996 /* BaseSnapshots in Resources */,
 				F25E2322FE4DD805DBB1A76F /* ReleaseNotes.md in Resources */,
+				F007D604FFFCE6C336FB1D87 /* base_GoldenGate_27.0.txt.gz in Resources */,
 				0774A3AC686A783E7173DC34 /* base_Sequoia_15.7.9.txt.gz in Resources */,
 				784A6F3DE4900D48D9328899 /* base_Tahoe_26.6.2.txt.gz in Resources */,
 				8AFEF96A156F43C87BDC4252 /* setshot.sh in Resources */,

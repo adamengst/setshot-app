@@ -13,6 +13,14 @@ final class MediaMarkerScopeTests: XCTestCase {
     /// Rows a reader would not connect to Media & Apple Music.
     private static let unrelated = ["Wi-Fi", "Hot corner", "Dock", "Trackpad", "Smart Quotes"]
 
+    /// The baseline the app would choose for a snapshot, matched on macOS major
+    /// version the way SnapshotStore does.
+    private func baselineName(for snapshot: String) -> String {
+        if snapshot.contains("macOS: 27.") { return "GoldenGate" }
+        if snapshot.contains("macOS: 26.") { return "Tahoe" }
+        return "Sequoia"
+    }
+
     private func newestUserSnapshot() -> URL? {
         let dir = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent("Library/Application Support/SetShot/snapshots")
@@ -91,7 +99,7 @@ final class MediaMarkerScopeTests: XCTestCase {
         let mediaOff = try TestSupport.gunzip(URL(fileURLWithPath: offPath))
 
         // The baseline the app would choose: matched on macOS major version.
-        let major = mediaOn.contains("macOS: 26.") ? "Tahoe" : "Sequoia"
+        let major = baselineName(for: mediaOn)
         let bases = (try? FileManager.default.contentsOfDirectory(
             at: TestSupport.baseSnapshotsDir, includingPropertiesForKeys: nil)) ?? []
         let baseURL = try XCTUnwrap(bases.first { $0.lastPathComponent.contains(major) },
@@ -132,7 +140,7 @@ final class MediaMarkerScopeTests: XCTestCase {
                                version: 0, updatedAt: nil)
         let fdaOn = try TestSupport.gunzip(URL(fileURLWithPath: onPath))
         let fdaOff = try TestSupport.gunzip(URL(fileURLWithPath: offPath))
-        let major = fdaOn.contains("macOS: 26.") ? "Tahoe" : "Sequoia"
+        let major = baselineName(for: fdaOn)
         let bases = (try? FileManager.default.contentsOfDirectory(
             at: TestSupport.baseSnapshotsDir, includingPropertiesForKeys: nil)) ?? []
         let baseURL = try XCTUnwrap(bases.first { $0.lastPathComponent.contains(major) })

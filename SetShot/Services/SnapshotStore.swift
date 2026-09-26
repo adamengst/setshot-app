@@ -137,7 +137,20 @@ actor SnapshotStore {
         else if name.hasSuffix(".txt") { name = String(name.dropLast(4)) }
         let parts = name.split(separator: "_", maxSplits: 1)
         guard parts.count == 2 else { return nil }
-        return "macOS \(parts[0]) \(parts[1]) baseline defaults"
+        return "macOS \(spacedName(parts[0])) \(parts[1]) baseline defaults"
+    }
+
+    /// "GoldenGate" -> "Golden Gate". A release whose name is two words cannot carry
+    /// the space in the filename, which is split on "_" and lives on a build phase's
+    /// path, so the capital marks the join and this puts it back. Single-word names
+    /// pass through untouched.
+    nonisolated func spacedName(_ name: Substring) -> String {
+        var out = ""
+        for (i, c) in name.enumerated() {
+            if i > 0, c.isUppercase, Array(name)[i - 1].isLowercase { out.append(" ") }
+            out.append(c)
+        }
+        return out
     }
 
     private nonisolated func baseMajorVersion(for filename: String) -> Int? {

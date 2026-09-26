@@ -52,4 +52,33 @@ final class ExportNameTests: XCTestCase {
         XCTAssertEqual(StoredSnapshot.exportDateStamp.count, 10)
         XCTAssertFalse(StoredSnapshot.exportDateStamp.contains("/"))
     }
+
+    // MARK: - Baseline labels
+
+    /// A release whose name is two words cannot carry the space in the filename:
+    /// baseLabel splits on "_" to find the version, and the file sits on a build
+    /// phase's path. The capital marks the join, so "base_GoldenGate_27.0.txt.gz"
+    /// has to come back out as "Golden Gate" rather than running the words together.
+    func testATwoWordReleaseNameGetsItsSpaceBack() {
+        let store = SnapshotStore.shared
+        XCTAssertEqual(store.spacedName("GoldenGate"), "Golden Gate")
+        XCTAssertEqual(store.spacedName("Sequoia"), "Sequoia")
+        XCTAssertEqual(store.spacedName("Tahoe"), "Tahoe")
+    }
+
+    /// Every baseline in the bundle is labelled, so one added with a name the
+    /// deriver cannot read shows up here rather than in the picker.
+    func testEveryBundledBaselineIsLabelled() throws {
+        let names = try FileManager.default
+            .contentsOfDirectory(at: TestSupport.baseSnapshotsDir, includingPropertiesForKeys: nil)
+            .map(\.lastPathComponent)
+            .filter { $0.hasPrefix("base_") && $0.hasSuffix(".txt.gz") }
+        XCTAssertFalse(names.isEmpty)
+        for name in names {
+            let parts = name.dropFirst(5).dropLast(7).split(separator: "_", maxSplits: 1)
+            XCTAssertEqual(parts.count, 2, "\(name) has no version after the release name")
+            XCTAssertNotNil(Int(String(parts[1]).split(separator: ".").first ?? ""),
+                            "\(name) has no major version the picker can match on")
+        }
+    }
 }
