@@ -844,11 +844,22 @@ NOISE_PATTERN='(
   GamePolicyAgent.*:: gameMetadataHintsCache\[|
   GameOverlayUI.*:: lastBootstrapDate\s*=|
   configurationprofiles.*:: LastDailyReportAttemptDate\s*=|
-  AuthenticationServicesCore.*:: WBS.*LastUpdate(Time)?\s*=|
+  AuthenticationServices(Core|\.Helper).*:: WBS.*LastUpdate(Time)?\s*=|
   MenuBarAgent.*:: MenuBarAnalytics\.|
   spotlightknowledge.*:: hdbCutover\.|
   spotlightknowledge.*:: stateDump\.lastEvaluationTimestamp\s*=|
   mobilephone.*:: PNRltc\s*=|
+
+  # Text the user typed, and a credential. Suppressed here rather than in the
+  # knowledge base, because a knowledge base rule only keeps a value out of the
+  # comparison -- it would still sit in the snapshot file, and in any export or
+  # submission made from it.
+  #
+  # campo keeps the text of Spotlight requests that were composed and not sent.
+  # The two on the Mac this was found on both said "Hey Siri", but the key holds
+  # whatever was typed.
+  campo.*:: campo\.unsentMessages\.|
+  ShazamEvents.*:: .*EncodedAccessTokens\s*=|
 
   # Audio Unit component cache kept by the pro audio apps. Each installed plug-in
   # writes a block of keys under a four-four-four component id -- bus counts, channel
