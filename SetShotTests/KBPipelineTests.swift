@@ -170,6 +170,33 @@ final class KBPipelineTests: XCTestCase {
             """)
     }
 
+    /// Two entries naming the same key means one of them is never used, and which
+    /// one wins is whichever the lookup reaches first. That is how a measured entry
+    /// for the icon style setting ended up shadowed by an older AI-written one whose
+    /// value map listed three values macOS never writes — the comparison kept showing
+    /// the old description and there was nothing to say why.
+    func testNoTwoEntriesClaimTheSameKey() throws {
+        let entries = try TestSupport.requireKnowledgeBase()
+
+        let byID = Dictionary(grouping: entries, by: \.id).filter { $0.value.count > 1 }
+        XCTAssertTrue(byID.isEmpty, """
+            \(byID.count) id(s) are used by more than one entry:
+
+            \(byID.keys.sorted().joined(separator: "\n"))
+            """)
+
+        let exact = entries.filter { !($0.key ?? "").isEmpty }
+        let byKey = Dictionary(grouping: exact, by: { "\($0.domain) :: \($0.key ?? "")" })
+            .filter { $0.value.count > 1 }
+        XCTAssertTrue(byKey.isEmpty, """
+            \(byKey.count) key(s) are claimed by more than one entry, so only the first \
+            is ever used:
+
+            \(byKey.map { "\($0.key)  —  \($0.value.map(\.id).joined(separator: ", "))" }
+                .sorted().joined(separator: "\n"))
+            """)
+    }
+
     func testNoEntryIsBothKeySpecificAndDomainWide() throws {
         let entries = try TestSupport.requireKnowledgeBase()
 
