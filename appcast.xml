@@ -6,13 +6,15 @@
         <description>SetShot release feed</description>
         <language>en</language>
         <item>
-            <title>SetShot 1.0b28</title>
-            <pubDate>Sat, 26 Sep 2026 19:44:19 +0000</pubDate>
-            <sparkle:version>40</sparkle:version>
-            <sparkle:shortVersionString>1.0b28</sparkle:shortVersionString>
+            <title>SetShot 1.0b29</title>
+            <pubDate>Sun, 27 Sep 2026 17:38:43 +0000</pubDate>
+            <sparkle:version>41</sparkle:version>
+            <sparkle:shortVersionString>1.0b29</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
 <style>body{font:13px -apple-system,sans-serif;margin:0;padding:12px}h2{font-size:15px;margin:16px 0 6px}h2:first-child{margin-top:0}li{margin-bottom:8px;line-height:1.45}ul{padding-left:20px;margin:0}code{font:12px ui-monospace,monospace}</style>
+<h2>1.0b29</h2>
+<ul><li><strong>Fixed: automatic snapshots stopped running</strong> — In 1.0b27 and 1.0b28, a change meant to reject command-line options SetShot didn&#x27;t recognize also rejected the one macOS uses to start an automatic snapshot. Automatic snapshots work again with this update. The first scheduled snapshot after updating compares against your last snapshot from before 1.0b27, so it may show several weeks of changes at once.</li><li><strong>Login Items &amp; Extensions switches are now captured</strong> — Turning off an item under Background App Activity in System Settings → General → Login Items &amp; Extensions leaves the item installed, so SetShot saw items appear and disappear but never noticed them being switched off or on. SetShot now reads the list macOS keeps of those switches and reports each item as allowed or not allowed. This feature needs the Full Disk Access permission.</li><li><strong>Fixed: account names still appeared as managed settings</strong> — 1.0b28 stopped new snapshots from listing other accounts&#x27; short names as managed preference domains, but a comparison against an older snapshot still showed them, and so did a comparison against the built-in macOS 27 baseline, which was captured before the fix. SetShot now ignores those lines from older snapshots, and the baseline no longer contains them.</li></ul>
 <h2>1.0b28</h2>
 <ul><li><strong>macOS 27 Golden Gate is supported</strong> — SetShot ships with a Golden Gate baseline alongside the Sequoia and Tahoe ones, so a first comparison on macOS 27 has something current to compare against. Plus, SetShot now recognizes additional keys that are new in Golden Gate, although it&#x27;s always possible there are more, so keep those feedback submissions coming.</li><li><strong>Wallpaper changes no longer flood a comparison</strong> — For various reasons that are too tedious to describe, setting different wallpapers on multiple screens would result in numerous settings changes that were mostly just chatter.</li><li><strong>Settings that switch off by deleting their key read correctly</strong> — Several macOS 27 settings write a value when on and remove the key entirely when off, rather than writing zero. That&#x27;s now handled correctly.</li><li><strong>Rows for the default browser, mail client and RSS reader show that app&#x27;s icon</strong> — Previously, they had no icon at all, because the choice is made in the app rather than in System Settings, so there was no pane to take one from.</li><li><strong>Submissions record which version made them</strong> — A feedback submission now contains the SetShot build and knowledge base version, so I can tell when a report is the same as something that was already fixed in an earlier app or knowledge base update.</li><li><strong>Permissions are attributed properly</strong> — A comparison now says which app an Automation grant lets control which other app, rather than running both names together. Grants for files in a cloud provider name the provider — iCloud Drive, Dropbox, Google Drive — instead of the identifier of the extension behind it.</li><li><strong>Fixed: another account&#x27;s name was reported as a setting</strong> — On a Mac with a second user, SetShot incorrectly listed that account&#x27;s short name as though it were a preference domain under management.</li><li><strong>Fixed: Submit Feedback marked rows you had not commented on</strong> — When one knowledge base entry covers many rows, submitting feedback about one row marked all of them as sent, which was weird.</li><li><strong>A great deal more is described</strong> — The knowledge base has gone from version 176 to 231. Among those changes are our new or improved entries for every Magic Mouse setting; the Menu Bar modules; the macOS 27 Appearance settings for Liquid Glass, icon style, and folder color; and the Analytics &amp; Improvements switches.</li></ul>
 <h2>1.0b27</h2>
@@ -60,6 +62,19 @@
 <h2>1.0b5</h2>
 <ul><li><strong>Journal view</strong> — Added a Journal tab that keeps a cumulative record of every recognized change found across all your comparisons, grouped by comparison date.</li><li><strong>System Settings icons</strong> — Comprehensive icon coverage for System Settings panes using SF Symbols and custom assets, so recognized changes show the correct pane icon.</li><li><strong>Journal deduplication</strong> — The journal now automatically removes duplicate entries, so running the same comparison twice doesn&#x27;t create redundant records.</li></ul>
 ]]></description>
+            <enclosure
+                url="https://github.com/adamengst/setshot-app/releases/download/v1.0b29/SetShot-1.0b29.zip"
+                sparkle:edSignature="pdpw/0Ow5Ls3QjhQO52/pRcou8I/dy84+dPRlO1lp2mf4Cv2AxSBo0pqs/uelmuqG1oKNxfEJiM4ybB42QbQCA=="
+                length="7738512"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
+            <title>SetShot 1.0b28</title>
+            <pubDate>Sat, 26 Sep 2026 19:44:19 +0000</pubDate>
+            <sparkle:version>40</sparkle:version>
+            <sparkle:shortVersionString>1.0b28</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <enclosure
                 url="https://github.com/adamengst/setshot-app/releases/download/v1.0b28/SetShot-1.0b28.zip"
                 sparkle:edSignature="d/jdCv1zG8L9XfQ29FmID06juGbt2m4gH+bF3Gzn6Mc0fVWhztDO2TzRvaD/Hz6qZ962if6vv8fwWwTvthgvAg=="
