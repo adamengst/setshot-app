@@ -57,10 +57,20 @@ struct SchedulerManager {
         // path inside a mount macOS discards, so the job would be written, report
         // success, and then silently never run again.
         guard !Translocation.isActive else { throw SchedulerError.translocated }
-        let executablePath = Bundle.main.executablePath!
+        let plist = launchAgentPlist(schedule: schedule, executablePath: Bundle.main.executablePath!)
+
+        try FileManager.default.createDirectory(at: launchAgentsDir, withIntermediateDirectories: true)
+        if isInstalled { try? unload() }
+        (plist as NSDictionary).write(to: plistURL, atomically: true)
+        try load()
+    }
+
+    /// The LaunchAgent contents, separate from installing them so a test can check
+    /// that what launchd will run is something the binary accepts.
+    static func launchAgentPlist(schedule: SnapshotSchedule, executablePath: String) -> [String: Any] {
         var plist: [String: Any] = [
             "Label": label,
-            "ProgramArguments": [executablePath, "--background-snapshot"],
+            "ProgramArguments": [executablePath, LaunchArguments.backgroundSnapshot],
             "StandardOutPath": "/tmp/setshot-daily.log",
             "StandardErrorPath": "/tmp/setshot-daily.log",
             "AssociatedBundleIdentifiers": "com.tidbits.SetShot",
@@ -76,11 +86,7 @@ struct SchedulerManager {
         case .monthly(let day, let hour, let minute):
             plist["StartCalendarInterval"] = ["Day": day, "Hour": hour, "Minute": minute]
         }
-
-        try FileManager.default.createDirectory(at: launchAgentsDir, withIntermediateDirectories: true)
-        if isInstalled { try? unload() }
-        (plist as NSDictionary).write(to: plistURL, atomically: true)
-        try load()
+        return plist
     }
 
     static func uninstall() throws {

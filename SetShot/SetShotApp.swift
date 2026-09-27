@@ -8,7 +8,7 @@ struct SetShotApp: App {
     @StateObject private var updaterState = UpdaterState()
 
     private static let isBackgroundLaunch =
-        CommandLine.arguments.contains("--background-snapshot")
+        CommandLine.arguments.contains(LaunchArguments.backgroundSnapshot)
 
     var body: some Scene {
         WindowGroup {
@@ -280,7 +280,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
     }
 
     func applicationWillFinishLaunching(_ notification: Notification) {
-        if CommandLine.arguments.contains("--background-snapshot") {
+        if CommandLine.arguments.contains(LaunchArguments.backgroundSnapshot) {
             NSApp.setActivationPolicy(.prohibited)
             return
         }
@@ -289,7 +289,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         migrateAutoDeleteDefault()
-        if CommandLine.arguments.contains("--background-snapshot") {
+        if CommandLine.arguments.contains(LaunchArguments.backgroundSnapshot) {
             runBackgroundSnapshot()
         } else {
             UNUserNotificationCenter.current().delegate = self
