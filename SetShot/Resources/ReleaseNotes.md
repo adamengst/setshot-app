@@ -1,3 +1,11 @@
+## 1.0b29
+
+- **Fixed: automatic snapshots stopped running** — In 1.0b27 and 1.0b28, a change meant to reject command-line options SetShot didn't recognize also rejected the one macOS uses to start an automatic snapshot. Automatic snapshots work again with this update. The first scheduled snapshot after updating compares against your last snapshot from before 1.0b27, so it may show several weeks of changes at once.
+
+- **Login Items & Extensions switches are now captured** — Turning off an item under Background App Activity in System Settings → General → Login Items & Extensions leaves the item installed, so SetShot saw items appear and disappear but never noticed them being switched off or on. SetShot now reads the list macOS keeps of those switches and reports each item as allowed or not allowed. This feature needs the Full Disk Access permission.
+
+- **Fixed: account names still appeared as managed settings** — 1.0b28 stopped new snapshots from listing other accounts' short names as managed preference domains, but a comparison against an older snapshot still showed them, and so did a comparison against the built-in macOS 27 baseline, which was captured before the fix. SetShot now ignores those lines from older snapshots, and the baseline no longer contains them.
+
 ## 1.0b28
 
 - **macOS 27 Golden Gate is supported** — SetShot ships with a Golden Gate baseline alongside the Sequoia and Tahoe ones, so a first comparison on macOS 27 has something current to compare against. Plus, SetShot now recognizes additional keys that are new in Golden Gate, although it's always possible there are more, so keep those feedback submissions coming.
