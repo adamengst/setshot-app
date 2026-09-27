@@ -147,6 +147,45 @@ final class DiffEngineTests: XCTestCase {
     // `TCC :: available` to separate "a permission changed" from "SetShot can
     // suddenly see all of them".
 
+    // MARK: - Managed preferences captured before 1.0b28
+
+    private func managedKB() -> KnowledgeBase {
+        KnowledgeBase(entries: [makeEntry(domain: "managedpreferences", keyPrefix: "")],
+                      version: 1, updatedAt: nil)
+    }
+
+    func testAnOlderCapturesAccountNameIsNotReported() {
+        let result = engine().parse(diffOutput: """
+            -managedpreferences :: miranda = present
+            """, kb: managedKB())
+        XCTAssertEqual(result.recognized.count + result.unrecognized.count + result.noise.count, 0)
+    }
+
+    func testTheSameDomainInBothFormatsIsNotReported() {
+        let result = engine().parse(diffOutput: """
+            -managedpreferences :: com.apple.screensaver = present
+            +managedpreferences :: com.apple.screensaver = managed
+            """, kb: managedKB())
+        XCTAssertEqual(result.recognized.count + result.unrecognized.count + result.noise.count, 0)
+    }
+
+    func testANewlyManagedDomainIsReported() {
+        let result = engine().parse(diffOutput: """
+            +managedpreferences :: com.apple.screensaver = managed
+            """, kb: managedKB())
+        XCTAssertEqual(result.recognized.count, 1)
+    }
+
+    /// The Golden Gate baseline was captured before the fix and shipped in 1.0b28 with
+    /// the capture Mac's `_mbsetupuser` and `base` folders listed as managed domains.
+    func testTheShippedBaselinesCarryNoOlderManagedLines() throws {
+        for (name, text) in try TestSupport.baseSnapshotFixtures() {
+            let stale = text.components(separatedBy: "\n")
+                .filter { $0.hasPrefix("managedpreferences :: ") && $0.hasSuffix(" = present") }
+            XCTAssertEqual(stale, [], name)
+        }
+    }
+
     private func tccKB(extra: [KBEntry] = []) -> KnowledgeBase {
         KnowledgeBase(entries: extra + [
             makeEntry(domain: "TCC", key: "available"),

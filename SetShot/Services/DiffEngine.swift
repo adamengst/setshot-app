@@ -174,6 +174,18 @@ struct DiffEngine {
             }
         }
 
+        // Before 1.0b28 the capture listed /Library/Managed Preferences and wrote every
+        // entry as `managedpreferences :: <name> = present`, including the per-user
+        // subdirectories, so another account's short name arrived looking like a managed
+        // domain. The capture now writes only real domains, as `= managed`. A `present`
+        // side comes from an older snapshot and cannot be told apart from an account
+        // name, so any pair carrying one is dropped. This stops mattering once both
+        // snapshots in a comparison were taken by 1.0b28 or later.
+        pairs.removeAll { pair in
+            pair.domain == "managedpreferences"
+                && (pair.before == "present" || pair.after == "present")
+        }
+
         var recognized: [(entry: KBEntry, diff: DiffLine)] = []
         var unrecognized: [DiffLine] = []
         var noise: [(entry: KBEntry, diff: DiffLine)] = []
