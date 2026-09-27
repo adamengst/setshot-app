@@ -1911,12 +1911,20 @@ JSEOF
     fi
 
     section "BACKGROUND TASK MANAGEMENT (Login Items & Background)"
-    # `sfltool dumpbackgroundtaskmanagement` needs root, so from the app it produced
-    # nothing at all — silently, because 2>/dev/null swallowed the refusal and there
-    # was no fallback. There is no root-free source for the BTM database, so say so
-    # rather than emit an empty section. The launchd half of what BTM reports is
-    # captured by LAUNCH AGENTS & DAEMONS above.
-    echo "BTM :: (requires root; run the setshot.sh CLI with --sudo to capture)"
+    # `sfltool dumpbtm` asks for admin approval, which a scheduled snapshot cannot
+    # give. The app reads the BTM database files directly instead (they need only
+    # Full Disk Access; see BackgroundItems.swift) and reports whether each item is
+    # allowed -- the Login Items & Extensions switch, which leaves the item's plist
+    # in LAUNCH AGENTS & DAEMONS untouched. Without Full Disk Access, or run
+    # standalone without the app, it prints nothing and the section says so.
+    _btm=""
+    [ "$_SETSHOT_BIN_MATCHED" = "1" ] && [ -n "$SETSHOT_BIN" ] \
+      && _btm=$("$SETSHOT_BIN" --background-items 2>/dev/null)
+    if [ -n "$_btm" ]; then
+      echo "$_btm"
+    else
+      echo "BTM :: (requires root; run the setshot.sh CLI with --sudo to capture)"
+    fi
 
     # ── Sudo-elevated captures ────────────────────────────────────────────────
     if [ "$use_sudo" = true ]; then

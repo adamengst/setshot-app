@@ -108,6 +108,16 @@ struct DiffEngine {
         return 1
     }
 
+    /// Whether a snapshot recorded any background item. The "not captured" line that
+    /// takes their place has no ` = `, so it does not count.
+    static func hasBackgroundItems(_ snapshot: String) -> Bool {
+        for line in snapshot.components(separatedBy: "\n")
+        where (line.hasPrefix("BTM :: ") || line.hasPrefix("BTM-system :: ")) && line.contains(" = ") {
+            return true
+        }
+        return false
+    }
+
     /// Reads a key's value straight out of a snapshot, for values the display needs
     /// even when they did not change and so never appear in the diff.
     private static func value(ofKey key: String, inDomain domain: String,
@@ -184,6 +194,18 @@ struct DiffEngine {
         pairs.removeAll { pair in
             pair.domain == "managedpreferences"
                 && (pair.before == "present" || pair.after == "present")
+        }
+
+        // Background items are read from the BTM database only from 1.0b29 on, and only
+        // with Full Disk Access. When one snapshot has none, every item exists on one
+        // side only and would be reported as added or deleted. That reflects what
+        // SetShot could read, not what changed, so those pairs are dropped.
+        if !beforeSnapshot.isEmpty, !afterSnapshot.isEmpty,
+           Self.hasBackgroundItems(beforeSnapshot) != Self.hasBackgroundItems(afterSnapshot) {
+            pairs.removeAll { pair in
+                (pair.domain == "BTM" || pair.domain == "BTM-system")
+                    && (pair.before == nil || pair.after == nil)
+            }
         }
 
         var recognized: [(entry: KBEntry, diff: DiffLine)] = []

@@ -22,6 +22,7 @@ enum LaunchArguments {
         "--flatten-plist": PlistFlattener.run,            // one plist on stdin -> stdout
         "--default-handlers": DefaultHandlers.run,        // -> stdout
         "--explain-diff": DiffExplainer.run,              // two snapshot paths in argv
+        "--background-items": BackgroundItems.run,        // -> stdout
     ]
 
     enum Resolution: Equatable {
