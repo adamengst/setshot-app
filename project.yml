@@ -35,6 +35,9 @@ targets:
           - "Resources/setshots"
       - path: SetShot/Resources/BaseSnapshots
         type: folder
+      # Single source for the in-app About view and the website's documentation page.
+      - path: docs/documentation.md
+        buildPhase: resources
     dependencies:
       - package: Sparkle
         product: Sparkle
