@@ -47,6 +47,7 @@
 		784A6F3DE4900D48D9328899 /* base_Tahoe_26.6.2.txt.gz in Resources */ = {isa = PBXBuildFile; fileRef = 33768FEAFDEC45A5AEA8BEFE /* base_Tahoe_26.6.2.txt.gz */; };
 		7ADDE1A25FF0088471FAFE20 /* SnapshotTakenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC851344C45F930AD15B70EA /* SnapshotTakenView.swift */; };
 		7B9BF59C23CA73F554092204 /* KBPipelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B6A02B718905E8E7C463726 /* KBPipelineTests.swift */; };
+		7D7AFD659C841677E54AB0D0 /* HelpDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE4FA58983CD0470291D315B /* HelpDocument.swift */; };
 		81261E5980E8BF6C18B034F7 /* documentation.md in Resources */ = {isa = PBXBuildFile; fileRef = 36FCF87A7569CDBD830136B6 /* documentation.md */; };
 		82C5D1D575CEB3FDEA62F0BB /* BackgroundItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CB3F6EFF5A858C5A570E89E /* BackgroundItems.swift */; };
 		84003123710E517BD6FCD2F0 /* DiffEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C57C901AB4841ACACEBB1709 /* DiffEngine.swift */; };
@@ -158,6 +159,7 @@
 		9FB9705E796395269414C4D8 /* KBEntryDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBEntryDecodingTests.swift; sourceTree = "<group>"; };
 		A6F92F4EEAFE12BF05C49DC5 /* setshot.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = setshot.sh; sourceTree = "<group>"; };
 		AE458B21430FC4FCBA1B8DAB /* CancellationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CancellationTests.swift; sourceTree = "<group>"; };
+		AE4FA58983CD0470291D315B /* HelpDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpDocument.swift; sourceTree = "<group>"; };
 		B14C522DB332A096A903EB34 /* MusicKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MusicKit.framework; path = System/Library/Frameworks/MusicKit.framework; sourceTree = SDKROOT; };
 		B1CCB5A46AF855D9998F53D5 /* ReadyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadyView.swift; sourceTree = "<group>"; };
 		B1F709629A970693935F4135 /* MarkdownExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownExporter.swift; sourceTree = "<group>"; };
@@ -241,6 +243,7 @@
 			children = (
 				78E54FFE685F4C0170A297ED /* AboutPanelView.swift */,
 				590C3CF672ED6999CE28820A /* AboutView.swift */,
+				AE4FA58983CD0470291D315B /* HelpDocument.swift */,
 				071D1ABF6A0037E3333B7BF7 /* JournalView.swift */,
 				8C893A2030276A4A2FE4EA80 /* KBFeedbackView.swift */,
 				B1CCB5A46AF855D9998F53D5 /* ReadyView.swift */,
@@ -494,6 +497,7 @@
 				DB641ED5E5F4A74A7DFA9DC8 /* ExportFormat.swift in Sources */,
 				68F873A795B82F0D6861B419 /* FactoryReset.swift in Sources */,
 				CDBDE04C2E871D4326AD8D6D /* HTMLExporter.swift in Sources */,
+				7D7AFD659C841677E54AB0D0 /* HelpDocument.swift in Sources */,
 				63D2341D409F5EEED9B4461A /* JournalEntry.swift in Sources */,
 				665FA48D5216B9CF36FAD003 /* JournalHTMLExporter.swift in Sources */,
 				FA45E69608F29852F581E969 /* JournalStore.swift in Sources */,
