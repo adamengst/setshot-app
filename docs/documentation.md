@@ -27,7 +27,7 @@ Each snapshot line shows when the snapshot was taken, a brief summary of the fir
 
 ![The snapshot library with a context menu open](images/ScreenshotSnapshotsContext.png)
 
-Although it's not necessary, you can rename a snapshot. Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labeling snapshots with context — for example, ‘Before macOS 26.7’ or ‘After Accessibility testing.’
+If you wish, you can rename a snapshot. Control-click it and choose **Rename**, then type a new name. Renaming can be useful for labeling snapshots with context — for example, ‘Before macOS 26.7’ or ‘After Accessibility testing.’
 
 If a snapshot is superfluous — perhaps because it shows no changes — you can delete it. Control-click it and choose **Delete**.
 
