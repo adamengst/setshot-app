@@ -1,0 +1,91 @@
+name: Deploy website
+
+# Secrets this workflow expects (Settings -> Secrets and variables -> Actions):
+#   DEPLOY_HOST         server hostname, e.g. example.com
+#   DEPLOY_USER         SSH username
+#   DEPLOY_PATH         absolute path of the site's subdirectory on the server,
+#                       e.g. /home/user/public_html/setshot (NOT the WordPress root)
+#   DEPLOY_SSH_KEY      private key, full PEM/OpenSSH text including BEGIN/END lines
+#   DEPLOY_KNOWN_HOSTS  the server's host key line(s), from: ssh-keyscan -p PORT HOST
+#   DEPLOY_PORT         optional SSH port; defaults to 22
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "docs/documentation.md"
+      - "SetShot/Resources/ReleaseNotes.md"
+      - "SetShot/Resources/Assets.xcassets/**"
+      - "README.md"
+      - ".github/workflows/deploy-site.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "rsync --dry-run: list what would change without uploading"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # A release builds from its tag so the site never documents unreleased
+      # functionality; the other triggers build from the ref that fired them (main).
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+
+      - name: Install pandoc
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq pandoc
+
+      - name: Build site
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 site/build.py
+
+      - name: Deploy with rsync over SSH
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          for v in DEPLOY_HOST DEPLOY_USER DEPLOY_PATH DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
+            [ -n "${!v}" ] || { echo "::error::Secret $v is not set"; exit 1; }
+          done
+          # --delete removes anything under DEPLOY_PATH that is not in the build, so
+          # refuse paths that could be a server or WordPress root.
+          case "$DEPLOY_PATH" in
+            /|~|.|"") echo "::error::DEPLOY_PATH must be the site's subdirectory"; exit 1 ;;
+          esac
+          [ "$(printf '%s' "$DEPLOY_PATH" | tr -cd '/' | wc -c)" -ge 2 ] \
+            || { echo "::error::DEPLOY_PATH is too shallow to be a subdirectory"; exit 1; }
+
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+          extra=()
+          [ "$DRY_RUN" = "true" ] && extra+=(--dry-run)
+
+          rsync -rlt --delete --itemize-changes \
+            --chmod=D755,F644 \
+            "${extra[@]}" \
+            -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
+            site/dist/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"

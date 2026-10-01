@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>$title</title>
+<meta name="description" content="$description">
+<link rel="icon" type="image/png" href="${root}static/icon.png">
+<link rel="stylesheet" href="${root}static/style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="${root}"><img src="${root}static/icon.png" alt="" width="32" height="32">SetShot</a>
+    <nav>
+      <a href="${root}"$nav_home>Overview</a>
+      <a href="${root}docs/"$nav_docs>Documentation</a>
+      <a href="${root}release-notes/"$nav_notes>Release Notes</a>
+    </nav>
+  </div>
+</header>
+<main class="wrap">
+$content
+</main>
+<footer class="site-footer">
+  <div class="wrap">
+    SetShot is designed by Adam Engst, coded by Claude Code, and published by
+    <a href="https://tidbits.com">TidBITS Publishing</a>.
+    <a href="$repo_url">Source on GitHub</a>.
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,58 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1d1d1f;
+  --muted: #6e6e73;
+  --line: #d2d2d7;
+  --accent: #0a66d6;
+  --accent-fg: #ffffff;
+  --code-bg: #f5f5f7;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161618;
+    --fg: #f5f5f7;
+    --muted: #a1a1a6;
+    --line: #3a3a3d;
+    --accent: #4a9eff;
+    --accent-fg: #0b0b0c;
+    --code-bg: #232326;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+.wrap { max-width: 46rem; margin: 0 auto; padding: 0 16px; }
+a { color: var(--accent); }
+.site-header { border-bottom: 1px solid var(--line); }
+.site-header .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding-top: 12px; padding-bottom: 12px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1.15rem; color: var(--fg); text-decoration: none; }
+.brand img { border-radius: 7px; }
+nav a { margin-right: 18px; color: var(--muted); text-decoration: none; }
+nav a:last-child { margin-right: 0; }
+nav a:hover, nav a[aria-current] { color: var(--fg); }
+nav a[aria-current] { font-weight: 600; }
+main { padding-top: 32px; padding-bottom: 56px; }
+h1 { font-size: 2.1rem; line-height: 1.2; margin: 0 0 16px; }
+h2 { font-size: 1.5rem; line-height: 1.25; margin: 2.2rem 0 0.6rem; }
+h3 { font-size: 1.2rem; margin: 1.6rem 0 0.4rem; }
+img { max-width: 100%; height: auto; }
+main img { border-radius: 6px; }
+hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
+code { font: 0.88em ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; }
+pre { background: var(--code-bg); padding: 12px 14px; border-radius: 8px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+li { margin: 0.35em 0; }
+.hero { padding: 8px 0 8px; }
+.hero .lede { color: var(--muted); font-size: 1.15rem; }
+.download { margin: 24px 0 8px; }
+.button { display: inline-block; background: var(--accent); color: var(--accent-fg); text-decoration: none; font-weight: 600; padding: 12px 22px; border-radius: 10px; }
+.button:hover { opacity: 0.9; }
+.meta { color: var(--muted); font-size: 0.92rem; margin: 10px 0 0; }
+.site-footer { border-top: 1px solid var(--line); color: var(--muted); font-size: 0.9rem; padding: 20px 0 32px; }
+.release-meta { color: var(--muted); }
+h2 .date { color: var(--muted); font-size: 0.65em; font-weight: 400; margin-left: 0.5em; }
