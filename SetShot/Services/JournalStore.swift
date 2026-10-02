@@ -44,14 +44,24 @@ actor JournalStore {
         return deduped
     }
 
+    /// Drops an entry that repeats the previous entry for the same setting.
+    ///
+    /// Comparisons overlap -- 1 against 2, then 1 against 3 -- so the same change
+    /// can be recognized from more than one After snapshot. Those copies sit next to
+    /// each other in the setting's history and collapse to the earliest. A setting
+    /// that genuinely goes A → B, back to A, then to B again has B → A between the
+    /// two A → B entries, so both are kept. Deduplicating on the values alone, across
+    /// all history, dropped every return to a state the journal had seen before.
     private func deduplicated(_ entries: [JournalEntry]) -> [JournalEntry] {
-        var seen = Set<String>()
+        var previous: [String: String] = [:]   // domain|key → normalized old|new
         var result: [JournalEntry] = []
-        // Sort oldest After snapshot first so we always keep the earliest occurrence.
+        // Oldest After snapshot first, so the earliest occurrence is the one kept.
         for e in entries.sorted(by: { $0.afterSnapshotDate < $1.afterSnapshotDate }) {
-            if seen.insert(dedupKey(domain: e.domain, key: e.key, old: e.oldValue, new: e.newValue)).inserted {
-                result.append(e)
-            }
+            let setting = "\(e.domain)|\(e.key)"
+            let change = "\(normalizeBool(e.oldValue))|\(normalizeBool(e.newValue))"
+            if previous[setting] == change { continue }
+            previous[setting] = change
+            result.append(e)
         }
         return result
     }
@@ -81,7 +91,11 @@ actor JournalStore {
     @discardableResult
     func add(recognized: [(entry: KBEntry, diff: DiffLine)], afterSnapshot: StoredSnapshot, fromBaseline: Bool = false) -> [JournalEntry] {
         var entries = load()
-        let existingKeys = Set(entries.map { dedupKey(domain: $0.domain, key: $0.key, old: $0.oldValue, new: $0.newValue) })
+        // Re-running a comparison offers the same changes for the same After snapshot.
+        // Repeats from other snapshots are settled by deduplicated(_:) below, which
+        // can tell an overlapping comparison from a setting changed back and again.
+        let existingKeys = Set(entries.filter { $0.afterSnapshotId == afterSnapshot.id }
+            .map { dedupKey(domain: $0.domain, key: $0.key, old: $0.oldValue, new: $0.newValue) })
         let now = Date()
         for item in recognized {
             let before = item.diff.beforeValue
@@ -121,6 +135,7 @@ actor JournalStore {
                 fromBaseline: fromBaseline
             ))
         }
+        entries = deduplicated(entries)
         save(entries)
         return entries
     }

@@ -131,6 +131,30 @@ final class JournalStoreTests: XCTestCase {
         XCTAssertEqual(entries[0].afterSnapshotId, snap1.id, "Older entry should be kept")
     }
 
+    func testASettingChangedBackAndAgainIsRecordedEachTime() async {
+        let snaps = (1...4).map { makeSnapshot(id: "snap\($0).txt.gz", date: Date(timeIntervalSince1970: Double($0) * 1_000_000)) }
+        let on  = [(entry: makeKBEntry(), diff: makeDiffLine(before: "False", after: "True"))]
+        let off = [(entry: makeKBEntry(), diff: makeDiffLine(before: "True", after: "False"))]
+        _ = await store.add(recognized: on, afterSnapshot: snaps[0])
+        _ = await store.add(recognized: off, afterSnapshot: snaps[1])
+        _ = await store.add(recognized: on, afterSnapshot: snaps[2])
+        let entries = await store.add(recognized: off, afterSnapshot: snaps[3])
+        XCTAssertEqual(entries.map(\.afterSnapshotId), snaps.map(\.id))
+
+        let reloaded = await store.reload()
+        XCTAssertEqual(reloaded.count, 4, "Loading must not collapse a setting that went back and forth")
+    }
+
+    func testAnOverlappingComparisonRecordedOutOfOrderKeepsTheEarlier() async {
+        let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))
+        let snap3 = makeSnapshot(id: "snap3.txt.gz", date: Date(timeIntervalSince1970: 3_000_000))
+        let recognized = [(entry: makeKBEntry(), diff: makeDiffLine())]
+        // 1 against 3 first, then 1 against 2: both see the change.
+        _ = await store.add(recognized: recognized, afterSnapshot: snap3)
+        let entries = await store.add(recognized: recognized, afterSnapshot: snap2)
+        XCTAssertEqual(entries.map(\.afterSnapshotId), [snap2.id])
+    }
+
     func testDifferentValuesSameKeyProduceSeparateEntries() async {
         let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))
         let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))
