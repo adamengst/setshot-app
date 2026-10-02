@@ -1,3 +1,9 @@
+## 1.0b30
+
+- **Fixed: the Journal skipped settings changed back and forth** — If you changed a setting, changed it back, and later made the same change again, the Journal recorded only the first time, so later snapshots with that change showed no description in the snapshot list. Switching audio output to AirPods and back was enough to trigger it. The Journal now records each change, while still recording a change only once when comparisons overlap. Entries skipped before this update aren't restored automatically; comparing those snapshots again adds them.
+
+- **Removed items say so** — Launch agents, launch daemons, system extensions and configuration profiles are recorded only by being present, so a removed one used to show "installed → (none)". It now reads "Installed → Removed", and a new one reads "Not installed → Installed".
+
 ## 1.0b29
 
 - **Fixed: automatic snapshots stopped running** — In 1.0b27 and 1.0b28, a change meant to reject command-line options SetShot didn't recognize also rejected the one macOS uses to start an automatic snapshot. Automatic snapshots work again with this update. The first scheduled snapshot after updating compares against your last snapshot from before 1.0b27, so it may show several weeks of changes at once.
