@@ -184,8 +184,10 @@ func unrecognizedRowText(rawLine: String, before: String, after: String, key: St
     ns.append(NSAttributedString(string: rawLine, attributes: [
         .font: mono, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: para(8),
     ]))
-    let b = before.isEmpty ? "(none)" : formatValue(before, key: key, counterpart: after)
-    let a = after.isEmpty  ? "(none)" : formatValue(after,  key: key, counterpart: before)
+    let b = before.isEmpty ? missingValueText(counterpart: after, isAfter: false)
+        : formatValue(before, key: key, counterpart: after)
+    let a = after.isEmpty ? missingValueText(counterpart: before, isAfter: true)
+        : formatValue(after, key: key, counterpart: before)
     ns.append(NSAttributedString(string: "\n" + b,
         attributes: [.font: mono, .foregroundColor: NSColor.systemOrange]))
     ns.append(NSAttributedString(string: "  \u{2192}  ",
@@ -514,8 +516,8 @@ func recognizedRowText(description: String, location: String?, old: String, new:
             .font: calloutFont, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: para(8)
         ]))
     }
-    let oldDisplay = old.isEmpty ? "(none)" : old
-    let newDisplay = new.isEmpty ? "(none)" : new
+    let oldDisplay = old.isEmpty ? missingValueText(counterpart: new, isAfter: false) : old
+    let newDisplay = new.isEmpty ? missingValueText(counterpart: old, isAfter: true) : new
     ns.append(NSAttributedString(string: "\n" + oldDisplay,
         attributes: [.font: monoFont, .foregroundColor: NSColor.systemOrange]))
     ns.append(NSAttributedString(string: "  \u{2192}  ",
@@ -525,6 +527,18 @@ func recognizedRowText(description: String, location: String?, old: String, new:
     return Text(AttributedString(ns))
         .lineSpacing(4)
         .fixedSize(horizontal: false, vertical: true)
+}
+
+/// What a side of a change with no value shows.
+///
+/// Launch agents, daemons, system extensions and profiles are recorded only by
+/// being present, as `= installed`, so their only changes are appearing and
+/// disappearing. "Installed → (none)" left the reader to work out that the item
+/// was removed (submissions issue 317). Everything else has no such reading and
+/// keeps "(none)".
+func missingValueText(counterpart: String, isAfter: Bool) -> String {
+    guard counterpart.lowercased() == "installed" else { return "(none)" }
+    return isAfter ? "Removed" : "Not installed"
 }
 
 func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = nil,
@@ -621,6 +635,9 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
     if raw.hasPrefix("/"), let url = URL(string: "file://\(raw)") {
         return url.deletingPathExtension().lastPathComponent
     }
+    // The presence marker for launch items, extensions and profiles; capitalised to
+    // match "Removed" and "Not installed" on the other side (see missingValueText).
+    if raw == "installed" { return "Installed" }
     // Keyed on assetID, but a wallpaper row that paired an aerial being replaced by
     // a picture carries the aerial's identifier under the picture's key, so a bare
     // identifier is looked up whatever the key says. Anything absent from the

@@ -72,8 +72,8 @@ enum DiffExplainer {
                                       valueMap: item.entry.valueMap, detail: item.diff.afterDetail,
                                       valueType: item.entry.valueType,
                                       counterpart: item.diff.beforeValue)
-                let bv = bvf.isEmpty ? "(none)" : bvf
-                let av = avf.isEmpty ? "(none)" : avf
+                let bv = bvf.isEmpty ? missingValueText(counterpart: item.diff.afterValue, isAfter: false) : bvf
+                let av = avf.isEmpty ? missingValueText(counterpart: item.diff.beforeValue, isAfter: true) : avf
                 print("  \(label.padding(toLength: maxLen, withPad: " ", startingAt: 0))  \(bv) → \(av)")
             }
             if !result.unrecognized.isEmpty { print() }

@@ -22,10 +22,10 @@ struct SubmitAllPreviewView: View {
                                     .font(.system(.callout, design: .monospaced))
                                     .foregroundStyle(.secondary)
                                 HStack(spacing: 6) {
-                                    Text(item.beforeValue.isEmpty ? "(none)" : formatValue(item.beforeValue, key: item.key, counterpart: item.afterValue))
+                                    Text(item.beforeValue.isEmpty ? missingValueText(counterpart: item.afterValue, isAfter: false) : formatValue(item.beforeValue, key: item.key, counterpart: item.afterValue))
                                         .foregroundStyle(.orange)
                                     Text("→").foregroundStyle(.secondary)
-                                    Text(item.afterValue.isEmpty ? "(none)" : formatValue(item.afterValue, key: item.key, counterpart: item.beforeValue))
+                                    Text(item.afterValue.isEmpty ? missingValueText(counterpart: item.beforeValue, isAfter: true) : formatValue(item.afterValue, key: item.key, counterpart: item.beforeValue))
                                         .foregroundStyle(.blue)
                                 }
                                 .font(.system(.caption, design: .monospaced))

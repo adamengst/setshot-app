@@ -597,4 +597,20 @@ final class TwoPartGrantSubjectTests: XCTestCase {
         XCTAssertTrue(rendered.contains("/usr/local/bin/some-helper"),
                       "A path client should survive intact: \(rendered)")
     }
+
+    // MARK: - Presence-only rows (issue 317)
+
+    func testARemovedItemSaysRemoved() {
+        XCTAssertEqual(formatValue("installed"), "Installed")
+        XCTAssertEqual(missingValueText(counterpart: "installed", isAfter: true), "Removed")
+        XCTAssertEqual(missingValueText(counterpart: "installed", isAfter: false), "Not installed")
+        // Callers that pass the already-formatted counterpart get the same answer.
+        XCTAssertEqual(missingValueText(counterpart: "Installed", isAfter: true), "Removed")
+    }
+
+    func testOtherEmptySidesStayNone() {
+        XCTAssertEqual(missingValueText(counterpart: "1", isAfter: true), "(none)")
+        XCTAssertEqual(missingValueText(counterpart: "AirPods Pro 2", isAfter: false), "(none)")
+        XCTAssertEqual(missingValueText(counterpart: "", isAfter: true), "(none)")
+    }
 }
