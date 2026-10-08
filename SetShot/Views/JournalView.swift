@@ -9,10 +9,19 @@ struct JournalView: View {
     @State private var showingClearConfirm = false
     @FocusState private var searchFocused: Bool
 
+    /// The journal less any settings ignored in Settings. Entries are hidden, not
+    /// deleted, so they come back if the switch is turned off. Settings is another tab
+    /// of this window, so the view is rebuilt — and this re-read — on the way back.
+    private var journal: [JournalEntry] {
+        let ignored = IgnoredChanges.current()
+        guard !ignored.isEmpty else { return appModel.journal }
+        return appModel.journal.filter { !ignored.covers(domain: $0.domain, key: $0.key) }
+    }
+
     private var filteredEntries: [JournalEntry] {
-        guard !searchQuery.isEmpty else { return appModel.journal }
+        guard !searchQuery.isEmpty else { return journal }
         let q = searchQuery.lowercased()
-        return appModel.journal.filter {
+        return journal.filter {
             let kbEntry = appModel.kb.entry(forDomain: $0.domain, key: $0.key)
             let valueMap = kbEntry?.valueMap
             let oldFormatted = formatValue($0.oldValue, key: $0.key, valueMap: valueMap,
@@ -54,7 +63,7 @@ struct JournalView: View {
         VStack(spacing: 0) {
             searchField
             Divider()
-            if appModel.journal.isEmpty {
+            if journal.isEmpty {
                 emptyState
             } else if sections.isEmpty {
                 noResults
@@ -98,7 +107,7 @@ struct JournalView: View {
                 }
                 .buttonStyle(.plain)
             }
-            if !appModel.journal.isEmpty {
+            if !journal.isEmpty {
                 // Inline, SwiftUI draws a Menu's indicator as a filled badge in the
                 // accent colour whatever the menu or button style — borderless only
                 // removes it by removing the frame too. The comparison window's copy
@@ -150,9 +159,9 @@ struct JournalView: View {
         let text: String
         switch format {
         case .html:
-            text = JournalHTMLExporter.export(journal: appModel.journal, oldestFirst: oldestFirst)
+            text = JournalHTMLExporter.export(journal: journal, oldestFirst: oldestFirst)
         case .markdown:
-            text = MarkdownExporter.export(journal: appModel.journal, oldestFirst: oldestFirst)
+            text = MarkdownExporter.export(journal: journal, oldestFirst: oldestFirst)
         }
         try? text.data(using: .utf8)?.write(to: url, options: .atomic)
     }

@@ -36,6 +36,7 @@ struct SettingsView: View {
             VStack(alignment: .leading, spacing: 32) {
                 schedulerSection
                 dataSourcesSection
+                ignoredChangesSection
                 displayOrderSection
                 updatesSection
             }
@@ -47,6 +48,18 @@ struct SettingsView: View {
     }
 
     // MARK: - Sections
+
+    private var ignoredChangesSection: some View {
+        SettingsSection("Ignored Changes") {
+            Text("Some settings change so often that their notifications get annoying. Ignored changes are left out of comparisons, the Journal, and notifications. Journal entries already recorded for them are hidden and reappear if you turn the switch off.")
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            ForEach(IgnoredChangeGroup.allCases) { group in
+                IgnoredChangeToggle(group: group)
+            }
+        }
+    }
 
     private var displayOrderSection: some View {
         SettingsSection("Display Order") {
@@ -430,6 +443,29 @@ struct SettingsView: View {
     private static func loadedDay() -> Int {
         if case .monthly(let d, _, _) = SchedulerManager.installedSchedule() { return d }
         return 1
+    }
+}
+
+/// One switch per ignored-change group. Its own view so each can bind @AppStorage to
+/// the group's key, which SwiftUI only allows to be chosen at initialization.
+private struct IgnoredChangeToggle: View {
+    let group: IgnoredChangeGroup
+    @AppStorage private var isIgnored: Bool
+
+    init(group: IgnoredChangeGroup) {
+        self.group = group
+        _isIgnored = AppStorage(wrappedValue: false, group.defaultsKey)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Toggle(group.title, isOn: $isIgnored)
+            Text(group.explanation)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.leading, 20)
+        }
     }
 }
 

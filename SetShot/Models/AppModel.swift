@@ -131,7 +131,7 @@ class AppModel: ObservableObject {
         let bSnap = Snapshot(takenAt: before.date, rawOutput: b)
         let aSnap = Snapshot(takenAt: after.date, rawOutput: a)
         let result = try await DiffEngine().diff(before: bSnap, after: aSnap, kb: kb)
-            .filteringHardware(hasBattery: SnapshotRunner.hasBattery)
+            .filteringHardware(hasBattery: SnapshotRunner.hasBattery).filteringIgnored()
         // Comparing writes nothing to disk, so cancelling here only has to stop the
         // journal being appended to for a comparison the user abandoned.
         try Task.checkCancellation()
@@ -181,7 +181,7 @@ class AppModel: ObservableObject {
             before: Snapshot(takenAt: before.date, rawOutput: b),
             after: Snapshot(takenAt: after.date, rawOutput: a),
             kb: kb)
-            .filteringHardware(hasBattery: SnapshotRunner.hasBattery) else { return }
+            .filteringHardware(hasBattery: SnapshotRunner.hasBattery).filteringIgnored() else { return }
         try? await store.saveMeta(for: after, recognized: result.recognized.count, unrecognized: result.unrecognized.count, scheduled: false, fromBaseline: fromBaseline)
         journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after, fromBaseline: fromBaseline)
     }
@@ -199,7 +199,7 @@ class AppModel: ObservableObject {
             before: Snapshot(takenAt: before.date, rawOutput: b),
             after: Snapshot(takenAt: after.date, rawOutput: a),
             kb: kb
-        ).filteringHardware(hasBattery: SnapshotRunner.hasBattery)
+        ).filteringHardware(hasBattery: SnapshotRunner.hasBattery).filteringIgnored()
         return result.recognized
     }
 }

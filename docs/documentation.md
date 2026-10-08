@@ -14,7 +14,7 @@ SetShot has four views, accessed by clicking the buttons at the top of the windo
 
 - **Snapshots:** Shows all the snapshots you've taken in a single list, newest first.
 - **Journal:** A chronological log of all recognized changes across your comparisons.
-- **Settings:** Reverse sort order and set up automatic daily snapshots.
+- **Settings:** Set up automatic snapshots, choose which changes to ignore, and reverse the sort order.
 - **About:** You're reading it now.
 
 ## Taking Snapshots
@@ -106,6 +106,12 @@ When you enable automatic snapshots, macOS will ask for **Notifications** permis
 It would be smart to keep **Delete scheduled snapshots with no changes** enabled to automatically remove snapshots taken by the scheduler that found no changes, keeping your library uncluttered.
 
 ![The Settings view](images/ScreenshotSettings.png)
+
+## Ignored Changes
+
+Some settings change so often on their own that reporting them buries the changes you care about. The main culprit is the sound input and output device: macOS switches the microphone and speakers every time AirPods or other headphones connect or disconnect. To stop seeing those changes, click **Settings** and select **Ignore changes to sound input and output devices** under **Ignored Changes**.
+
+Ignored changes are left out of comparisons, the Journal, Journal exports, and notifications. A scheduled snapshot whose only changes are ignored counts as having no changes, so **Delete scheduled snapshots with no changes** removes it. Journal entries recorded before you turned the option on are hidden rather than deleted, and they reappear if you turn it off. Changes that occur while the option is on are not recorded, so turning it off later won't bring those back.
 
 ## Optional Permissions
 

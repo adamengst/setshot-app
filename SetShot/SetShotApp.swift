@@ -462,7 +462,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
                            before: Snapshot(takenAt: previous.date, rawOutput: previousRaw),
                            after: Snapshot(takenAt: stored.date, rawOutput: storedRaw),
                            kb: kb)
-                           .filteringHardware(hasBattery: SnapshotRunner.hasBattery) {
+                           .filteringHardware(hasBattery: SnapshotRunner.hasBattery).filteringIgnored() {
 
                         var effectivePrevious = previous
 
@@ -477,7 +477,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
                                before: Snapshot(takenAt: beforePrevious.date, rawOutput: beforePreviousRaw),
                                after: Snapshot(takenAt: previous.date, rawOutput: previousRaw),
                                kb: kb)
-                               .filteringHardware(hasBattery: SnapshotRunner.hasBattery),
+                               .filteringHardware(hasBattery: SnapshotRunner.hasBattery).filteringIgnored(),
                            DiffEngine.isFullReversal(of: result, reversing: justifyingResult) {
                             try? await SnapshotStore.shared.delete(previous)
                             _ = await JournalStore.shared.delete(afterSnapshotId: previous.id)
@@ -485,7 +485,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
                                 before: Snapshot(takenAt: beforePrevious.date, rawOutput: beforePreviousRaw),
                                 after: Snapshot(takenAt: stored.date, rawOutput: storedRaw),
                                 kb: kb)
-                                .filteringHardware(hasBattery: SnapshotRunner.hasBattery) {
+                                .filteringHardware(hasBattery: SnapshotRunner.hasBattery).filteringIgnored() {
                                 result = recomputed
                                 effectivePrevious = beforePrevious
                             }

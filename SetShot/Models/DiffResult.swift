@@ -36,4 +36,15 @@ struct DiffResult {
         return DiffResult(recognized: filtered, unrecognized: unrecognized, noise: noise,
                           unrecognizedOverflow: unrecognizedOverflow, limitedAccessWarning: limitedAccessWarning)
     }
+
+    /// Drops the recognized changes the user has chosen to ignore in Settings. Applied
+    /// before the journal, the snapshot counts and the notification see the result, so
+    /// a scheduled snapshot whose only changes are ignored counts as empty.
+    func filteringIgnored(_ ignored: IgnoredChanges = .current()) -> DiffResult {
+        guard !ignored.isEmpty else { return self }
+        let filtered = recognized.filter { !ignored.covers(domain: $0.diff.domain, key: $0.diff.key) }
+        guard filtered.count != recognized.count else { return self }
+        return DiffResult(recognized: filtered, unrecognized: unrecognized, noise: noise,
+                          unrecognizedOverflow: unrecognizedOverflow, limitedAccessWarning: limitedAccessWarning)
+    }
 }
