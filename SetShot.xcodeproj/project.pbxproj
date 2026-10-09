@@ -91,7 +91,6 @@
 		F5E7380F84CF5F147732D3C1 /* LaunchArguments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BA01DC03681D4FD512EF91 /* LaunchArguments.swift */; };
 		F932C362BDFA26623A14BFB3 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E256CCC724BA590CC12FEDB /* AppModel.swift */; };
 		FA45E69608F29852F581E969 /* JournalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6DC2A921ED003213349A822 /* JournalStore.swift */; };
-		FE14285D9EB25E8B55EB5212 /* PingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1874758C891BF8554EDD4FE8 /* PingService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -115,7 +114,6 @@
 		16BC8706F8185F017B4E6163 /* JournalEntryDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalEntryDecodingTests.swift; sourceTree = "<group>"; };
 		185A25C6B1C00220CA8814D3 /* SchedulerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchedulerManager.swift; sourceTree = "<group>"; };
 		185D8A7E9F70FCBF6906DC64 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		1874758C891BF8554EDD4FE8 /* PingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PingService.swift; sourceTree = "<group>"; };
 		1D8889A9EA64910626B609D9 /* PlistFlattener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlistFlattener.swift; sourceTree = "<group>"; };
 		1DC6C26E647502B005077209 /* UpdaterState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdaterState.swift; sourceTree = "<group>"; };
 		28C0EB307A7E0B5780B3107B /* HelpDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpDocumentTests.swift; sourceTree = "<group>"; };
@@ -370,7 +368,6 @@
 				61336BF2958C0E7F041BDB4B /* KBFetcher.swift */,
 				30BA01DC03681D4FD512EF91 /* LaunchArguments.swift */,
 				B1F709629A970693935F4135 /* MarkdownExporter.swift */,
-				1874758C891BF8554EDD4FE8 /* PingService.swift */,
 				1D8889A9EA64910626B609D9 /* PlistFlattener.swift */,
 				185A25C6B1C00220CA8814D3 /* SchedulerManager.swift */,
 				458C8E9D2E3CAD28CC042E3B /* SettingsPaneIconProvider.swift */,
@@ -515,7 +512,6 @@
 				515B9128CCCA9A4AC9E4FD7D /* KnowledgeBase.swift in Sources */,
 				F5E7380F84CF5F147732D3C1 /* LaunchArguments.swift in Sources */,
 				1159FBD42FCD79ACBE126356 /* MarkdownExporter.swift in Sources */,
-				FE14285D9EB25E8B55EB5212 /* PingService.swift in Sources */,
 				590AA0768AEA08BB83C79A16 /* PlistFlattener.swift in Sources */,
 				A5906661B8264FCD5B817DE6 /* ReadyView.swift in Sources */,
 				7743F116DF1E7C882CE9E1EE /* ReleaseNotesView.swift in Sources */,

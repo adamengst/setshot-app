@@ -20,7 +20,7 @@ struct SetShotApp: App {
                     .environmentObject(appModel)
                     .environmentObject(updaterState)
                     .background(WindowFrameSaver(name: "SetShotMainWindow"))
-                    .task { await appModel.start(); PingService.pingIfNeeded() }
+                    .task { await appModel.start() }
                     .task { await SettingsPaneIconProvider.shared.prewarm() }
             }
         }
