@@ -90,9 +90,7 @@ struct SettingsView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Music & Media Settings\(musicStatus.map { $0 == .authorized ? " (Enabled)" : " (Disabled)" } ?? "")")
-                    .font(.system(size: 14))
-                    .fontWeight(.medium)
+                statusHeading("Music & Media Settings", enabled: musicStatus.map { $0 == .authorized })
                 Text(musicDescription)
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
@@ -112,9 +110,7 @@ struct SettingsView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("App Privacy Permissions\(fdaGranted.map { $0 ? " (Enabled)" : " (Disabled)" } ?? "")")
-                    .font(.system(size: 14))
-                    .fontWeight(.medium)
+                statusHeading("App Privacy Permissions", enabled: fdaGranted)
                 Text(fdaDescription)
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
@@ -126,12 +122,35 @@ struct SettingsView: View {
         }
     }
 
+    /// A heading led by a green check or red X. The "(Enabled)"/"(Disabled)" text stays so
+    /// the state does not rest on color alone. Nothing is shown until the state is known.
+    @ViewBuilder
+    private func statusHeading(_ title: String, enabled: Bool?) -> some View {
+        HStack(spacing: 6) {
+            if let enabled {
+                Image(systemName: enabled ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .foregroundStyle(enabled ? Color.green : Color.red)
+                    .accessibilityHidden(true)
+            }
+            Text("\(title)\(enabled.map { $0 ? " (Enabled)" : " (Disabled)" } ?? "")")
+                .font(.system(size: 14))
+                .fontWeight(.medium)
+        }
+    }
+
     /// Full Disk Access cannot be requested programmatically — macOS only lets it be
     /// granted by hand — so the most SetShot can do is open the pane.
     static let fullDiskAccessSettingsURL = URL(
         string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles")!
 
     private var fdaDescription: AttributedString {
+        if fdaGranted == true {
+            var str = AttributedString("SetShot is detecting which apps have been granted access to the microphone, camera, contacts, and similar resources. To turn this off, remove SetShot from the list in ")
+            var link = AttributedString("System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access.")
+            link.link = Self.fullDiskAccessSettingsURL
+            str += link
+            return str
+        }
         var str = AttributedString("For SetShot to detect which apps have been granted access to the microphone, camera, contacts, and similar resources, it needs Full Disk Access, which must be turned on manually. You can do so in ")
         var link = AttributedString("System Settings \u{2192} Privacy & Security \u{2192} Full Disk Access.")
         link.link = Self.fullDiskAccessSettingsURL
@@ -143,6 +162,13 @@ struct SettingsView: View {
         string: "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_Media")!
 
     private var musicDescription: AttributedString {
+        if musicStatus == .authorized {
+            var str = AttributedString("SetShot is reading settings from the Music app, Home Sharing, and related systems. To turn this off, switch off SetShot in ")
+            var link = AttributedString("System Settings \u{2192} Privacy & Security \u{2192} Media & Apple Music.")
+            link.link = Self.mediaSettingsURL
+            str += link
+            return str
+        }
         var str = AttributedString("For SetShot to read settings from the Music app, Home Sharing, and related systems, it needs Media & Apple Music access. When you enable this toggle, macOS will ask for permission on the next snapshot. You can review or revoke this in ")
         var link = AttributedString("System Settings \u{2192} Privacy & Security \u{2192} Media & Apple Music.")
         link.link = Self.mediaSettingsURL

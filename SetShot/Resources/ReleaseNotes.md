@@ -1,6 +1,6 @@
 ## 1.0b30
 
-- **Ignore sound device changes** — Connecting or disconnecting AirPods switches the Mac's microphone and speakers, so those changes showed up in nearly every comparison. A new Ignored Changes section in Settings lets you leave them out of comparisons, the Journal, and notifications. Journal entries already recorded for them are hidden while the option is on.
+- **Ignore sound device changes** — Connecting or disconnecting AirPods switches the Mac's microphone and speakers, so those changes showed up repeatedly. A new Ignored Changes section in Settings lets you leave them out of comparisons, the Journal, and notifications. Journal entries already recorded for them are hidden while the option is on. Let me know if you have other legitimate but chatty settings that should be added to this Ignored Changes section.
 
 - **Fixed: the Journal skipped settings changed back and forth** — If you changed a setting, changed it back, and later made the same change again, the Journal recorded only the first time, so later snapshots with that change showed no description in the snapshot list. Switching audio output to AirPods and back was enough to trigger it. The Journal now records each change, while still recording a change only once when comparisons overlap. Entries skipped before this update aren't restored automatically; comparing those snapshots again adds them.
 
