@@ -376,6 +376,12 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.recognized[0].diff.afterValue, "Forever")
     }
 
+    func testAKeyAppearingAtItsDefaultIsNoChange() {
+        let result = engine().parse(diffOutput: "+com.example :: TTL = Forever\n",
+                                    kb: defaultingKB())
+        XCTAssertTrue(result.recognized.isEmpty)
+    }
+
     func testAKeyAppearingStillReadsAsLeavingTheDefault() {
         let result = engine().parse(diffOutput: "+com.example :: TTL = 2592000\n",
                                     kb: defaultingKB())

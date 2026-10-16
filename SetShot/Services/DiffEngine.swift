@@ -577,6 +577,11 @@ struct DiffEngine {
                 // when what happened was "30 Days → Forever".
                 let effectiveBefore = before.isEmpty ? (entry.implicitDefault ?? "") : before
                 let effectiveAfter = after.isEmpty ? (entry.implicitDefault ?? "") : after
+                // A key written for the first time at its default is no change at all:
+                // moving the Liquid Glass slider to the middle writes 0.5 where nothing
+                // was, and the row read "0.5 → 0.5". Compared as numbers when both sides
+                // are, so "0.5" and "0.50" agree.
+                if sameValue(effectiveBefore, effectiveAfter) { continue }
                 var diffLine = DiffLine(
                     domain: p.domain,
                     key: p.key,
@@ -724,6 +729,12 @@ struct DiffEngine {
         case "false", "no", "0": return "0"
         default: return value
         }
+    }
+
+    private func sameValue(_ a: String, _ b: String) -> Bool {
+        if semanticValue(a) == semanticValue(b) { return true }
+        guard let x = Double(a), let y = Double(b) else { return false }
+        return x == y
     }
 
     private func inferSource(rawDomain: String) -> String {
