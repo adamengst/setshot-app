@@ -25,6 +25,9 @@ class AppModel: ObservableObject {
         _ = await (kbLoad, snapshotsLoad)
         await loadJournal()
         await refreshJournalIfNeeded()
+        // The paired-device list names Bluetooth audio devices in comparison rows.
+        // Reading it here keeps the first comparison from waiting on it.
+        Task.detached(priority: .utility) { _ = AudioDeviceNames.pairedBluetoothNames }
         // Probe the legacy FDA-protected path so SetShot appears in the Full
         // Disk Access list on older macOS. On macOS 15+, this file no longer
         // exists and the probe is a harmless no-op.

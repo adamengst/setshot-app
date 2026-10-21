@@ -912,4 +912,53 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertEqual(result.recognized.count, 1, "Revoking one grant should still report")
         XCTAssertNil(result.limitedAccessWarning)
     }
+
+    // MARK: - Siri's Requests choice
+
+    private let siriPlist = "/Users/u/Library/Preferences/com.apple.voicetrigger.plist"
+
+    private func siriKB() -> KnowledgeBase {
+        KnowledgeBase(entries: [
+            makeEntry(domain: "com.apple.voicetrigger", key: "Remote Darwin VoiceTrigger Enabled"),
+            makeEntry(domain: "com.apple.voicetrigger", key: "UserPreferredVoiceTriggerPhraseType"),
+        ], version: 1, updatedAt: nil)
+    }
+
+    private func siriSnapshot(enabled: String, phrase: String) -> String {
+        """
+        \(siriPlist) :: Remote Darwin VoiceTrigger Enabled = \(enabled)
+        \(siriPlist) :: UserPreferredVoiceTriggerPhraseType = \(phrase)
+        """
+    }
+
+    private func siriRows(from before: (String, String), to after: (String, String)) -> [String] {
+        let b = siriSnapshot(enabled: before.0, phrase: before.1)
+        let a = siriSnapshot(enabled: after.0, phrase: after.1)
+        var diff = ""
+        if before.0 != after.0 {
+            diff += "-\(siriPlist) :: Remote Darwin VoiceTrigger Enabled = \(before.0)\n"
+            diff += "+\(siriPlist) :: Remote Darwin VoiceTrigger Enabled = \(after.0)\n"
+        }
+        if before.1 != after.1 {
+            diff += "-\(siriPlist) :: UserPreferredVoiceTriggerPhraseType = \(before.1)\n"
+            diff += "+\(siriPlist) :: UserPreferredVoiceTriggerPhraseType = \(after.1)\n"
+        }
+        return engine().parse(diffOutput: diff, kb: siriKB(), beforeSnapshot: b, afterSnapshot: a)
+            .recognized.map { "\($0.diff.key): \($0.diff.beforeValue) -> \($0.diff.afterValue)" }
+    }
+
+    func testTurningSiriOffNamesThePhraseItWasListeningFor() {
+        XCTAssertEqual(siriRows(from: ("True", "0"), to: ("False", "0")),
+                       ["Remote Darwin VoiceTrigger Enabled: phrase:0 -> off"])
+    }
+
+    func testTurningSiriOnWithADifferentPhraseIsOneRow() {
+        XCTAssertEqual(siriRows(from: ("False", "0"), to: ("True", "1")),
+                       ["Remote Darwin VoiceTrigger Enabled: off -> phrase:1"])
+    }
+
+    func testChangingOnlyThePhraseKeepsThePhraseRow() {
+        XCTAssertEqual(siriRows(from: ("True", "1"), to: ("True", "0")),
+                       ["UserPreferredVoiceTriggerPhraseType: 1 -> 0"])
+    }
 }

@@ -155,6 +155,44 @@ final class JournalStoreTests: XCTestCase {
         XCTAssertEqual(entries.map(\.afterSnapshotId), [snap2.id])
     }
 
+    func testARereadSettingReplacesItsEntryForTheSameSnapshot() async {
+        let snapshot = makeSnapshot()
+        let old = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "False", after: "True"))],
+                                  afterSnapshot: snapshot)
+        _ = await store.updateNote(for: old[0].id, note: "Turned on for the demo")
+        let entries = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "off", after: "phrase:0"))],
+                                      afterSnapshot: snapshot)
+        XCTAssertEqual(entries.count, 1)
+        XCTAssertEqual(entries[0].id, old[0].id)
+        XCTAssertEqual(entries[0].oldValue, "off")
+        XCTAssertEqual(entries[0].newValue, "phrase:0")
+        XCTAssertEqual(entries[0].userNote, "Turned on for the demo")
+    }
+
+    func testAJournalAlreadyHoldingBothReadingsCollapsesToTheCurrentOne() async {
+        let snapshot = makeSnapshot()
+        // A journal written before replacement existed: the old reading and the new
+        // one side by side for the same snapshot.
+        let legacy = [
+            JournalEntry(id: UUID(), afterSnapshotId: snapshot.id, afterSnapshotDate: snapshot.date,
+                         afterSnapshotName: "", domain: "com.apple.test", key: "SomeKey",
+                         entryDescription: "", uiLocation: nil, settingsURL: nil,
+                         oldValue: "False", newValue: "True", addedAt: Date()),
+            JournalEntry(id: UUID(), afterSnapshotId: snapshot.id, afterSnapshotDate: snapshot.date,
+                         afterSnapshotName: "", domain: "com.apple.test", key: "SomeKey",
+                         entryDescription: "", uiLocation: nil, settingsURL: nil,
+                         oldValue: "off", newValue: "phrase:0", addedAt: Date()),
+        ]
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        try? encoder.encode(legacy).write(to: tempURL)
+        _ = await store.reload()
+
+        let entries = await store.add(recognized: [(entry: makeKBEntry(), diff: makeDiffLine(before: "off", after: "phrase:0"))],
+                                      afterSnapshot: snapshot)
+        XCTAssertEqual(entries.map(\.newValue), ["phrase:0"])
+    }
+
     func testDifferentValuesSameKeyProduceSeparateEntries() async {
         let snap1 = makeSnapshot(id: "snap1.txt.gz", date: Date(timeIntervalSince1970: 1_000_000))
         let snap2 = makeSnapshot(id: "snap2.txt.gz", date: Date(timeIntervalSince1970: 2_000_000))

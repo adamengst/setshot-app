@@ -28,10 +28,21 @@ final class IgnoredChangesTests: XCTestCase {
         let filtered = result([
             row(domain: "sound", key: "outputDevice"),
             row(domain: "sound", key: "inputDevice"),
+            row(domain: "com.apple.FaceTime", key: "PreferredAudioInputDeviceUID"),
             row(domain: "com.apple.dock", key: "autohide"),
         ]).filteringIgnored(IgnoredChanges(groups: [.soundDevices]))
 
         XCTAssertEqual(filtered.recognized.map(\.diff.key), ["autohide"])
+    }
+
+    func testScreenshotGroupDropsModeAndStyleButNotSaveLocation() {
+        let filtered = result([
+            row(domain: "com.apple.screencapture", key: "video"),
+            row(domain: "com.apple.screencapture", key: "style"),
+            row(domain: "com.apple.screencapture", key: "location"),
+        ]).filteringIgnored(IgnoredChanges(groups: [.screenshotMode]))
+
+        XCTAssertEqual(filtered.recognized.map(\.diff.key), ["location"])
     }
 
     func testNoGroupsLeavesResultAlone() {
@@ -60,6 +71,23 @@ final class IgnoredChangesTests: XCTestCase {
                 XCTAssertEqual(entry?.key, setting.key, "\(group): \(setting.domain) \(setting.key) has no exact KB entry")
                 XCTAssertEqual(entry?.noise, false, "\(group): \(setting.domain) \(setting.key) is noise already")
             }
+            for p in group.settingPrefixes {
+                let entry = kb.entries.first { $0.domain == p.domain && $0.keyPrefix == p.prefix }
+                XCTAssertNotNil(entry, "\(group): no KB entry with key_prefix \(p.domain) \(p.prefix)")
+                XCTAssertEqual(entry?.noise, false, "\(group): \(p.domain) \(p.prefix) is noise already")
+            }
         }
+    }
+
+    func testDNSGroupHidesTheLiveListButNotManualServers() {
+        let filtered = result([
+            row(domain: "dns", key: "nameserver[0]"),
+            row(domain: "dns", key: "nameserver[1]"),
+            row(domain: "dns", key: "searchdomain[0]"),
+            row(domain: "dns", key: "domain"),
+            row(domain: "dns-manual", key: "servers.Wi-Fi"),
+        ]).filteringIgnored(IgnoredChanges(groups: [.dnsFromNetwork]))
+
+        XCTAssertEqual(filtered.recognized.map(\.diff.key), ["servers.Wi-Fi"])
     }
 }

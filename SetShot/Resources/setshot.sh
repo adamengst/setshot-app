@@ -1583,6 +1583,26 @@ JSEOF
     '
 
     echo ""
+    echo "# --- networksetup: manually set DNS ---"
+    # The dns :: lines above are the resolvers in use, which a DHCP server hands out
+    # and which change with every network joined. The servers and search domains typed
+    # into a service's DNS settings -- or written there by networksetup, as adware
+    # does -- are recorded per service and stay put, so they are captured separately
+    # and can be reported when the live list is ignored. A service with none set writes
+    # no line. Disabled services are included: their settings return when re-enabled.
+    networksetup -listallnetworkservices 2>/dev/null | awk 'NR > 1 && NF { sub(/^\*/, ""); print }' |
+      while IFS= read -r _svc; do
+        for _kind in servers searchdomains; do
+          if [ "$_kind" = servers ]; then _list=$(networksetup -getdnsservers "$_svc" 2>/dev/null)
+          else _list=$(networksetup -getsearchdomains "$_svc" 2>/dev/null); fi
+          # The "none set" answer is a sentence; anything else is one entry per line.
+          printf '%s\n' "$_list" | grep -q "aren't any" && continue
+          _joined=$(printf '%s\n' "$_list" | awk 'NF' | paste -sd ',' - | sed 's/,/, /g')
+          [ -n "$_joined" ] && echo "dns-manual :: $_kind.$_svc = $_joined"
+        done
+      done
+
+    echo ""
     echo "# --- scutil: network connection services ---"
     # A VPN does not appear in `networksetup -listallnetworkservices`, which lists
     # hardware services, so a VPN that software installs was invisible -- reported by

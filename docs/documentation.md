@@ -109,7 +109,11 @@ It would be smart to keep **Delete scheduled snapshots with no changes** enabled
 
 ## Ignored Changes
 
-Some settings change so often on their own that reporting them buries the changes you care about. The main culprit is the sound input and output device: macOS switches the microphone and speakers every time AirPods or other headphones connect or disconnect. To stop seeing those changes, click **Settings** and select **Ignore changes to sound input and output devices** under **Ignored Changes**.
+Some settings change so often on their own that reporting them buries the changes you care about. Click **Settings** and use the switches under **Ignored Changes** to stop seeing them:
+
+- **Ignore changes to sound input and output devices:** macOS switches the microphone and speakers, including FaceTime's microphone, every time AirPods or other headphones connect or disconnect.
+- **Ignore screenshot settings changes:** the Screenshot tool remembers whether you last took a screenshot or a screen recording, and whether you captured the whole screen, a window, or a selection. Where screenshots are saved and the other Options settings are still reported.
+- **Ignore DNS changes from switching networks:** each network you join assigns its own DNS servers and search domains. DNS servers or search domains you, or an app, set manually for a connection in **System Settings → Network → Details → DNS** are still reported, because an unexpected manual server can mean something is redirecting your lookups.
 
 Ignored changes are left out of comparisons, the Journal, Journal exports, and notifications. A scheduled snapshot whose only changes are ignored counts as having no changes, so **Delete scheduled snapshots with no changes** removes it. Journal entries recorded before you turned the option on are hidden rather than deleted, and they reappear if you turn it off. Changes that occur while the option is on are not recorded, so turning it off later won't bring those back.
 

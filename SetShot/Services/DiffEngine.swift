@@ -557,6 +557,32 @@ struct DiffEngine {
             return !seenAcrossSpaces.insert(identity).inserted
         }
 
+        // Siri's Requests pane offers "Siri" or "Hey Siri", "Hey Siri" and Off, stored
+        // as two keys: an on/off switch and the phrase, which keeps its value while the
+        // switch is off. Either key alone misreports the choice, so the switch's row
+        // carries the whole of it, reading the phrase from each snapshot, and the
+        // phrase's own row is dropped when the switch's is there to say the same.
+        // The values are tokens rather than 0 and 1 so that a value map naming them
+        // cannot be mistaken for On and Off by an older SetShot.
+        let siriDomain = "com.apple.voicetrigger"
+        // Only a switch that holds On or Off on each side it exists is read this way;
+        // any other value is left for its own row to show as it is.
+        let isSwitchValue = { (v: String?) in v.map { ["0", "1"].contains(semanticValue($0)) } ?? true }
+        if let i = pairs.firstIndex(where: {
+            $0.domain == siriDomain && $0.key == "Remote Darwin VoiceTrigger Enabled"
+        }), isSwitchValue(pairs[i].before), isSwitchValue(pairs[i].after) {
+            func choice(_ enabled: String?, in snapshot: String) -> String? {
+                guard let enabled else { return nil }
+                guard semanticValue(enabled) == "1" else { return "off" }
+                let phrase = Self.value(ofKey: "UserPreferredVoiceTriggerPhraseType",
+                                        inDomain: siriDomain, from: snapshot)
+                return phrase.map { "phrase:\(semanticValue($0))" } ?? enabled
+            }
+            pairs[i].before = choice(pairs[i].before, in: beforeSnapshot)
+            pairs[i].after = choice(pairs[i].after, in: afterSnapshot)
+            pairs.removeAll { $0.domain == siriDomain && $0.key == "UserPreferredVoiceTriggerPhraseType" }
+        }
+
         for p in pairs {
             let before = p.before ?? ""
             let after = p.after ?? ""

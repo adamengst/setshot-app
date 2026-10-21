@@ -1,3 +1,13 @@
+## 1.0b31
+
+- **Ignore screenshot settings changes** — The Screenshot tool remembers whether you last took a screenshot or a screen recording, and whether you captured the whole screen, a window, or a selection, so taking a screenshot often changed those settings. A new switch in Settings → Ignored Changes leaves them out of comparisons, the Journal, and notifications. Where screenshots are saved and the other Options settings are still reported.
+
+- **Ignore DNS changes from switching networks** — Every network you join automatically hands out its own DNS servers, so changing networks reported DNS changes each time. A new switch in Settings → Ignored Changes hides them. Regardless, SetShot still records manually set DNS servers and search domains to identify intentional changes, and those made by malicious apps trying to redirect your lookups.
+
+- **FaceTime microphone** — FaceTime's microphone is now identified with the device's name, and it is included in the "Ignore changes to sound input and output devices" option in Settings.
+
+- **Siri's trigger phrase reads as one choice** — macOS stores Siri → Requests as a switch plus a phrase, so changing phrases could show up as two rows. SetShot now reports the choice as it appears in System Settings: “Siri” or “Hey Siri”, “Hey Siri”, or Off.
+
 ## 1.0b30
 
 - **Ignore sound device changes** — Connecting or disconnecting AirPods switches the Mac's microphone and speakers, so those changes showed up repeatedly. A new Ignored Changes section in Settings lets you leave them out of comparisons, the Journal, and notifications. Journal entries already recorded for them are hidden while the option is on. Let me know if you have other legitimate but chatty settings that should be added to this Ignored Changes section.

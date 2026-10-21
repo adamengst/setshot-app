@@ -91,17 +91,52 @@ actor JournalStore {
     @discardableResult
     func add(recognized: [(entry: KBEntry, diff: DiffLine)], afterSnapshot: StoredSnapshot, fromBaseline: Bool = false) -> [JournalEntry] {
         var entries = load()
-        // Re-running a comparison offers the same changes for the same After snapshot.
         // Repeats from other snapshots are settled by deduplicated(_:) below, which
         // can tell an overlapping comparison from a setting changed back and again.
-        let existingKeys = Set(entries.filter { $0.afterSnapshotId == afterSnapshot.id }
-            .map { dedupKey(domain: $0.domain, key: $0.key, old: $0.oldValue, new: $0.newValue) })
         let now = Date()
         for item in recognized {
             let before = item.diff.beforeValue
             let after = item.diff.afterValue
             let key = dedupKey(domain: item.diff.domain, key: item.diff.key, old: before, new: after)
-            guard !existingKeys.contains(key) else { continue }
+
+            // One entry per setting per After snapshot. Re-running a comparison offers
+            // the same change again, which leaves the entry as it was. A comparison that
+            // reads the setting differently -- because the knowledge base or SetShot now
+            // reads it differently, as when Siri's Requests choice stopped being recorded
+            // as True and False -- replaces what was recorded, keeping the entry's
+            // identity and any note. Adding it alongside listed the setting twice, and
+            // journals that already hold such pairs collapse here too.
+            let sameSetting = entries.indices.filter {
+                entries[$0].afterSnapshotId == afterSnapshot.id &&
+                entries[$0].domain == item.diff.domain && entries[$0].key == item.diff.key
+            }
+            if let first = sameSetting.first {
+                let isSame = { (i: Int) in
+                    self.dedupKey(domain: entries[i].domain, key: entries[i].key,
+                                  old: entries[i].oldValue, new: entries[i].newValue) == key
+                }
+                let kept = sameSetting.first { entries[$0].userNote != nil }
+                    ?? sameSetting.first(where: isSame) ?? first
+                let unchanged = isSame(kept)
+                entries[kept] = JournalEntry(
+                    id: entries[kept].id,
+                    afterSnapshotId: afterSnapshot.id,
+                    afterSnapshotDate: afterSnapshot.date,
+                    afterSnapshotName: afterSnapshot.displayName,
+                    domain: item.diff.domain,
+                    key: item.diff.key,
+                    entryDescription: rowDescription(entry: item.entry, key: item.diff.key),
+                    uiLocation: item.entry.uiLocation,
+                    settingsURL: item.entry.settingsURL,
+                    oldValue: unchanged ? entries[kept].oldValue : before,
+                    newValue: unchanged ? entries[kept].newValue : after,
+                    addedAt: unchanged ? entries[kept].addedAt : now,
+                    fromBaseline: unchanged ? entries[kept].fromBaseline : fromBaseline,
+                    userNote: entries[kept].userNote
+                )
+                for extra in sameSetting.reversed() where extra != kept { entries.remove(at: extra) }
+                continue
+            }
 
             // A key appearing from nothing or vanishing to nothing may be half of a
             // round-trip (X → ∅ → X) caused by a preference domain being temporarily

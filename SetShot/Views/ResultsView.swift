@@ -581,6 +581,9 @@ func formatValue(_ raw: String, key: String = "", valueMap: [String: String]? = 
            let stem = URL(string: "file://\(raw)")?.deletingPathExtension().lastPathComponent,
            let label = map[stem] { return label }
     }
+    // Audio devices are recorded by Core Audio UID: a Bluetooth address or a USB
+    // engine string. Either reads better as the device's name.
+    if let name = AudioDeviceNames.name(for: raw) { return name }
     // Default handlers are recorded as bundle identifiers, and LaunchServices
     // lowercases them, so the raw value reads "com.apple.safari". Resolve the app's
     // real name. This is a live lookup, but an app's name is its identity rather
