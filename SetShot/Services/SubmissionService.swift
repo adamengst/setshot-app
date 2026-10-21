@@ -22,14 +22,14 @@ actor SubmissionService {
     /// have not updated: fourteen of twenty-seven open submissions were two
     /// AuthenticationServices timestamps that b27 has filtered at capture since the
     /// day it shipped.
-    private var appVersion: String {
+    static var appVersion: String {
         let info = Bundle.main.infoDictionary
         let short = info?["CFBundleShortVersionString"] as? String ?? "?"
         let build = info?["CFBundleVersion"] as? String ?? "?"
         return "\(short) (\(build))"
     }
 
-    private var kbVersion: String {
+    static var kbVersion: String {
         let v = UserDefaults.standard.integer(forKey: "kb_version")
         return v > 0 ? String(v) : "none"
     }
@@ -59,8 +59,8 @@ actor SubmissionService {
             "before_value": diff.beforeValue.isEmpty ? "(not set)" : diff.beforeValue,
             "after_value": diff.afterValue.isEmpty ? "(not set)" : diff.afterValue,
             "macos_version": diff.macOSVersion,
-            "app_version": appVersion,
-            "kb_version": kbVersion
+            "app_version": Self.appVersion,
+            "kb_version": Self.kbVersion
         ]
         if let fb = feedback {
             if let cat = fb.category { p["feedback_category"] = cat.rawValue }
@@ -85,13 +85,17 @@ actor SubmissionService {
             "current_settings_url":   entry.settingsURL ?? "",
             "current_icon_bundle_id": entry.iconBundleID ?? "",
             "macos_version":          diff.macOSVersion,
-            "app_version":            appVersion,
-            "kb_version":             kbVersion,
+            "app_version":            Self.appVersion,
+            "kb_version":             Self.kbVersion,
             "issues":                 issues.map(\.rawValue).joined(separator: ",")
         ]
         let trimmed = notes.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty { payload["notes"] = trimmed }
         try await post(payload, path: "/kb-feedback")
+    }
+
+    func submitSupportRequest(_ request: SupportRequest) async throws {
+        try await post(request, path: "/support")
     }
 
     private func post<T: Encodable>(_ body: T, path: String = "") async throws {
@@ -101,16 +105,22 @@ actor SubmissionService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
         let (_, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-            throw SubmissionError.serverError
-        }
+        guard let http = response as? HTTPURLResponse else { throw SubmissionError.serverError }
+        if http.statusCode == 429 { throw SubmissionError.rateLimited }
+        guard http.statusCode == 200 else { throw SubmissionError.serverError }
     }
 }
 
 enum SubmissionError: LocalizedError {
     case serverError
+    case rateLimited
 
     var errorDescription: String? {
-        "Submission failed. Please try again."
+        switch self {
+        case .serverError:
+            return "Submission failed. Please try again."
+        case .rateLimited:
+            return "Too many submissions have come from this network in the last hour. Please try again later."
+        }
     }
 }

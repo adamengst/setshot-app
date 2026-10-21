@@ -1,5 +1,7 @@
 ## 1.0b31
 
+- **Contact Support from the Help menu** — Help → Contact Support sends a question, bug report, or suggestion directly from SetShot, with no account needed. Add your email address if you'd like a reply, and choose whether to include your SetShot and macOS versions and other details about your Mac, all of which are shown before you send.
+
 - **Ignore screenshot settings changes** — The Screenshot tool remembers whether you last took a screenshot or a screen recording, and whether you captured the whole screen, a window, or a selection, so taking a screenshot often changed those settings. A new switch in Settings → Ignored Changes leaves them out of comparisons, the Journal, and notifications. Where screenshots are saved and the other Options settings are still reported.
 
 - **Ignore DNS changes from switching networks** — Every network you join automatically hands out its own DNS servers, so changing networks reported DNS changes each time. A new switch in Settings → Ignored Changes hides them. Regardless, SetShot still records manually set DNS servers and search domains to identify intentional changes, and those made by malicious apps trying to redirect your lookups.

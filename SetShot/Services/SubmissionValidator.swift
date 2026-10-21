@@ -48,6 +48,43 @@ enum SubmissionValidator {
         return nil
     }
 
+    // Support messages are checked for length only. The worker accepts links and
+    // angle brackets in them, putting the message in a code block instead, because
+    // someone asking for help will paste both.
+    static let maxSupportMessageLength = 5000
+    static let maxEmailLength = 254
+
+    // The same pattern as EMAIL_PATTERN in worker.js. It is narrow on purpose: the
+    // address goes into a mailto: link, so nothing that could end it or start a query
+    // is let through.
+    private static let email = try! NSRegularExpression(
+        pattern: #"^[A-Za-z0-9._+'-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$"#)
+
+    /// A sentence explaining what to change, or nil when the message will be accepted.
+    /// An empty message is not a problem here; the sheet disables Send instead.
+    static func problem(withSupportMessage message: String) -> String? {
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.count > maxSupportMessageLength {
+            return "Messages are limited to \(maxSupportMessageLength) characters, and this is "
+                 + "\(trimmed.count). Please shorten it by \(trimmed.count - maxSupportMessageLength)."
+        }
+        return nil
+    }
+
+    /// A sentence explaining what to change, or nil when the address will be accepted.
+    /// A blank address is fine; it means no reply is wanted.
+    static func problem(withEmail address: String) -> String? {
+        let trimmed = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let ns = trimmed as NSString
+        if trimmed.utf16.count > maxEmailLength
+            || email.firstMatch(in: trimmed, range: NSRange(location: 0, length: ns.length)) == nil {
+            return "“\(trimmed)” doesn’t look like an email address SetShot can accept. "
+                 + "Please check it, or leave the field empty if you don’t need a reply."
+        }
+        return nil
+    }
+
     private static func firstMatch(of regex: NSRegularExpression, in text: String) -> String? {
         let ns = text as NSString
         guard let m = regex.firstMatch(in: text, range: NSRange(location: 0, length: ns.length))

@@ -67,6 +67,9 @@ struct SetShotApp: App {
                 Button("Release Notes") {
                     ReleaseNotesWindowController.shared.show()
                 }
+                Button("Contact Support…") {
+                    ContactSupportWindowController.shared.show()
+                }
             }
         }
 
@@ -97,22 +100,53 @@ final class ReleaseNotesWindowController {
         win.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         win.isReleasedWhenClosed = false
         win.setContentSize(NSSize(width: 680, height: 560))
-        win.alphaValue = 0
-        win.makeKeyAndOrderFront(nil)
-        DispatchQueue.main.async {
-            if let main = NSApp.windows.first(where: { $0.title == "SetShot" && $0.isVisible }) {
-                let mf = main.frame
-                let wf = win.frame
-                win.setFrameOrigin(NSPoint(
-                    x: mf.midX - wf.width / 2,
-                    y: mf.midY - wf.height / 2
-                ))
-            } else {
-                win.center()
-            }
-            win.alphaValue = 1
-        }
+        showCenteredOnMainWindow(win)
         self.window = win
+    }
+}
+
+final class ContactSupportWindowController {
+    static let shared = ContactSupportWindowController()
+    private var window: NSWindow?
+
+    /// Brings back the existing window when there is one, even if it was closed, so a
+    /// message closed half-written is still there. Cancel, or Close after sending,
+    /// discards it.
+    func show() {
+        if let window {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        let hosting = NSHostingController(rootView: ContactSupportView { [weak self] in
+            self?.window?.close()
+            self?.window = nil
+        })
+        let win = NSWindow(contentViewController: hosting)
+        win.title = "Contact Support"
+        win.styleMask = [.titled, .closable]
+        win.isReleasedWhenClosed = false
+        showCenteredOnMainWindow(win)
+        self.window = win
+    }
+}
+
+/// Shows a window over the middle of the main window, or the screen when the main
+/// window is not open. It starts transparent and appears only once it is in place.
+private func showCenteredOnMainWindow(_ win: NSWindow) {
+    win.alphaValue = 0
+    win.makeKeyAndOrderFront(nil)
+    DispatchQueue.main.async {
+        if let main = NSApp.windows.first(where: { $0.title == "SetShot" && $0.isVisible }) {
+            let mf = main.frame
+            let wf = win.frame
+            win.setFrameOrigin(NSPoint(
+                x: mf.midX - wf.width / 2,
+                y: mf.midY - wf.height / 2
+            ))
+        } else {
+            win.center()
+        }
+        win.alphaValue = 1
     }
 }
 
@@ -130,21 +164,7 @@ final class AboutWindowController {
         win.title = "About SetShot"
         win.styleMask = [.titled, .closable]
         win.isReleasedWhenClosed = false
-        win.alphaValue = 0
-        win.makeKeyAndOrderFront(nil)
-        DispatchQueue.main.async {
-            if let main = NSApp.windows.first(where: { $0.title == "SetShot" && $0.isVisible }) {
-                let mf = main.frame
-                let wf = win.frame
-                win.setFrameOrigin(NSPoint(
-                    x: mf.midX - wf.width / 2,
-                    y: mf.midY - wf.height / 2
-                ))
-            } else {
-                win.center()
-            }
-            win.alphaValue = 1
-        }
+        showCenteredOnMainWindow(win)
         self.window = win
     }
 }

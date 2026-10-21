@@ -95,6 +95,14 @@ Click **Submit Feedback** on any recognized change row to open a feedback sheet.
 
 Feedback is reviewed and incorporated into future knowledge base updates, making SetShot more accurate for everyone.
 
+## Contacting Support
+
+For anything that isn’t about a single setting — a question about how SetShot works, a problem with the app itself, or an idea for a new feature — choose **Help → Contact Support**. Pick **Bug Report**, **Question**, or **Suggestion**, describe what you need, and click **Send**.
+
+If you’d like a reply, enter your email address; it’s used only to answer that message. Leave it empty to send feedback without one. **Include information about this Mac** adds the SetShot, knowledge base, and macOS versions, the Mac model, and whether Full Disk Access and Media & Apple Music access are granted. Everything it sends is shown in the window before you send it, and you can turn it off.
+
+If you close the window before sending, what you wrote is still there the next time you open it. **Cancel** discards it.
+
 ## Automatic Snapshots
 
 SetShot can take snapshots automatically on a schedule. Click **Settings** in the segmented control at the top, then select **Take automatic snapshots** and choose how often: every N minutes, every N hours, once a day, once a week, or once a month. For day, week, and month intervals, you can also set the time of day.
@@ -136,6 +144,6 @@ One more permission is used when automatic snapshots are enabled:
 The data SetShot works with is inherently non-sensitive — it's system settings like toggles, sliders, and preferences, not passwords, documents, photos, or personal content. That said, SetShot is designed to keep your data private.
 
 - **Snapshots, comparisons, and journal entries** are stored only on this Mac and are never transmitted anywhere.
-- **Submissions** are the one exception. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record.
+- **Submissions** go out over the Internet. When you submit an unrecognized change or send feedback on a recognized change, the relevant setting data is sent to the developer over a secure connection and stored privately. Submissions are entirely opt-in. Support messages sent with **Help → Contact Support** are handled the same way, along with the email address if you include one, which is used only to reply to that message. As with any Internet connection, your IP address is seen by the service that handles submissions (Cloudflare) but is not stored in your submission record.
 
 SetShot is open source. If you want to verify exactly what data the app collects and how it is handled, the full source code is available at [github.com/adamengst/setshot-app](https://github.com/adamengst/setshot-app).

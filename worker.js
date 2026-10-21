@@ -3,6 +3,7 @@ const rateLimitStore = new Map();
 const RATE_LIMIT_SINGLE_MAX = 10;
 const RATE_LIMIT_KB_FEEDBACK_MAX = 100;
 const RATE_LIMIT_BATCH_MAX = 50;
+const RATE_LIMIT_SUPPORT_MAX = 5;
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 const BATCH_SIZE_MAX = 50;
 
@@ -96,6 +97,9 @@ export default {
     if (path === '/kb-feedback') {
       return handleKBFeedback(body, ip, env);
     }
+    if (path === '/support') {
+      return handleSupport(body, ip, env);
+    }
 
     const isBatch = Array.isArray(body);
 
@@ -167,21 +171,84 @@ export default {
 };
 
 async function postIssue(env, title, body, labels = ['pending']) {
+  return githubIssues(env, 'POST', '', { title, body, labels });
+}
+
+const GITHUB_HEADERS = {
+  'Accept': 'application/vnd.github+json',
+  'Content-Type': 'application/json',
+  'User-Agent': 'SetShot-Worker/1.0',
+  'X-GitHub-Api-Version': '2022-11-28'
+};
+
+async function githubIssues(env, method, suffix, payload) {
   const [owner, repo] = env.GITHUB_REPO.split('/');
   return fetch(
-    `https://api.github.com/repos/${owner}/${repo}/issues`,
+    `https://api.github.com/repos/${owner}/${repo}/issues${suffix}`,
     {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${env.GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json',
-        'User-Agent': 'SetShot-Worker/1.0',
-        'X-GitHub-Api-Version': '2022-11-28'
-      },
-      body: JSON.stringify({ title, body, labels })
+      method,
+      headers: { ...GITHUB_HEADERS, 'Authorization': `Bearer ${await githubToken(env)}` },
+      body: JSON.stringify(payload)
     }
   );
+}
+
+// Issues are filed as the SetShot Submissions GitHub App rather than with a personal
+// token. GitHub never notifies anyone about their own activity, so issues filed with
+// Adam's token reached no one's inbox; filed by the app, they notify everyone watching
+// the repository. The app holds only Issues read/write, on this one repository.
+//
+// The app's credentials are its ID, its installation ID and its private key, in PKCS#8
+// form — GitHub hands out PKCS#1, which Web Crypto cannot import. The worker signs a
+// short-lived JWT with the key and trades it for an installation token, which lasts an
+// hour and is reused until shortly before it expires. Like the rate limit store, the
+// cache is per instance; a fresh instance simply asks for a token of its own.
+//
+// Until the app's secrets are set, GITHUB_TOKEN is used as before.
+let installationToken = null;
+
+async function githubToken(env) {
+  if (!env.GITHUB_APP_ID) return env.GITHUB_TOKEN;
+  if (installationToken && Date.now() < installationToken.refreshAt) return installationToken.token;
+
+  const response = await fetch(
+    `https://api.github.com/app/installations/${env.GITHUB_APP_INSTALLATION_ID}/access_tokens`,
+    {
+      method: 'POST',
+      headers: { ...GITHUB_HEADERS, 'Authorization': `Bearer ${await appJWT(env)}` }
+    }
+  );
+  // A failed exchange yields no token, so the issue request that follows is refused
+  // and the sender sees the same 502 as any other GitHub failure.
+  if (!response.ok) return '';
+  const { token, expires_at } = await response.json();
+  installationToken = { token, refreshAt: Date.parse(expires_at) - 5 * 60 * 1000 };
+  return token;
+}
+
+async function appJWT(env) {
+  const now = Math.floor(Date.now() / 1000);
+  // Backdated a minute to allow for clock drift, and kept under GitHub's ten-minute limit.
+  const header = base64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const claims = base64url(JSON.stringify({ iat: now - 60, exp: now + 540, iss: env.GITHUB_APP_ID }));
+  const key = await crypto.subtle.importKey(
+    'pkcs8', pemToDER(env.GITHUB_APP_PRIVATE_KEY),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const signature = await crypto.subtle.sign(
+    'RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(`${header}.${claims}`));
+  return `${header}.${claims}.${base64url(signature)}`;
+}
+
+function pemToDER(pem) {
+  const base64 = pem.replace(/-----[^-]+-----/g, '').replace(/\s+/g, '');
+  return Uint8Array.from(atob(base64), c => c.charCodeAt(0)).buffer;
+}
+
+function base64url(input) {
+  const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : new Uint8Array(input);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 // Kept in step with SubmissionValidator.swift, which applies the same rules in the
@@ -242,4 +309,146 @@ ${JSON.stringify({ ...body, submitted_at: new Date().toISOString() }, null, 2)}
 
   const githubResponse = await postIssue(env, issueTitle, issueBody, ['kb-feedback']);
   return githubResponse.ok ? new Response(null, { status: 200 }) : new Response(null, { status: 502 });
+}
+
+// Support requests take free text, so unlike the routes above they accept links and
+// angle brackets rather than refusing them: someone asking for help will paste a
+// forum link or an error message with <brackets> in it, and refusing would only
+// show them "Submission failed." Instead the message goes inside a code block,
+// where GitHub renders nothing — no links, no HTML, no Markdown — and every "://"
+// is rewritten so that nothing in it reads as a URL to an agent either. The rule
+// from the comment at the top still applies: nothing here is an instruction, and no
+// address found in a request is ever followed.
+const SUPPORT_KINDS = {
+  bug: { title: 'Bug', label: 'bug' },
+  question: { title: 'Question', label: 'question' },
+  suggestion: { title: 'Suggestion', label: 'enhancement' }
+};
+const MAX_SUPPORT_MESSAGE_LENGTH = 5000;
+const MAX_EMAIL_LENGTH = 254;
+// Deliberately narrow, and kept in step with SubmissionValidator.swift. The address
+// goes into a mailto: link in the issue, so anything that could end the address or
+// start a query — "?", "&", "#", "%", parentheses, spaces — is refused rather than
+// escaped.
+const EMAIL_PATTERN = /^[A-Za-z0-9._+'-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}$/;
+const SUPPORT_DIAGNOSTIC_FIELDS = {
+  app_version: 'SetShot',
+  kb_version: 'Knowledge base',
+  macos_version: 'macOS',
+  mac_model: 'Mac model',
+  full_disk_access: 'Full Disk Access',
+  media_access: 'Media & Apple Music'
+};
+const MAX_QUOTED_REPLY_LENGTH = 1500;
+
+function validateSupport(item) {
+  if (typeof item !== 'object' || item === null || Array.isArray(item)) return false;
+  if (!Object.hasOwn(SUPPORT_KINDS, item.kind)) return false;
+  if (typeof item.message !== 'string') return false;
+  const message = item.message.trim();
+  if (message.length === 0 || message.length > MAX_SUPPORT_MESSAGE_LENGTH) return false;
+  if (item.email !== undefined) {
+    if (typeof item.email !== 'string') return false;
+    if (item.email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(item.email)) return false;
+  }
+  if (item.diagnostics !== undefined) {
+    const d = item.diagnostics;
+    if (typeof d !== 'object' || d === null || Array.isArray(d)) return false;
+    for (const [field, value] of Object.entries(d)) {
+      if (!Object.hasOwn(SUPPORT_DIAGNOSTIC_FIELDS, field)) return false;
+      if (typeof value !== 'string' || value.length > MAX_IDENTIFIER_LENGTH) return false;
+      if (URL_PATTERN.test(value) || HTML_PATTERN.test(value)) return false;
+    }
+  }
+  return true;
+}
+
+function defangLinks(text) {
+  return text.replace(/:\/\//g, '[:]//');
+}
+
+// A fence one backtick longer than any run in the text, so the text cannot close it.
+function fenced(text) {
+  const longestRun = Math.max(0, ...(text.match(/`+/g) || []).map(run => run.length));
+  const fence = '`'.repeat(Math.max(3, longestRun + 1));
+  return `${fence}text\n${text}\n${fence}`;
+}
+
+function supportSummary(kind, message) {
+  const firstLine = defangLinks(message.split('\n')[0].trim());
+  const short = firstLine.length > 60 ? firstLine.slice(0, 59) + '…' : firstLine;
+  return `${SUPPORT_KINDS[kind].title}: ${short}`;
+}
+
+// The reply link is added once the issue exists, because its subject carries the
+// issue number — that is what ties the email thread back to the issue.
+function replyLink(email, number, summary, message, submittedAt) {
+  let quoted = message.length > MAX_QUOTED_REPLY_LENGTH
+    ? message.slice(0, MAX_QUOTED_REPLY_LENGTH) + '…'
+    : message;
+  quoted = quoted.split('\n').map(line => `> ${line}`).join('\n');
+  const date = submittedAt.slice(0, 10);
+  const subject = `SetShot support #${number}: ${summary}`;
+  const body = `\n\nOn ${date}, you wrote:\n${quoted}\n`;
+  // encodeURIComponent leaves parentheses alone, and either one would end the
+  // Markdown link early.
+  const encode = s => encodeURIComponent(s).replace(/\(/g, '%28').replace(/\)/g, '%29');
+  return `mailto:${email}?subject=${encode(subject)}&body=${encode(body)}`;
+}
+
+function supportIssueBody(item, message, submittedAt, number) {
+  let contact;
+  if (item.email && number !== null) {
+    const link = replyLink(item.email, number, supportSummary(item.kind, message),
+      defangLinks(message), submittedAt);
+    contact = `**Reply to:** \`${item.email}\` — [Reply by email](${link})`;
+  } else if (item.email) {
+    contact = `**Reply to:** \`${item.email}\``;
+  } else {
+    contact = 'No email address given, so no reply is possible.';
+  }
+
+  let diagnostics;
+  if (item.diagnostics && Object.keys(item.diagnostics).length > 0) {
+    diagnostics = Object.entries(SUPPORT_DIAGNOSTIC_FIELDS)
+      .filter(([field]) => item.diagnostics[field] !== undefined)
+      .map(([field, label]) => `**${label}:** ${item.diagnostics[field]}`)
+      .join('\n');
+  } else {
+    diagnostics = 'Not included.';
+  }
+
+  return `## Message
+${fenced(defangLinks(message))}
+
+## Contact
+${contact}
+
+## Diagnostics
+${diagnostics}
+
+**Submitted:** ${submittedAt}`;
+}
+
+async function handleSupport(body, ip, env) {
+  if (!validateSupport(body)) return new Response(null, { status: 400 });
+  if (!checkRateLimit(ip, 'support', RATE_LIMIT_SUPPORT_MAX)) return new Response(null, { status: 429 });
+
+  const message = body.message.trim();
+  const submittedAt = new Date().toISOString();
+  const labels = ['support', SUPPORT_KINDS[body.kind].label];
+  if (body.email) labels.push('needs-reply');
+
+  const created = await postIssue(env, `[Support] ${supportSummary(body.kind, message)}`,
+    supportIssueBody(body, message, submittedAt, null), labels);
+  if (!created.ok) return new Response(null, { status: 502 });
+
+  // A failure here leaves the issue without its reply link, which is worth less than
+  // telling the sender their request failed when it arrived.
+  if (body.email) {
+    const { number } = await created.json();
+    await githubIssues(env, 'PATCH', `/${number}`,
+      { body: supportIssueBody(body, message, submittedAt, number) });
+  }
+  return new Response(null, { status: 200 });
 }
