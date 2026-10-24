@@ -100,7 +100,7 @@ final class ReleaseNotesWindowController {
         win.styleMask = [.titled, .closable, .resizable, .miniaturizable]
         win.isReleasedWhenClosed = false
         win.setContentSize(NSSize(width: 680, height: 560))
-        showCenteredOnMainWindow(win)
+        showPositioned(win)
         self.window = win
     }
 }
@@ -110,43 +110,115 @@ final class ContactSupportWindowController {
     private var window: NSWindow?
 
     /// Brings back the existing window when there is one, even if it was closed, so a
-    /// message closed half-written is still there. Cancel, or Close after sending,
+    /// message closed half-written is still there. Cancel, or a successful send,
     /// discards it.
+    ///
+    /// The window opens beside the main window rather than over it, so the snapshot
+    /// or comparison being asked about stays in view. A closed window that comes back
+    /// is placed again, since the main window may have moved in the meantime.
     func show() {
         if let window {
+            if !window.isVisible { position(window, besideMain: true) }
             window.makeKeyAndOrderFront(nil)
             return
         }
         let hosting = NSHostingController(rootView: ContactSupportView { [weak self] in
             self?.window?.close()
             self?.window = nil
+            self?.observers.forEach { NotificationCenter.default.removeObserver($0) }
+            self?.observers = []
         })
         let win = NSWindow(contentViewController: hosting)
         win.title = "Contact Support"
         win.styleMask = [.titled, .closable]
         win.isReleasedWhenClosed = false
-        showCenteredOnMainWindow(win)
+        keepTopEdgeFixed(win)
+        showPositioned(win, besideMain: true)
         self.window = win
+    }
+
+    private var observers: [NSObjectProtocol] = []
+
+    /// The window resizes itself after it is placed — when the diagnostics finish
+    /// loading, and when an error message appears — and AppKit grows a window upward
+    /// from its bottom edge, which pulled its top out of line with the main window's.
+    /// This holds the top where it was last put, by placement or by the user, and lets
+    /// the window grow downward instead.
+    private func keepTopEdgeFixed(_ win: NSWindow) {
+        var top: CGFloat?
+        observers.append(NotificationCenter.default.addObserver(
+            forName: NSWindow.didMoveNotification, object: win, queue: .main
+        ) { [weak win] _ in
+            guard let win else { return }
+            top = win.frame.maxY
+        })
+        observers.append(NotificationCenter.default.addObserver(
+            forName: NSWindow.didResizeNotification, object: win, queue: .main
+        ) { [weak win] _ in
+            guard let win, let top, win.frame.maxY != top else { return }
+            win.setFrameOrigin(NSPoint(x: win.frame.minX, y: top - win.frame.height))
+        })
     }
 }
 
-/// Shows a window over the middle of the main window, or the screen when the main
-/// window is not open. It starts transparent and appears only once it is in place.
-private func showCenteredOnMainWindow(_ win: NSWindow) {
+/// Shows a window placed by `position`. It starts transparent and appears only once
+/// it is in place, because SwiftUI has not sized it until the next pass.
+private func showPositioned(_ win: NSWindow, besideMain: Bool = false) {
     win.alphaValue = 0
     win.makeKeyAndOrderFront(nil)
     DispatchQueue.main.async {
-        if let main = NSApp.windows.first(where: { $0.title == "SetShot" && $0.isVisible }) {
-            let mf = main.frame
-            let wf = win.frame
-            win.setFrameOrigin(NSPoint(
-                x: mf.midX - wf.width / 2,
-                y: mf.midY - wf.height / 2
-            ))
-        } else {
-            win.center()
-        }
+        position(win, besideMain: besideMain)
         win.alphaValue = 1
+    }
+}
+
+/// Places a window over the middle of the main window, or with `besideMain` next to it
+/// when the screen has room, or in the middle of the screen when the main window is
+/// not open.
+private func position(_ win: NSWindow, besideMain: Bool) {
+    guard let main = NSApp.windows.first(where: { $0.title == "SetShot" && $0.isVisible }) else {
+        win.center()
+        return
+    }
+    let mf = main.frame
+    let wf = win.frame
+    if besideMain,
+       let visible = (main.screen ?? NSScreen.main)?.visibleFrame,
+       let origin = WindowPlacement.originBeside(mf, size: wf.size, within: visible) {
+        win.setFrameOrigin(origin)
+        return
+    }
+    win.setFrameOrigin(NSPoint(
+        x: mf.midX - wf.width / 2,
+        y: mf.midY - wf.height / 2
+    ))
+}
+
+enum WindowPlacement {
+    /// The space between the main window and a window opened beside it — comparison
+    /// windows and Contact Support use the same, so they line up when both are open.
+    static let gap: CGFloat = 8
+
+    /// Where a window of `size` goes beside `main`: to its right if it fits on the
+    /// screen, otherwise to its left, `gap` points away with the top edges aligned.
+    /// Nil when it fits on neither side.
+    ///
+    /// A window taller than the space below the main window's top is lifted only as far
+    /// as needed to keep its bottom on screen, so top alignment gives way to keeping
+    /// the whole window visible.
+    static func originBeside(_ main: NSRect, size: NSSize, within visible: NSRect) -> NSPoint? {
+        let right = main.maxX + gap
+        let left = main.minX - gap - size.width
+        let x: CGFloat
+        if right + size.width <= visible.maxX {
+            x = right
+        } else if left >= visible.minX {
+            x = left
+        } else {
+            return nil
+        }
+        let y = max(main.maxY - size.height, visible.minY)
+        return NSPoint(x: x, y: min(y, visible.maxY - size.height))
     }
 }
 
@@ -164,7 +236,7 @@ final class AboutWindowController {
         win.title = "About SetShot"
         win.styleMask = [.titled, .closable]
         win.isReleasedWhenClosed = false
-        showCenteredOnMainWindow(win)
+        showPositioned(win)
         self.window = win
     }
 }

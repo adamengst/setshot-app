@@ -1,6 +1,8 @@
 ## 1.0b31
 
-- **Contact Support from the Help menu** — Help → Contact Support sends a question, bug report, or suggestion directly from SetShot, with no account needed. Add your email address if you'd like a reply, and choose whether to include your SetShot and macOS versions and other details about your Mac, all of which are shown before you send.
+- **SetShot 1.0 coming soon!** — I would like to release the official SetShot 1.0 next week, so please use the new Contact Support option in the Help menu to send me any bugs, questions, or other feedback about things that would be good to do before releasing 1.0. Bigger suggestions are always welcome, but I'll hold off on those for now.
+
+- **Contact Support from the Help menu** — Help → Contact Support sends a question, bug report, or suggestion directly from SetShot, with no account needed. Add your name and email address if you'd like a reply, and choose whether to include your SetShot and macOS versions and other details about your Mac, all of which are shown before you send.
 
 - **Ignore screenshot settings changes** — The Screenshot tool remembers whether you last took a screenshot or a screen recording, and whether you captured the whole screen, a window, or a selection, so taking a screenshot often changed those settings. A new switch in Settings → Ignored Changes leaves them out of comparisons, the Journal, and notifications. Where screenshots are saved and the other Options settings are still reported.
 

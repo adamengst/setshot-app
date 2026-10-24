@@ -52,6 +52,7 @@ enum SubmissionValidator {
     // angle brackets in them, putting the message in a code block instead, because
     // someone asking for help will paste both.
     static let maxSupportMessageLength = 5000
+    static let maxNameLength = 100
     static let maxEmailLength = 254
 
     // The same pattern as EMAIL_PATTERN in worker.js. It is narrow on purpose: the
@@ -67,6 +68,25 @@ enum SubmissionValidator {
         if trimmed.count > maxSupportMessageLength {
             return "Messages are limited to \(maxSupportMessageLength) characters, and this is "
                  + "\(trimmed.count). Please shorten it by \(trimmed.count - maxSupportMessageLength)."
+        }
+        return nil
+    }
+
+    /// A sentence explaining what to change, or nil when the name will be accepted. A
+    /// blank name is fine.
+    ///
+    /// The worker writes the name before the address as "Name <address> writes:", so
+    /// angle brackets are refused, along with links, as everywhere else outside the
+    /// message itself.
+    static func problem(withName name: String) -> String? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if trimmed.count > maxNameLength {
+            return "Names are limited to \(maxNameLength) characters. Please shorten “\(trimmed.prefix(20))…”."
+        }
+        if trimmed.contains("<") || trimmed.contains(">") || firstMatch(of: link, in: trimmed) != nil
+            || trimmed.unicodeScalars.contains(where: CharacterSet.controlCharacters.contains) {
+            return "Names can’t include links or angle brackets. Please enter just your name."
         }
         return nil
     }

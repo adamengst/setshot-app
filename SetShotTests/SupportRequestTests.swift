@@ -7,7 +7,8 @@ final class SupportRequestTests: XCTestCase {
 
     private let diagnostics = SupportDiagnostics(
         appVersion: "1.0b31 (43)", kbVersion: "212", macOSVersion: "27.0 (26A123)",
-        macModel: "Mac16,10", fullDiskAccess: "Granted", mediaAccess: "Not requested")
+        macModel: "MacBook Pro (14-inch, Nov 2024)", chip: "Apple M4 Pro",
+        fullDiskAccess: "Granted", mediaAccess: "Not requested")
 
     private func json(_ request: SupportRequest) throws -> [String: Any] {
         let data = try JSONEncoder().encode(request)
@@ -16,19 +17,22 @@ final class SupportRequestTests: XCTestCase {
 
     func testEncodesWhatTheWorkerExpects() throws {
         let object = try json(SupportRequest(kind: .suggestion, message: "  Dark icons, please \n",
-                                             email: " name@example.com ", diagnostics: diagnostics))
+                                             name: " Alex Smith ", email: " name@example.com ",
+                                             diagnostics: diagnostics))
         XCTAssertEqual(object["kind"] as? String, "suggestion")
         XCTAssertEqual(object["message"] as? String, "Dark icons, please")
+        XCTAssertEqual(object["name"] as? String, "Alex Smith")
         XCTAssertEqual(object["email"] as? String, "name@example.com")
         let d = try XCTUnwrap(object["diagnostics"] as? [String: String])
         XCTAssertEqual(Set(d.keys), ["app_version", "kb_version", "macos_version",
-                                     "mac_model", "full_disk_access", "media_access"])
+                                     "mac_model", "chip", "full_disk_access", "media_access"])
         XCTAssertEqual(d["macos_version"], "27.0 (26A123)")
     }
 
     func testBlankAddressAndDiagnosticsAreLeftOut() throws {
         let object = try json(SupportRequest(kind: .bug, message: "It hangs",
-                                             email: "   ", diagnostics: nil))
+                                             name: "  ", email: "   ", diagnostics: nil))
+        XCTAssertNil(object["name"])
         XCTAssertNil(object["email"], "A blank field means no reply is wanted, not an invalid address")
         XCTAssertNil(object["diagnostics"])
     }
@@ -39,7 +43,12 @@ final class SupportRequestTests: XCTestCase {
         XCTAssertTrue(current.macOSVersion.hasPrefix("\(major)."), current.macOSVersion)
         XCTAssertTrue(current.macOSVersion.contains("("), "The build number should follow: \(current.macOSVersion)")
         XCTAssertNotEqual(current.macModel, "unknown")
-        XCTAssertEqual(current.rows.count, 6)
+        #if arch(arm64)
+        // Apple silicon always has the device-tree name, so no bare identifier.
+        XCTAssertTrue(current.macModel.contains("("), current.macModel)
+        XCTAssertTrue(current.chip.hasPrefix("Apple M"), current.chip)
+        #endif
+        XCTAssertEqual(current.rows.count, 7)
     }
 
     func testAcceptsOrdinaryAddresses() {
@@ -57,6 +66,19 @@ final class SupportRequestTests: XCTestCase {
         }
         let problem = SubmissionValidator.problem(withEmail: "name@example")!
         XCTAssertTrue(problem.contains("name@example"), "It should quote the address: \(problem)")
+    }
+
+    func testAcceptsOrdinaryNames() {
+        for name in ["", "  ", "Alex", "José Ñúñez-O'Brien", "李小龙", "Dr. A. Smith, Jr."] {
+            XCTAssertNil(SubmissionValidator.problem(withName: name), name)
+        }
+    }
+
+    func testExplainsANameTheWorkerRefuses() {
+        for name in ["Alex <alex@example.com>", "https://example.com", "Al\nex",
+                     String(repeating: "a", count: SubmissionValidator.maxNameLength + 1)] {
+            XCTAssertNotNil(SubmissionValidator.problem(withName: name), name)
+        }
     }
 
     func testSupportMessagesMayContainLinksAndBrackets() {

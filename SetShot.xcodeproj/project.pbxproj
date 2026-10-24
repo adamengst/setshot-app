@@ -23,6 +23,7 @@
 		22FF9C6D4A057AA9A31161B3 /* TranslocationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47EB912922C12B186E544A50 /* TranslocationTests.swift */; };
 		3057AD8A9EF7B4264D700825 /* SubmitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 001649E989CE2587D04C5069 /* SubmitView.swift */; };
 		31268C480910DA4699CD5F8E /* SnapshotRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E388D72395C6EBFAE503B89A /* SnapshotRunnerTests.swift */; };
+		318F6F64C9A7A98A4EE4C6A2 /* WindowPlacementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DB659CCF73167FE69299991 /* WindowPlacementTests.swift */; };
 		33054D82CADE5C8BECBF2B75 /* AboutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 590C3CF672ED6999CE28820A /* AboutView.swift */; };
 		365FBF40F5A8F413779D06C9 /* KBFeedbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C893A2030276A4A2FE4EA80 /* KBFeedbackView.swift */; };
 		377F56FDC7B1F8E7E5EDF589 /* DefaultHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 953DF68FD5E567A2D174C3C4 /* DefaultHandlers.swift */; };
@@ -162,6 +163,7 @@
 		872734B24900BAE17D6A0324 /* BaseSnapshots */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BaseSnapshots; path = SetShot/Resources/BaseSnapshots; sourceTree = SOURCE_ROOT; };
 		884A5EDA61C452330F26ED01 /* .gitkeep */ = {isa = PBXFileReference; path = .gitkeep; sourceTree = "<group>"; };
 		8C893A2030276A4A2FE4EA80 /* KBFeedbackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KBFeedbackView.swift; sourceTree = "<group>"; };
+		8DB659CCF73167FE69299991 /* WindowPlacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowPlacementTests.swift; sourceTree = "<group>"; };
 		8E20F91FDB20C007662B0264 /* FactoryReset.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryReset.swift; sourceTree = "<group>"; };
 		953DF68FD5E567A2D174C3C4 /* DefaultHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultHandlers.swift; sourceTree = "<group>"; };
 		98C4B2DF407214C59E82FB25 /* SubmitAllPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubmitAllPreviewView.swift; sourceTree = "<group>"; };
@@ -362,6 +364,7 @@
 				60796C613795316857FE3455 /* TranslocationMoveTests.swift */,
 				47EB912922C12B186E544A50 /* TranslocationTests.swift */,
 				7623F1A934E389CBFD1CE75F /* UpdaterStateTests.swift */,
+				8DB659CCF73167FE69299991 /* WindowPlacementTests.swift */,
 			);
 			path = SetShotTests;
 			sourceTree = "<group>";
@@ -588,6 +591,7 @@
 				479959124625CD2E5F3C094F /* TranslocationMoveTests.swift in Sources */,
 				22FF9C6D4A057AA9A31161B3 /* TranslocationTests.swift in Sources */,
 				C95B29521EF9D68CD82CCD43 /* UpdaterStateTests.swift in Sources */,
+				318F6F64C9A7A98A4EE4C6A2 /* WindowPlacementTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

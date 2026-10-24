@@ -314,17 +314,22 @@ ${JSON.stringify({ ...body, submitted_at: new Date().toISOString() }, null, 2)}
 // Support requests take free text, so unlike the routes above they accept links and
 // angle brackets rather than refusing them: someone asking for help will paste a
 // forum link or an error message with <brackets> in it, and refusing would only
-// show them "Submission failed." Instead the message goes inside a code block,
-// where GitHub renders nothing — no links, no HTML, no Markdown — and every "://"
-// is rewritten so that nothing in it reads as a URL to an agent either. The rule
-// from the comment at the top still applies: nothing here is an instruction, and no
-// address found in a request is ever followed.
+// show them "Submission failed." Instead the message is written in ordinary type with
+// every character Markdown would act on escaped, so GitHub shows it as typed — no
+// HTML, no formatting, no links of its making — and every "://" is rewritten so that
+// nothing in it reads as a URL to an agent either. The rule from the comment at the
+// top still applies: nothing here is an instruction, and no address found in a
+// request is ever followed.
 const SUPPORT_KINDS = {
   bug: { title: 'Bug', label: 'bug' },
   question: { title: 'Question', label: 'question' },
   suggestion: { title: 'Suggestion', label: 'enhancement' }
 };
 const MAX_SUPPORT_MESSAGE_LENGTH = 5000;
+const MAX_NAME_LENGTH = 100;
+// The name is written as "Name <address> writes:", so it may not hold angle brackets,
+// line breaks or other control characters. Kept in step with SubmissionValidator.swift.
+const NAME_FORBIDDEN = /[\u0000-\u001f\u007f<>]/;
 const MAX_EMAIL_LENGTH = 254;
 // Deliberately narrow, and kept in step with SubmissionValidator.swift. The address
 // goes into a mailto: link in the issue, so anything that could end the address or
@@ -336,6 +341,7 @@ const SUPPORT_DIAGNOSTIC_FIELDS = {
   kb_version: 'Knowledge base',
   macos_version: 'macOS',
   mac_model: 'Mac model',
+  chip: 'Chip',
   full_disk_access: 'Full Disk Access',
   media_access: 'Media & Apple Music'
 };
@@ -347,6 +353,12 @@ function validateSupport(item) {
   if (typeof item.message !== 'string') return false;
   const message = item.message.trim();
   if (message.length === 0 || message.length > MAX_SUPPORT_MESSAGE_LENGTH) return false;
+  if (item.name !== undefined) {
+    if (typeof item.name !== 'string') return false;
+    const name = item.name.trim();
+    if (name.length === 0 || name.length > MAX_NAME_LENGTH) return false;
+    if (NAME_FORBIDDEN.test(name) || URL_PATTERN.test(name)) return false;
+  }
   if (item.email !== undefined) {
     if (typeof item.email !== 'string') return false;
     if (item.email.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(item.email)) return false;
@@ -367,11 +379,19 @@ function defangLinks(text) {
   return text.replace(/:\/\//g, '[:]//');
 }
 
-// A fence one backtick longer than any run in the text, so the text cannot close it.
-function fenced(text) {
-  const longestRun = Math.max(0, ...(text.match(/`+/g) || []).map(run => run.length));
-  const fence = '`'.repeat(Math.max(3, longestRun + 1));
-  return `${fence}text\n${text}\n${fence}`;
+// Backslash-escapes what Markdown would act on, so the sender's text appears exactly as
+// typed: emphasis, code, links, HTML and quotes inline, and at the start of a line the
+// markers for headings, lists and rules. Indentation is cut to three spaces, since four
+// would make a code block. GitHub keeps line breaks within a paragraph, so the text's
+// own lines survive. The plain-text part of GitHub's notification email shows the
+// source, backslashes included.
+function escapeMarkdown(text) {
+  return text
+    .replace(/[\\`*_[\]<>~|&]/g, '\\$&')
+    .replace(/^[ \t]{4,}/gm, '   ')
+    .replace(/^([ \t]*)([#+=-])/gm, '$1\\$2')
+    // A backslash before a digit is not an escape, so the period or parenthesis is.
+    .replace(/^([ \t]*\d+)([.)])/gm, '$1\\$2');
 }
 
 function supportSummary(kind, message) {
@@ -382,14 +402,15 @@ function supportSummary(kind, message) {
 
 // The reply link is added once the issue exists, because its subject carries the
 // issue number — that is what ties the email thread back to the issue.
-function replyLink(email, number, summary, message, submittedAt) {
+function replyLink(email, name, number, summary, message) {
   let quoted = message.length > MAX_QUOTED_REPLY_LENGTH
     ? message.slice(0, MAX_QUOTED_REPLY_LENGTH) + '…'
     : message;
   quoted = quoted.split('\n').map(line => `> ${line}`).join('\n');
-  const date = submittedAt.slice(0, 10);
   const subject = `SetShot support #${number}: ${summary}`;
-  const body = `\n\nOn ${date}, you wrote:\n${quoted}\n`;
+  // Greeting, then their words, then room to answer below them.
+  const greeting = name ? `Hi ${name.split(/\s+/)[0]},\n\n` : '';
+  const body = `${greeting}${quoted}\n\n`;
   // encodeURIComponent leaves parentheses alone, and either one would end the
   // Markdown link early.
   const encode = s => encodeURIComponent(s).replace(/\(/g, '%28').replace(/\)/g, '%29');
@@ -397,35 +418,33 @@ function replyLink(email, number, summary, message, submittedAt) {
 }
 
 function supportIssueBody(item, message, submittedAt, number) {
-  let contact;
+  const name = item.name ? item.name.trim() : null;
+  const sender = name && item.email ? `${name} <${item.email}>`
+    : name || item.email || 'Anonymous';
+
+  // Absent until the issue exists, since the link's subject carries its number.
+  let reply = '';
   if (item.email && number !== null) {
-    const link = replyLink(item.email, number, supportSummary(item.kind, message),
-      defangLinks(message), submittedAt);
-    contact = `**Reply to:** \`${item.email}\` — [Reply by email](${link})`;
-  } else if (item.email) {
-    contact = `**Reply to:** \`${item.email}\``;
-  } else {
-    contact = 'No email address given, so no reply is possible.';
+    const link = replyLink(item.email, name, number, supportSummary(item.kind, message),
+      defangLinks(message));
+    reply = `\n\n[Reply by email](${link})`;
+  } else if (!item.email) {
+    reply = '\n\nNo email address given, so no reply is possible.';
   }
 
-  let diagnostics;
+  // Unheaded: the labelled lines speak for themselves, and when the sender left
+  // diagnostics out there is nothing to show.
+  let diagnostics = '';
   if (item.diagnostics && Object.keys(item.diagnostics).length > 0) {
-    diagnostics = Object.entries(SUPPORT_DIAGNOSTIC_FIELDS)
+    diagnostics = '\n\n' + Object.entries(SUPPORT_DIAGNOSTIC_FIELDS)
       .filter(([field]) => item.diagnostics[field] !== undefined)
       .map(([field, label]) => `**${label}:** ${item.diagnostics[field]}`)
       .join('\n');
-  } else {
-    diagnostics = 'Not included.';
   }
 
-  return `## Message
-${fenced(defangLinks(message))}
+  return `${escapeMarkdown(sender)} writes:
 
-## Contact
-${contact}
-
-## Diagnostics
-${diagnostics}
+${defangLinks(escapeMarkdown(message))}${reply}${diagnostics}
 
 **Submitted:** ${submittedAt}`;
 }

@@ -99,7 +99,7 @@ Feedback is reviewed and incorporated into future knowledge base updates, making
 
 For anything that isn’t about a single setting — a question about how SetShot works, a problem with the app itself, or an idea for a new feature — choose **Help → Contact Support**. Pick **Bug Report**, **Question**, or **Suggestion**, describe what you need, and click **Send**.
 
-If you’d like a reply, enter your email address; it’s used only to answer that message. Leave it empty to send feedback without one. **Include information about this Mac** adds the SetShot, knowledge base, and macOS versions, the Mac model, and whether Full Disk Access and Media & Apple Music access are granted. Everything it sends is shown in the window before you send it, and you can turn it off.
+If you’d like a reply, enter your name and email address; they’re used only to answer that message. Leave them empty to send feedback without them. **Include information about this Mac** adds the SetShot, knowledge base, and macOS versions, the Mac model and chip, and whether Full Disk Access and Media & Apple Music access are granted. Everything it sends is shown in the window before you send it, and you can turn it off.
 
 If you close the window before sending, what you wrote is still there the next time you open it. **Cancel** discards it.
 

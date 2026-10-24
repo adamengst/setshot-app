@@ -859,7 +859,7 @@ private struct ComparisonWindowPositioner: NSViewRepresentable {
                 let cascadeStep = window.standardWindowButton(.closeButton)?
                     .superview?.bounds.height ?? 28
 
-                let startPoint = Self.nextCascadePoint ?? NSPoint(x: main.frame.maxX + 8, y: main.frame.maxY)
+                let startPoint = Self.nextCascadePoint ?? NSPoint(x: main.frame.maxX + WindowPlacement.gap, y: main.frame.maxY)
                 window.setFrameTopLeftPoint(startPoint)
                 Self.nextCascadePoint = NSPoint(x: startPoint.x + cascadeStep,
                                                 y: startPoint.y - cascadeStep)

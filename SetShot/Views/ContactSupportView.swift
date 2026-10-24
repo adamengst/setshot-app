@@ -3,12 +3,14 @@ import SwiftUI
 /// Help → Contact Support. Sends a question, bug report or suggestion to the
 /// developer, with an optional address for a reply.
 struct ContactSupportView: View {
-    /// Closes the window and discards the form. Closing with the window's close button
-    /// instead keeps what was typed for the next Contact Support.
+    /// Closes the window and discards the form, after Cancel or a successful send.
+    /// Closing with the window's close button instead keeps what was typed for the
+    /// next Contact Support.
     let onDone: () -> Void
 
     @State private var kind: SupportKind = .question
     @State private var message = ""
+    @State private var name = ""
     @State private var email = ""
     @State private var includeDiagnostics = true
     @State private var diagnostics: SupportDiagnostics?
@@ -17,7 +19,6 @@ struct ContactSupportView: View {
     /// Whether the last attempt reached the network and failed, as opposed to being
     /// stopped by a check here, which Try Again would not get past.
     @State private var sendFailed = false
-    @State private var sentTo: String??
 
     private var canSend: Bool {
         !message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -26,13 +27,7 @@ struct ContactSupportView: View {
     }
 
     var body: some View {
-        Group {
-            if let sentTo {
-                confirmation(sentTo: sentTo)
-            } else {
-                form
-            }
-        }
+        form
         .padding(28)
         .frame(width: 480)
         .task {
@@ -65,9 +60,12 @@ struct ContactSupportView: View {
                 .cornerRadius(6)
 
             VStack(alignment: .leading, spacing: 6) {
-                TextField("Email address (optional)", text: $email)
-                    .textFieldStyle(.roundedBorder)
-                Text("Include an address if you’d like a reply. It’s used only to answer this message.")
+                HStack(spacing: 10) {
+                    TextField("Name (optional)", text: $name)
+                    TextField("Email address (optional)", text: $email)
+                }
+                .textFieldStyle(.roundedBorder)
+                Text("Include an address if you’d like a reply. Your name and address are used only to answer this message.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -138,41 +136,22 @@ struct ContactSupportView: View {
         .textSelection(.enabled)
     }
 
-    private func confirmation(sentTo: String?) -> some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Text("Message Sent")
-                .font(.headline)
-            Group {
-                if let sentTo {
-                    Text("Thanks for writing. Any reply will go to \(sentTo).")
-                } else {
-                    Text("Thanks for writing. You didn’t include an email address, so there’s no way to reply to this message.")
-                }
-            }
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            HStack {
-                Spacer()
-                Button("Close") { onDone() }
-                    .keyboardShortcut(.defaultAction)
-            }
-        }
-    }
-
     private func send() async {
         if let problem = SubmissionValidator.problem(withSupportMessage: message)
+            ?? SubmissionValidator.problem(withName: name)
             ?? SubmissionValidator.problem(withEmail: email) {
             errorMessage = problem
             sendFailed = false
             return
         }
-        let request = SupportRequest(kind: kind, message: message, email: email,
+        let request = SupportRequest(kind: kind, message: message, name: name, email: email,
                                      diagnostics: includeDiagnostics ? diagnostics : nil)
         isSending = true
         errorMessage = nil
         do {
             try await SubmissionService.shared.submitSupportRequest(request)
-            sentTo = .some(request.email)
+            onDone()
+            return
         } catch {
             sendFailed = true
             errorMessage = (error as? SubmissionError)?.errorDescription
