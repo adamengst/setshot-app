@@ -6,13 +6,15 @@
         <description>SetShot release feed</description>
         <language>en</language>
         <item>
-            <title>SetShot 1.0b30</title>
-            <pubDate>Fri, 16 Oct 2026 21:26:26 +0000</pubDate>
-            <sparkle:version>42</sparkle:version>
-            <sparkle:shortVersionString>1.0b30</sparkle:shortVersionString>
+            <title>SetShot 1.0b31</title>
+            <pubDate>Sat, 24 Oct 2026 16:12:07 +0000</pubDate>
+            <sparkle:version>43</sparkle:version>
+            <sparkle:shortVersionString>1.0b31</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
 <style>body{font:13px -apple-system,sans-serif;margin:0;padding:12px}h2{font-size:15px;margin:16px 0 6px}h2:first-child{margin-top:0}li{margin-bottom:8px;line-height:1.45}ul{padding-left:20px;margin:0}code{font:12px ui-monospace,monospace}</style>
+<h2>1.0b31</h2>
+<ul><li><strong>SetShot 1.0 coming soon!</strong> — I would like to release the official SetShot 1.0 next week, so please use the new Contact Support option in the Help menu to send me any bugs, questions, or other feedback about things that would be good to do before releasing 1.0. Bigger suggestions are always welcome, but I&#x27;ll hold off on those for now.</li><li><strong>Contact Support from the Help menu</strong> — Help → Contact Support sends a question, bug report, or suggestion directly from SetShot, with no account needed. Add your name and email address if you&#x27;d like a reply, and choose whether to include your SetShot and macOS versions and other details about your Mac, all of which are shown before you send.</li><li><strong>Ignore screenshot settings changes</strong> — The Screenshot tool remembers whether you last took a screenshot or a screen recording, and whether you captured the whole screen, a window, or a selection, so taking a screenshot often changed those settings. A new switch in Settings → Ignored Changes leaves them out of comparisons, the Journal, and notifications. Where screenshots are saved and the other Options settings are still reported.</li><li><strong>Ignore DNS changes from switching networks</strong> — Every network you join automatically hands out its own DNS servers, so changing networks reported DNS changes each time. A new switch in Settings → Ignored Changes hides them. Regardless, SetShot still records manually set DNS servers and search domains to identify intentional changes, and those made by malicious apps trying to redirect your lookups.</li><li><strong>FaceTime microphone</strong> — FaceTime&#x27;s microphone is now identified with the device&#x27;s name, and it is included in the &quot;Ignore changes to sound input and output devices&quot; option in Settings.</li><li><strong>Siri&#x27;s trigger phrase reads as one choice</strong> — macOS stores Siri → Requests as a switch plus a phrase, so changing phrases could show up as two rows. SetShot now reports the choice as it appears in System Settings: “Siri” or “Hey Siri”, “Hey Siri”, or Off.</li></ul>
 <h2>1.0b30</h2>
 <ul><li><strong>Ignore sound device changes</strong> — Connecting or disconnecting AirPods switches the Mac&#x27;s microphone and speakers, so those changes showed up repeatedly. A new Ignored Changes section in Settings lets you leave them out of comparisons, the Journal, and notifications. Journal entries already recorded for them are hidden while the option is on. Let me know if you have other legitimate but chatty settings that should be added to this Ignored Changes section.</li><li><strong>Fixed: the Journal skipped settings changed back and forth</strong> — If you changed a setting, changed it back, and later made the same change again, the Journal recorded only the first time, so later snapshots with that change showed no description in the snapshot list. Switching audio output to AirPods and back was enough to trigger it. The Journal now records each change, while still recording a change only once when comparisons overlap. Entries skipped before this update aren&#x27;t restored automatically; comparing those snapshots again adds them.</li><li><strong>Removed items say so</strong> — Launch agents, launch daemons, system extensions and configuration profiles are recorded only by being present, so a removed one used to show &quot;installed → (none)&quot;. It now reads &quot;Installed → Removed&quot;, and a new one reads &quot;Not installed → Installed&quot;.</li></ul>
 <h2>1.0b29</h2>
@@ -64,6 +66,19 @@
 <h2>1.0b5</h2>
 <ul><li><strong>Journal view</strong> — Added a Journal tab that keeps a cumulative record of every recognized change found across all your comparisons, grouped by comparison date.</li><li><strong>System Settings icons</strong> — Comprehensive icon coverage for System Settings panes using SF Symbols and custom assets, so recognized changes show the correct pane icon.</li><li><strong>Journal deduplication</strong> — The journal now automatically removes duplicate entries, so running the same comparison twice doesn&#x27;t create redundant records.</li></ul>
 ]]></description>
+            <enclosure
+                url="https://github.com/adamengst/setshot-app/releases/download/v1.0b31/SetShot-1.0b31.zip"
+                sparkle:edSignature="go0rjwObHXrC4B6sLDcisSKHoY8yI26kyCouSQbFISl796kBxEbz+Lj7C0xfSxjyav89Ki/jyTSChcaX6Zk6Bw=="
+                length="7780510"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
+            <title>SetShot 1.0b30</title>
+            <pubDate>Fri, 16 Oct 2026 21:26:26 +0000</pubDate>
+            <sparkle:version>42</sparkle:version>
+            <sparkle:shortVersionString>1.0b30</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <enclosure
                 url="https://github.com/adamengst/setshot-app/releases/download/v1.0b30/SetShot-1.0b30.zip"
                 sparkle:edSignature="ndK4z/d3uBbXLS9lZsBdkJa6YbxtwPhKwnDAEQvtYt9wcUaIeVwjKEbnNR7tCXOWhzxIzXs3sh9oIMQYZ9JIAQ=="
