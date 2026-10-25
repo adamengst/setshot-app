@@ -1,3 +1,7 @@
+## 1.0b32
+
+- **Fixed: automatic update checks** — SetShot was meant to check for updates every time it opened, but the check was being dropped, and a copy left running never checked again, so new versions appeared only when you chose Check for Updates. SetShot now checks when it opens and once a day while it's running. Because earlier versions can't check on their own, choose SetShot → Check for Updates once to get this one.
+
 ## 1.0b31
 
 - **SetShot 1.0 coming soon!** — I would like to release the official SetShot 1.0 next week, so please use the new Contact Support option in the Help menu to send me any bugs, questions, or other feedback about things that would be good to do before releasing 1.0. Bigger suggestions are always welcome, but I'll hold off on those for now.

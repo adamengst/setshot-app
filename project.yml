@@ -55,12 +55,11 @@ targets:
         INFOPLIST_KEY_NSAppleMusicUsageDescription: "SetShot reads Music, TV, and media settings to detect changes to your media preferences."
         INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml"
         INFOPLIST_KEY_SUPublicEDKey: "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg="
-        # Effectively launch-only: SetShot already forces its own check at launch
-        # (UpdaterState.swift), and this app isn't a persistent background
-        # resident, so Sparkle's own recurring timer adds little. Set absurdly
-        # high (10 years) rather than to 0, which Sparkle treats as "disable
-        # automatic checks" entirely (see SPUUpdaterSettings.m).
-        INFOPLIST_KEY_SUScheduledCheckInterval: "315360000"
+        # SUScheduledCheckInterval is set in SetShot/Info.plist, whose own keys win
+        # over INFOPLIST_KEY_ settings here. It is one day, on top of the check at
+        # every launch (UpdaterState.swift). It was 10 years, on the theory that
+        # SetShot is not left running, but people do leave it open for days, and a
+        # copy that never relaunched never saw a new release.
         DEVELOPMENT_TEAM: 6SCP2R96HY
         CODE_SIGN_STYLE: Manual
         ENABLE_HARDENED_RUNTIME: YES

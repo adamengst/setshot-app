@@ -69,7 +69,27 @@ final class UpdaterStateTests: XCTestCase {
         #endif
     }
 
+    // A headless scheduled snapshot quits within seconds, so it must never start the
+    // updater, even in a release build.
+    func testUpdaterStartsOnlyInAnInteractiveReleaseLaunch() {
+        XCTAssertTrue(UpdaterState.startsUpdater(arguments: ["SetShot"], release: true))
+        XCTAssertFalse(UpdaterState.startsUpdater(
+            arguments: ["SetShot", LaunchArguments.backgroundSnapshot], release: true))
+        XCTAssertFalse(UpdaterState.startsUpdater(arguments: ["SetShot"], release: false))
+    }
+
     // MARK: - Info.plist Sparkle configuration
+
+    // A running copy has to check again on its own. At 10 years it never did, and a
+    // copy left open for days missed every release until it was relaunched. Sparkle
+    // treats 0 as "never check", and anything under an hour is raised to an hour.
+    func testScheduledCheckIntervalIsOneDay() {
+        let bundle = Bundle(for: UpdaterState.self)
+        let interval = (bundle.object(forInfoDictionaryKey: "SUScheduledCheckInterval") as? String)
+            .flatMap(Double.init)
+            ?? bundle.object(forInfoDictionaryKey: "SUScheduledCheckInterval") as? Double
+        XCTAssertEqual(interval, 86400)
+    }
 
     // If SUFeedURL is missing or points to the wrong URL, Sparkle checks the
     // wrong endpoint and users never receive updates regardless of how often it runs.

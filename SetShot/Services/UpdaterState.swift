@@ -23,40 +23,46 @@ final class UpdaterState: ObservableObject {
         #endif
     }()
 
+    /// Whether this launch should run the updater at all. Not in a headless scheduled
+    /// snapshot: that process quits within seconds, so a check there would only fetch
+    /// the appcast on every snapshot and could find an update with no window to show it.
+    static func startsUpdater(arguments: [String], release: Bool = startsInRelease) -> Bool {
+        release && !arguments.contains(LaunchArguments.backgroundSnapshot)
+    }
+
     init() {
         // Gate auto-downloads at the allowsAutomaticUpdates level so Sparkle never
         // silently installs. This also removes the "automatically download" checkbox
         // from the update dialog. Without this, a prior Sparkle run that wrote
         // SUAutomaticallyUpdate=true to UserDefaults can override per-launch intent.
         UserDefaults.standard.set(false, forKey: "SUAllowsAutomaticUpdates")
+        let starts = Self.startsUpdater(arguments: CommandLine.arguments)
         controller = SPUStandardUpdaterController(
-            startingUpdater: Self.startsInRelease,
+            startingUpdater: starts,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
         observation = controller.updater.observe(\.canCheckForUpdates, options: [.initial, .new]) { [weak self] updater, _ in
             DispatchQueue.main.async { self?.canCheckForUpdates = updater.canCheckForUpdates }
         }
-        // Force a background check on every launch so a pending update re-shows
-        // immediately. Without this, Sparkle gates checks against SULastCheckTime +
-        // SUScheduledCheckInterval and won't check (or show any dialog) until the
-        // timer fires. Using checkForUpdatesInBackground (not checkForUpdates) keeps
-        // it silent when there is no update. The async dispatch ensures this runs
-        // after Sparkle's own deferred startUpdateCycle, avoiding a session collision,
-        // and within the 3-second appNearUpdaterInitialization window that makes
-        // Sparkle show the dialog immediately with focus.
+        // Check on every launch, rather than waiting for SULastCheckTime plus
+        // SUScheduledCheckInterval, so a waiting update shows as soon as SetShot opens.
+        // checkForUpdatesInBackground stays silent when there is nothing new.
         //
-        // This is effectively the *only* check SetShot performs: SUScheduledCheckInterval
-        // (project.yml) is set to 10 years, so Sparkle's own recurring timer never
-        // meaningfully re-fires within a session — SetShot isn't a persistent
-        // background resident, so a per-launch check covers real usage.
+        // It has to be called here, before this run loop turn ends. Starting the
+        // updater queues Sparkle's own start of its update cycle for the next turn, and
+        // that marks a session in progress while it works out when the next scheduled
+        // check is due; a check requested while a session is in progress is refused.
+        // The call used to be dispatched async to run after that start, so Sparkle
+        // refused it on every launch and nothing checked until Check for Updates was
+        // chosen by hand. Called now, the check is the session, Sparkle skips its own
+        // start, and once the check finishes it schedules the next one at the usual
+        // interval. Sparkle leaves this turn free for exactly this.
         //
-        // Gated on automaticallyChecksForUpdates (SUEnableAutomaticChecks) so
-        // turning off "Check for updates automatically" in Settings stops this too.
-        if Self.startsInRelease && controller.updater.automaticallyChecksForUpdates {
-            DispatchQueue.main.async { [controller] in
-                controller.updater.checkForUpdatesInBackground()
-            }
+        // Gated on automaticallyChecksForUpdates (SUEnableAutomaticChecks) so turning
+        // off "Check for updates automatically" in Settings stops this too.
+        if starts && controller.updater.automaticallyChecksForUpdates {
+            controller.updater.checkForUpdatesInBackground()
         }
     }
 }
