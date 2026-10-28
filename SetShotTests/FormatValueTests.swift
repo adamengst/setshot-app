@@ -613,4 +613,15 @@ final class TwoPartGrantSubjectTests: XCTestCase {
         XCTAssertEqual(missingValueText(counterpart: "AirPods Pro 2", isAfter: false), "(none)")
         XCTAssertEqual(missingValueText(counterpart: "", isAfter: true), "(none)")
     }
+
+    // MARK: - Login Items & Extensions records (issues 372, 373)
+
+    func testADisappearedBackgroundItemSaysRemoved() {
+        for domain in ["BTM", "BTM-system", "BTM-login"] {
+            XCTAssertEqual(missingValueText(counterpart: "Yes", isAfter: true, domain: domain), "Removed")
+            XCTAssertEqual(missingValueText(counterpart: "No", isAfter: false, domain: domain), "Not listed")
+        }
+        // The same counterpart elsewhere still has no reading.
+        XCTAssertEqual(missingValueText(counterpart: "Yes", isAfter: true, domain: "com.apple.dock"), "(none)")
+    }
 }

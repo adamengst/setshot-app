@@ -61,7 +61,40 @@ final class BackgroundItemsTests: XCTestCase {
             "BTM :: com.adobe.ARMDC.Communicator = 0",
             "BTM :: com.example.app = 0",
             "BTM :: com.example.helper = 1",
+            "BTM-login :: com.example.app = 1",
         ])
+    }
+
+    // MARK: - Open at Login (issues 372, 373)
+
+    func testOpenAtLoginIsReadFromTheAppRecord() {
+        let data = archive("userStore", UserStore([
+            Item("2.company.thebrowser.Browser", type: 2, disposition: 0xa),   // taken off the list
+            Item("2.com.barebones.bbedit", type: 2, disposition: 0x3),         // on it
+            Item("8.com.example.agent", type: 8, disposition: 0xb),            // not an app
+        ]))
+        XCTAssertEqual(BackgroundItems.lines(fromArchive: data, user: nil), [
+            "BTM :: com.barebones.bbedit = 1",
+            "BTM :: com.example.agent = 1",
+            "BTM :: company.thebrowser.Browser = 1",
+            "BTM-login :: com.barebones.bbedit = 1",
+            "BTM-login :: company.thebrowser.Browser = 0",
+        ])
+    }
+
+    func testAnAppRegisteredTwiceOpensAtLoginIfEitherCopyDoes() {
+        let data = archive("userStore", UserStore([
+            Item("2.com.getcleanshot.app-setapp", type: 2, disposition: 0xa),
+            Item("2.com.getcleanshot.app-setapp", type: 2, disposition: 0xb),
+        ]))
+        XCTAssertEqual(BackgroundItems.lines(fromArchive: data, user: nil).last,
+                       "BTM-login :: com.getcleanshot.app-setapp = 1")
+    }
+
+    func testTheMacsOwnStoreHasNoOpenAtLogin() {
+        let data = archive("userStore", UserStore([Item("2.com.example.app", type: 2, disposition: 0xb)]))
+        XCTAssertEqual(BackgroundItems.lines(fromArchive: data, user: nil, domain: "BTM-system"),
+                       ["BTM-system :: com.example.app = 1"])
     }
 
     func testSingleFileLayoutReadsOnlyThisUser() {
@@ -124,6 +157,25 @@ final class BackgroundItemsTests: XCTestCase {
             """, kb: kb,
             beforeSnapshot: "BTM-system :: com.adobe.ARMDC.Communicator = 1\n",
             afterSnapshot: "BTM-system :: com.adobe.ARMDC.Communicator = 0\n")
+        XCTAssertEqual(result.unrecognized.count, 1)
+    }
+
+    func testOpenAtLoginIsNotReportedAgainstAnOlderSnapshot() {
+        let result = DiffEngine().parse(diffOutput: """
+            +BTM-login :: com.barebones.bbedit = 1
+            """, kb: kb,
+            beforeSnapshot: "BTM :: com.barebones.bbedit = 1\n",
+            afterSnapshot: "BTM :: com.barebones.bbedit = 1\nBTM-login :: com.barebones.bbedit = 1\n")
+        XCTAssertEqual(result.recognized.count + result.unrecognized.count, 0)
+    }
+
+    func testLeavingOpenAtLoginIsReported() {
+        let result = DiffEngine().parse(diffOutput: """
+            -BTM-login :: company.thebrowser.Browser = 1
+            +BTM-login :: company.thebrowser.Browser = 0
+            """, kb: kb,
+            beforeSnapshot: "BTM-login :: company.thebrowser.Browser = 1\n",
+            afterSnapshot: "BTM-login :: company.thebrowser.Browser = 0\n")
         XCTAssertEqual(result.unrecognized.count, 1)
     }
 

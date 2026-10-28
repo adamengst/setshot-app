@@ -1935,7 +1935,8 @@ JSEOF
     # give. The app reads the BTM database files directly instead (they need only
     # Full Disk Access; see BackgroundItems.swift) and reports whether each item is
     # allowed -- the Login Items & Extensions switch, which leaves the item's plist
-    # in LAUNCH AGENTS & DAEMONS untouched. Without Full Disk Access, or run
+    # in LAUNCH AGENTS & DAEMONS untouched -- and, as BTM-login, whether each app is
+    # on the Open at Login list. Without Full Disk Access, or run
     # standalone without the app, it prints nothing and the section says so.
     _btm=""
     [ "$_SETSHOT_BIN_MATCHED" = "1" ] && [ -n "$SETSHOT_BIN" ] \

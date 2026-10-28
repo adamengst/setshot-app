@@ -27,6 +27,15 @@ enum BackgroundItems {
     /// bits enabled (0x1), allowed (0x2) and notified (0x8).
     static let allowedBit = 0x2
 
+    /// `disposition` bit for an app's Open at Login switch, which sfltool calls
+    /// enabled. Taking Arc off the Open at Login list turned its app record from 0xb
+    /// to 0xa and left the allowed bit alone (submissions issues 372, 373).
+    static let enabledBit = 0x1
+
+    /// `type` of an app's own record (sfltool: "app"). Only these carry the Open at
+    /// Login switch; on a helper or agent the enabled bit means something else.
+    static let appType = 0x2
+
     /// `type` of a record that groups one developer's items (sfltool: "developer").
     static let developerType = 0x20
 
@@ -78,8 +87,10 @@ enum BackgroundItems {
         return best.map { ($0.name, $0.perUser) }
     }
 
-    /// `<domain> :: <identifier> = 1 | 0` (allowed or not), sorted. Pass `user` for the
-    /// older single-file layout, nil when the archive holds one store's records.
+    /// `<domain> :: <identifier> = 1 | 0` (allowed or not), sorted, then for the
+    /// user's store `BTM-login :: <identifier> = 1 | 0` for each app (opens at login
+    /// or not). Pass `user` for the older single-file layout, nil when the archive
+    /// holds one store's records.
     static func lines(fromArchive data: Data, user: String?, domain: String = "BTM") -> [String] {
         guard let archive = Archive(data) else { return [] }
 
@@ -103,6 +114,7 @@ enum BackgroundItems {
         }
 
         var allowed: [String: Bool] = [:]
+        var opensAtLogin: [String: Bool] = [:]
         for ref in records {
             guard let record = archive.resolve(ref).flatMap(archive.dict),
                   archive.className(of: record) == "ItemRecord",
@@ -112,15 +124,27 @@ enum BackgroundItems {
             // A developer record groups that developer's items and keeps its own
             // disposition, which stays allowed after every item under it is turned
             // off. The items carry the switch, so the group would only contradict them.
-            if record["type"].flatMap(archive.resolve) as? Int == developerType { continue }
+            let type = record["type"].flatMap(archive.resolve) as? Int
+            if type == developerType { continue }
             let key = itemKey(identifier)
             guard !key.isEmpty else { continue }
             // One switch can cover several records under the same bundle identifier
             // -- Acrobat has an app record and a type-8192 one -- and they move
             // together. It counts as allowed only while all of them are.
             allowed[key] = (allowed[key] ?? true) && disposition & allowedBit != 0
+            // An app registered at two paths has a record for each, and only the one
+            // on the list is enabled -- CleanShot has one of each. It opens at login
+            // if any of them does.
+            if type == appType {
+                opensAtLogin[key] = (opensAtLogin[key] ?? false) || disposition & enabledBit != 0
+            }
         }
-        return allowed.keys.sorted().map { "\(domain) :: \($0) = \(allowed[$0]! ? 1 : 0)" }
+        var lines = allowed.keys.sorted().map { "\(domain) :: \($0) = \(allowed[$0]! ? 1 : 0)" }
+        // Open at Login belongs to a user; the Mac's own store has no such list.
+        if domain == "BTM" {
+            lines += opensAtLogin.keys.sorted().map { "BTM-login :: \($0) = \(opensAtLogin[$0]! ? 1 : 0)" }
+        }
+        return lines
     }
 
     /// BTM prefixes each identifier with its type number: "2.com.seriflabs.affinitydesigner2",

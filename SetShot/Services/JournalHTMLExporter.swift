@@ -70,9 +70,9 @@ struct JournalHTMLExporter {
     private static func row(_ entry: JournalEntry) -> String {
         let desc = htmlEscape(entry.entryDescription.isEmpty ? entry.key : entry.entryDescription)
         let location = entry.uiLocation.map { "<div class=\"location\">\(htmlEscape($0))</div>" } ?? ""
-        let before = htmlEscape(entry.oldValue.isEmpty ? missingValueText(counterpart: entry.newValue, isAfter: false)
+        let before = htmlEscape(entry.oldValue.isEmpty ? missingValueText(counterpart: entry.newValue, isAfter: false, domain: entry.domain)
             : formatValue(entry.oldValue, key: entry.key, valueMap: nil, counterpart: entry.newValue))
-        let after  = htmlEscape(entry.newValue.isEmpty ? missingValueText(counterpart: entry.oldValue, isAfter: true)
+        let after  = htmlEscape(entry.newValue.isEmpty ? missingValueText(counterpart: entry.oldValue, isAfter: true, domain: entry.domain)
             : formatValue(entry.newValue, key: entry.key, valueMap: nil, counterpart: entry.oldValue))
         let noteHTML: String
         if let note = entry.userNote, !note.isEmpty {

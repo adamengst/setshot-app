@@ -62,10 +62,10 @@ struct HTMLExporter {
     private static func row(entry: KBEntry, diff: DiffLine, macOSMajor: Int) -> String {
         let desc = htmlEscape(rowDescription(entry: entry, key: diff.key))
         let location = entry.effectiveUILocation(macOSMajor: macOSMajor).map { "<div class=\"location\">\(htmlEscape($0))</div>" } ?? ""
-        let before = htmlEscape(diff.beforeValue.isEmpty ? missingValueText(counterpart: diff.afterValue, isAfter: false)
+        let before = htmlEscape(diff.beforeValue.isEmpty ? missingValueText(counterpart: diff.afterValue, isAfter: false, domain: diff.domain)
             : formatValue(diff.beforeValue, key: diff.key, valueMap: entry.valueMap,
                           valueType: entry.valueType, counterpart: diff.afterValue))
-        let after = htmlEscape(diff.afterValue.isEmpty ? missingValueText(counterpart: diff.beforeValue, isAfter: true)
+        let after = htmlEscape(diff.afterValue.isEmpty ? missingValueText(counterpart: diff.beforeValue, isAfter: true, domain: diff.domain)
             : formatValue(diff.afterValue, key: diff.key, valueMap: entry.valueMap,
                           valueType: entry.valueType, counterpart: diff.beforeValue))
         let openBtn: String

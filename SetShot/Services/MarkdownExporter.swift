@@ -22,13 +22,13 @@ struct MarkdownExporter {
         for item in result.recognized {
             out += row(description: rowDescription(entry: item.entry, key: item.diff.key),
                        location: item.entry.effectiveUILocation(macOSMajor: macOSMajor),
-                       before: item.diff.beforeValue.isEmpty ? missingValueText(counterpart: item.diff.afterValue, isAfter: false)
+                       before: item.diff.beforeValue.isEmpty ? missingValueText(counterpart: item.diff.afterValue, isAfter: false, domain: item.diff.domain)
                            : formatValue(item.diff.beforeValue, key: item.diff.key,
                                          valueMap: item.entry.valueMap,
                                          detail: item.diff.beforeDetail,
                                          valueType: item.entry.valueType,
                                          counterpart: item.diff.afterValue),
-                       after: item.diff.afterValue.isEmpty ? missingValueText(counterpart: item.diff.beforeValue, isAfter: true)
+                       after: item.diff.afterValue.isEmpty ? missingValueText(counterpart: item.diff.beforeValue, isAfter: true, domain: item.diff.domain)
                            : formatValue(item.diff.afterValue, key: item.diff.key,
                                          valueMap: item.entry.valueMap,
                                          detail: item.diff.afterDetail,
@@ -59,10 +59,10 @@ struct MarkdownExporter {
                 out += row(description: entry.entryDescription.isEmpty ? entry.key
                                                                        : entry.entryDescription,
                            location: entry.uiLocation,
-                           before: entry.oldValue.isEmpty ? missingValueText(counterpart: entry.newValue, isAfter: false)
+                           before: entry.oldValue.isEmpty ? missingValueText(counterpart: entry.newValue, isAfter: false, domain: entry.domain)
                                : formatValue(entry.oldValue, key: entry.key, valueMap: nil,
                                              counterpart: entry.newValue),
-                           after: entry.newValue.isEmpty ? missingValueText(counterpart: entry.oldValue, isAfter: true)
+                           after: entry.newValue.isEmpty ? missingValueText(counterpart: entry.oldValue, isAfter: true, domain: entry.domain)
                                : formatValue(entry.newValue, key: entry.key, valueMap: nil,
                                              counterpart: entry.oldValue),
                            note: entry.userNote)

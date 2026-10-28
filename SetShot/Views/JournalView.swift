@@ -276,7 +276,8 @@ private struct JournalRow: View {
                         description: description,
                         location: location,
                         old: oldFormatted,
-                        new: newFormatted
+                        new: newFormatted,
+                        domain: entry.domain
                     )
                     Spacer()
                     VStack(alignment: .center, spacing: 0) {

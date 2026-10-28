@@ -118,6 +118,12 @@ struct DiffEngine {
         return false
     }
 
+    /// Whether a snapshot recorded which apps open at login, which it does from the
+    /// release after 1.0b32 on.
+    static func hasOpenAtLogin(_ snapshot: String) -> Bool {
+        snapshot.contains("\nBTM-login :: ") || snapshot.hasPrefix("BTM-login :: ")
+    }
+
     /// Reads a key's value straight out of a snapshot, for values the display needs
     /// even when they did not change and so never appear in the diff.
     private static func value(ofKey key: String, inDomain domain: String,
@@ -203,8 +209,16 @@ struct DiffEngine {
         if !beforeSnapshot.isEmpty, !afterSnapshot.isEmpty,
            Self.hasBackgroundItems(beforeSnapshot) != Self.hasBackgroundItems(afterSnapshot) {
             pairs.removeAll { pair in
-                (pair.domain == "BTM" || pair.domain == "BTM-system")
+                (pair.domain == "BTM" || pair.domain == "BTM-system" || pair.domain == "BTM-login")
                     && (pair.before == nil || pair.after == nil)
+            }
+        }
+        // Likewise for Open at Login, which a snapshot taken by 1.0b32 or earlier does
+        // not record at all: every app on the list would otherwise appear as added.
+        if !beforeSnapshot.isEmpty, !afterSnapshot.isEmpty,
+           Self.hasOpenAtLogin(beforeSnapshot) != Self.hasOpenAtLogin(afterSnapshot) {
+            pairs.removeAll { pair in
+                pair.domain == "BTM-login" && (pair.before == nil || pair.after == nil)
             }
         }
 

@@ -175,7 +175,8 @@ struct ResultsView: View {
 
 }
 
-func unrecognizedRowText(rawLine: String, before: String, after: String, key: String) -> some View {
+func unrecognizedRowText(rawLine: String, before: String, after: String, key: String,
+                         domain: String = "") -> some View {
     let mono = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize - 1, weight: .regular)
     func para(_ spacing: CGFloat) -> NSParagraphStyle {
         let s = NSMutableParagraphStyle(); s.paragraphSpacing = spacing; return s
@@ -184,9 +185,9 @@ func unrecognizedRowText(rawLine: String, before: String, after: String, key: St
     ns.append(NSAttributedString(string: rawLine, attributes: [
         .font: mono, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: para(8),
     ]))
-    let b = before.isEmpty ? missingValueText(counterpart: after, isAfter: false)
+    let b = before.isEmpty ? missingValueText(counterpart: after, isAfter: false, domain: domain)
         : formatValue(before, key: key, counterpart: after)
-    let a = after.isEmpty ? missingValueText(counterpart: before, isAfter: true)
+    let a = after.isEmpty ? missingValueText(counterpart: before, isAfter: true, domain: domain)
         : formatValue(after, key: key, counterpart: before)
     ns.append(NSAttributedString(string: "\n" + b,
         attributes: [.font: mono, .foregroundColor: NSColor.systemOrange]))
@@ -500,7 +501,8 @@ func displayName(forUUID uuid: String) -> String? {
     return nil
 }
 
-func recognizedRowText(description: String, location: String?, old: String, new: String) -> some View {
+func recognizedRowText(description: String, location: String?, old: String, new: String,
+                       domain: String = "") -> some View {
     let bodyFont  = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .medium)
     let calloutFont = NSFont.systemFont(ofSize: NSFont.systemFontSize - 1)
     let monoFont  = NSFont.monospacedSystemFont(ofSize: NSFont.systemFontSize - 1, weight: .regular)
@@ -516,8 +518,8 @@ func recognizedRowText(description: String, location: String?, old: String, new:
             .font: calloutFont, .foregroundColor: NSColor.secondaryLabelColor, .paragraphStyle: para(8)
         ]))
     }
-    let oldDisplay = old.isEmpty ? missingValueText(counterpart: new, isAfter: false) : old
-    let newDisplay = new.isEmpty ? missingValueText(counterpart: old, isAfter: true) : new
+    let oldDisplay = old.isEmpty ? missingValueText(counterpart: new, isAfter: false, domain: domain) : old
+    let newDisplay = new.isEmpty ? missingValueText(counterpart: old, isAfter: true, domain: domain) : new
     ns.append(NSAttributedString(string: "\n" + oldDisplay,
         attributes: [.font: monoFont, .foregroundColor: NSColor.systemOrange]))
     ns.append(NSAttributedString(string: "  \u{2192}  ",
@@ -536,7 +538,13 @@ func recognizedRowText(description: String, location: String?, old: String, new:
 /// disappearing. "Installed → (none)" left the reader to work out that the item
 /// was removed (submissions issue 317). Everything else has no such reading and
 /// keeps "(none)".
-func missingValueText(counterpart: String, isAfter: Bool) -> String {
+///
+/// A Login Items & Extensions record disappears when the item is taken off the
+/// list, when its app is deleted, or when the app unregisters it, and the snapshot
+/// cannot say which. "Yes → (none)" read as nothing at all, and "Deleted" would
+/// claim the app went (submissions issues 372, 373). "Removed" is true of all three.
+func missingValueText(counterpart: String, isAfter: Bool, domain: String = "") -> String {
+    if domain == "BTM" || domain == "BTM-system" || domain == "BTM-login" { return isAfter ? "Removed" : "Not listed" }
     guard counterpart.lowercased() == "installed" else { return "(none)" }
     return isAfter ? "Removed" : "Not installed"
 }
@@ -735,7 +743,8 @@ private struct RecognizedRow: View {
                                      valueType: entry.valueType, counterpart: diff.afterValue),
                     new: formatValue(diff.afterValue, key: diff.key,
                                      valueMap: entry.valueMap, detail: diff.afterDetail,
-                                     valueType: entry.valueType, counterpart: diff.beforeValue)
+                                     valueType: entry.valueType, counterpart: diff.beforeValue),
+                    domain: diff.domain
                 )
                 Spacer()
                 VStack(alignment: .center, spacing: 0) {
@@ -930,7 +939,8 @@ private struct UnrecognizedRow: View {
             unrecognizedRowText(rawLine: diff.rawLine,
                                 before: diff.beforeValue,
                                 after: diff.afterValue,
-                                key: diff.key)
+                                key: diff.key,
+                                domain: diff.domain)
             Spacer()
             if isSubmitted {
                 Label("Submitted", systemImage: "checkmark.circle.fill")
