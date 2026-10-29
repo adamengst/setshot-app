@@ -30,10 +30,18 @@ targets:
       # directory behind. xcodegen would otherwise make a group for it with a freshly
       # generated identifier each run, so every build dirtied the project and the next
       # release failed its own clean-tree check.
+      #
+      # Resources/BundledKB is excluded here and added as a folder below, so its two
+      # JSON files land in Contents/Resources/BundledKB/ rather than loose at the top
+      # of Resources, where version.json says nothing about what it is the version of.
       - path: SetShot
         excludes:
           - "Resources/setshots"
+          - "Resources/BundledKB"
       - path: SetShot/Resources/BaseSnapshots
+        type: folder
+      # A copy of the knowledge base, refreshed by scripts/refresh-bundled-kb.sh.
+      - path: SetShot/Resources/BundledKB
         type: folder
       # Single source for the in-app About view and the website's documentation page.
       - path: docs/documentation.md

@@ -89,6 +89,20 @@ else
     info "none pending"
 fi
 
+# The bundled KB is what a first launch without network sees, so it should match
+# what setshot-kb has now. The clean-tree check above already ensures a refreshed
+# copy has been committed.
+step "Checking the bundled knowledge base"
+KB_REPO="${SETSHOT_KB_REPO:-$HOME/GitHub/setshot-kb}"
+[ -f "$KB_REPO/version.json" ] || fail "No version.json in $KB_REPO (set SETSHOT_KB_REPO)"
+BUNDLED_KB="$(plutil -extract version raw -o - SetShot/Resources/BundledKB/version.json 2>/dev/null)" \
+  || fail "Could not read SetShot/Resources/BundledKB/version.json"
+CURRENT_KB="$(plutil -extract version raw -o - "$KB_REPO/version.json" 2>/dev/null)" \
+  || fail "Could not read $KB_REPO/version.json"
+[ "$BUNDLED_KB" -ge "$CURRENT_KB" ] \
+  || fail "Bundled KB is version $BUNDLED_KB, setshot-kb is $CURRENT_KB — run scripts/refresh-bundled-kb.sh and commit"
+info "bundled KB is version $BUNDLED_KB, same as setshot-kb"
+
 # ── Build ─────────────────────────────────────────────────────────────────────
 
 step "Running the tests"
