@@ -6,13 +6,15 @@
         <description>SetShot release feed</description>
         <language>en</language>
         <item>
-            <title>SetShot 1.0b33</title>
-            <pubDate>Thu, 29 Oct 2026 16:16:54 +0000</pubDate>
-            <sparkle:version>45</sparkle:version>
-            <sparkle:shortVersionString>1.0b33</sparkle:shortVersionString>
+            <title>SetShot 1.0b34</title>
+            <pubDate>Thu, 29 Oct 2026 23:36:36 +0000</pubDate>
+            <sparkle:version>46</sparkle:version>
+            <sparkle:shortVersionString>1.0b34</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
 <style>body{font:13px -apple-system,sans-serif;margin:0;padding:12px}h2{font-size:15px;margin:16px 0 6px}h2:first-child{margin-top:0}li{margin-bottom:8px;line-height:1.45}ul{padding-left:20px;margin:0}code{font:12px ui-monospace,monospace}</style>
+<h2>1.0b34</h2>
+<ul><li><strong>Steadier tab bar</strong> — Ugh! The Snapshots, Journal, Settings, and About buttons at the top of the window no longer widen and shrink each time you switch between them.</li><li><strong>Faster Journal</strong> — Switching to the Journal no longer stalls with a spinning pizza of death when the Journal holds thousands of entries.</li></ul>
 <h2>1.0b33</h2>
 <ul><li><strong>Works without an Internet connection</strong> — SetShot now includes a copy of its knowledge base, so it can describe the changes it finds even when it can&#x27;t reach the Internet, such as on a first launch with the network off. It still downloads newer versions of the knowledge base when it can.</li><li><strong>New domain for updates and submissions</strong> — Update checks, knowledge base downloads, submissions, and support messages now go to setshot.tidbits.com. If anything seems off with Check for Updates, sending submissions, or Contact Support, please let me know.</li></ul>
 <h2>1.0b32</h2>
@@ -70,6 +72,19 @@
 <h2>1.0b5</h2>
 <ul><li><strong>Journal view</strong> — Added a Journal tab that keeps a cumulative record of every recognized change found across all your comparisons, grouped by comparison date.</li><li><strong>System Settings icons</strong> — Comprehensive icon coverage for System Settings panes using SF Symbols and custom assets, so recognized changes show the correct pane icon.</li><li><strong>Journal deduplication</strong> — The journal now automatically removes duplicate entries, so running the same comparison twice doesn&#x27;t create redundant records.</li></ul>
 ]]></description>
+            <enclosure
+                url="https://github.com/adamengst/setshot-app/releases/download/v1.0b34/SetShot-1.0b34.zip"
+                sparkle:edSignature="QhzkRqFgZq8FX0oF0DCvbA3TWkrtsGLVgOHtIqqe25JImvuSe4vRZQvFngeKEUIEq9pRtcG2q2psp+/6e8hpDA=="
+                length="7922818"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
+            <title>SetShot 1.0b33</title>
+            <pubDate>Thu, 29 Oct 2026 16:16:54 +0000</pubDate>
+            <sparkle:version>45</sparkle:version>
+            <sparkle:shortVersionString>1.0b33</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <enclosure
                 url="https://github.com/adamengst/setshot-app/releases/download/v1.0b33/SetShot-1.0b33.zip"
                 sparkle:edSignature="EktLNl+AZgrNhfWKpvr8m1Nl0NxCMSyAiBMZcpCbkoVyqS/Qqv/sdE2s4fr0k/fHyqWk2BN2VmCnfkaY3SmDAA=="
