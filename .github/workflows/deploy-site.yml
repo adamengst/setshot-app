@@ -8,6 +8,10 @@ name: Deploy website
 #   DEPLOY_SSH_KEY      private key, full PEM/OpenSSH text including BEGIN/END lines
 #   DEPLOY_KNOWN_HOSTS  the server's host key line(s), from: ssh-keyscan -p PORT HOST
 #   DEPLOY_PORT         optional SSH port; defaults to 22
+#   CLOUDFLARE_PURGE_TOKEN  API token with Zone → Cache Purge → Purge on tidbits.com only
+#   CLOUDFLARE_ZONE_ID      tidbits.com's Zone ID, from the zone's Overview page
+#                       Without these two the deploy still runs, with a warning, and
+#                       Cloudflare may keep serving the old pages.
 
 on:
   push:
@@ -89,3 +93,52 @@ jobs:
             "${extra[@]}" \
             -e "ssh -i ~/.ssh/deploy_key -p ${DEPLOY_PORT:-22} -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
             site/dist/ "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/"
+
+      # Cloudflare APO caches these pages at the edge and drops them only when
+      # WordPress reports a change, which files uploaded by rsync never cause, so
+      # without this the old pages are served for days. Each uploaded file is purged
+      # at both hosts, along with the directory URLs the pages are reached by.
+      - name: Purge the Cloudflare cache
+        if: ${{ inputs.dry_run != true }}
+        env:
+          CLOUDFLARE_PURGE_TOKEN: ${{ secrets.CLOUDFLARE_PURGE_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+          SITE_URLS: https://tidbits.com/setshot https://www.tidbits.com/setshot
+        run: |
+          if [ -z "$CLOUDFLARE_PURGE_TOKEN" ] || [ -z "$CLOUDFLARE_ZONE_ID" ]; then
+            echo "::warning::CLOUDFLARE_PURGE_TOKEN or CLOUDFLARE_ZONE_ID is not set, so Cloudflare may serve the old pages"
+            exit 0
+          fi
+          python3 - <<'EOF'
+          import json, os, pathlib, urllib.request
+
+          paths = []
+          for f in sorted(pathlib.Path("site/dist").rglob("*")):
+              if not f.is_file():
+                  continue
+              rel = f.relative_to("site/dist").as_posix()
+              paths.append(rel)
+              if rel == "index.html":
+                  paths.append("")
+              elif rel.endswith("/index.html"):
+                  paths.append(rel[: -len("index.html")])
+          urls = [f"{base}/{p}" for base in os.environ["SITE_URLS"].split() for p in paths]
+
+          endpoint = f"https://api.cloudflare.com/client/v4/zones/{os.environ['CLOUDFLARE_ZONE_ID']}/purge_cache"
+          for i in range(0, len(urls), 30):
+              batch = urls[i : i + 30]
+              req = urllib.request.Request(
+                  endpoint,
+                  data=json.dumps({"files": batch}).encode(),
+                  headers={
+                      "Authorization": f"Bearer {os.environ['CLOUDFLARE_PURGE_TOKEN']}",
+                      "Content-Type": "application/json",
+                  },
+                  method="POST",
+              )
+              with urllib.request.urlopen(req) as resp:
+                  result = json.load(resp)
+              if not result.get("success"):
+                  raise SystemExit(f"Purge failed: {result.get('errors')}")
+          print(f"Purged {len(urls)} URLs")
+          EOF
