@@ -1,3 +1,9 @@
+## 1.0b33
+
+- **Works without an Internet connection** — SetShot now includes a copy of its knowledge base, so it can describe the changes it finds even when it can't reach the Internet, such as on a first launch with the network off. It still downloads newer versions of the knowledge base when it can.
+
+- **New domain for updates and submissions** — Update checks, knowledge base downloads, submissions, and support messages now go to setshot.tidbits.com. If anything seems off with Check for Updates, sending submissions, or Contact Support, please let me know.
+
 ## 1.0b32
 
 - **SetShot 1.0 coming soon!** — I would like to release the official SetShot 1.0 next week, so please use the new Contact Support option in the Help menu to send me any bugs, questions, or other feedback about things that would be good to do before releasing 1.0. Bigger suggestions are always welcome, but I'll hold off on those for now.
