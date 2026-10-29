@@ -1,3 +1,9 @@
+## 1.0b34
+
+- **Steadier tab bar** — Ugh! The Snapshots, Journal, Settings, and About buttons at the top of the window no longer widen and shrink each time you switch between them.
+
+- **Faster Journal** — Switching to the Journal no longer stalls with a spinning pizza of death when the Journal holds thousands of entries.
+
 ## 1.0b33
 
 - **Works without an Internet connection** — SetShot now includes a copy of its knowledge base, so it can describe the changes it finds even when it can't reach the Internet, such as on a first launch with the network off. It still downloads newer versions of the knowledge base when it can.
