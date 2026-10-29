@@ -6,13 +6,15 @@
         <description>SetShot release feed</description>
         <language>en</language>
         <item>
-            <title>SetShot 1.0b32</title>
-            <pubDate>Sun, 25 Oct 2026 21:29:45 +0000</pubDate>
-            <sparkle:version>44</sparkle:version>
-            <sparkle:shortVersionString>1.0b32</sparkle:shortVersionString>
+            <title>SetShot 1.0b33</title>
+            <pubDate>Thu, 29 Oct 2026 16:16:54 +0000</pubDate>
+            <sparkle:version>45</sparkle:version>
+            <sparkle:shortVersionString>1.0b33</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <description><![CDATA[
 <style>body{font:13px -apple-system,sans-serif;margin:0;padding:12px}h2{font-size:15px;margin:16px 0 6px}h2:first-child{margin-top:0}li{margin-bottom:8px;line-height:1.45}ul{padding-left:20px;margin:0}code{font:12px ui-monospace,monospace}</style>
+<h2>1.0b33</h2>
+<ul><li><strong>Works without an Internet connection</strong> — SetShot now includes a copy of its knowledge base, so it can describe the changes it finds even when it can&#x27;t reach the Internet, such as on a first launch with the network off. It still downloads newer versions of the knowledge base when it can.</li><li><strong>New domain for updates and submissions</strong> — Update checks, knowledge base downloads, submissions, and support messages now go to setshot.tidbits.com. If anything seems off with Check for Updates, sending submissions, or Contact Support, please let me know.</li></ul>
 <h2>1.0b32</h2>
 <ul><li><strong>SetShot 1.0 coming soon!</strong> — I would like to release the official SetShot 1.0 next week, so please use the new Contact Support option in the Help menu to send me any bugs, questions, or other feedback about things that would be good to do before releasing 1.0. Bigger suggestions are always welcome, but I&#x27;ll hold off on those for now.</li><li><strong>Fixed: automatic update checks</strong> — SetShot was meant to check for updates on each launch, but the check was being dropped, so new versions appeared only when you chose Check for Updates. SetShot now checks when it opens and once a day while it&#x27;s running. Because earlier versions can&#x27;t check on their own, choose SetShot → Check for Updates once to get this one.</li></ul>
 <h2>1.0b31</h2>
@@ -68,6 +70,19 @@
 <h2>1.0b5</h2>
 <ul><li><strong>Journal view</strong> — Added a Journal tab that keeps a cumulative record of every recognized change found across all your comparisons, grouped by comparison date.</li><li><strong>System Settings icons</strong> — Comprehensive icon coverage for System Settings panes using SF Symbols and custom assets, so recognized changes show the correct pane icon.</li><li><strong>Journal deduplication</strong> — The journal now automatically removes duplicate entries, so running the same comparison twice doesn&#x27;t create redundant records.</li></ul>
 ]]></description>
+            <enclosure
+                url="https://github.com/adamengst/setshot-app/releases/download/v1.0b33/SetShot-1.0b33.zip"
+                sparkle:edSignature="EktLNl+AZgrNhfWKpvr8m1Nl0NxCMSyAiBMZcpCbkoVyqS/Qqv/sdE2s4fr0k/fHyqWk2BN2VmCnfkaY3SmDAA=="
+                length="7920877"
+                type="application/octet-stream"
+            />
+        </item>
+        <item>
+            <title>SetShot 1.0b32</title>
+            <pubDate>Sun, 25 Oct 2026 21:29:45 +0000</pubDate>
+            <sparkle:version>44</sparkle:version>
+            <sparkle:shortVersionString>1.0b32</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>13.0</sparkle:minimumSystemVersion>
             <enclosure
                 url="https://github.com/adamengst/setshot-app/releases/download/v1.0b32/SetShot-1.0b32.zip"
                 sparkle:edSignature="fmyXvEE3gBOtsaVqD+z1ISAZy3ZV2ehhlV+0rhj4zL2KxKGS8TmG7s39Kl/LAxzt26rQ0xn7DOhpB85XWPvBDQ=="
