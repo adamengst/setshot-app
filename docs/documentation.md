@@ -19,7 +19,7 @@ SetShot has four views, accessed by clicking the buttons at the top of the windo
 
 ## Taking Snapshots
 
-SetShot's core function is to take and compare snapshots. To that end, it scans around 450 settings files across 20 system data sources. It currently recognizes over 780 settings and knows to ignore over 1600 additional changes that are just macOS noise.
+SetShot's core function is to take and compare snapshots. To that end, it reads 20 system data sources, including Apple's preference files, of which a Mac in regular use has over 500. It currently recognizes over 830 settings and knows to ignore over 1750 additional changes that are just macOS noise.
 
 To take a snapshot of the current state of your Mac's settings, click **Take Snapshot** at the bottom of the Snapshots view. SetShot saves the result to the snapshot library with the date and time. Snapshots are stored in `~/Library/Application Support/SetShot/snapshots` as gzipped files that occupy little space. Capturing typically takes less than a minute.
 
@@ -41,7 +41,15 @@ The Snapshots view shows all your snapshots in a single list. Click any two snap
 
 After selecting both snapshots, click **Compare** to run the comparison. The results open in a new window titled with the names of the two snapshots, leaving the snapshot library available so you can start additional comparisons. You can have multiple comparison windows open at once to look at them side by side.
 
-SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. Changes to the knowledge base are read at every launch.
+SetShot identifies every setting that differs between the two snapshots and looks up each one in its knowledge base to determine whether it's a recognized change or an unrecognized change. SetShot includes a copy of the knowledge base, so it recognizes changes even without an Internet connection, and it checks for a newer version at every launch.
+
+## Baselines
+
+A baseline is a snapshot of a fresh installation of macOS, with its settings at Apple's defaults. SetShot includes one for each version of macOS from 15 Sequoia on, and the snapshot library shows the one for the version you're running, named like “macOS 27.0 Golden Gate baseline defaults.” It sits at the end of the list, or at the top if you've turned on **Show oldest first**, and it can't be renamed or deleted.
+
+Your first snapshot is compared against the baseline automatically. Its line in the library reads “First snapshot,” and the Journal labels that comparison's changes “from baseline.”
+
+You can also select the baseline like any other snapshot. Comparing your latest snapshot against it lists everything you've changed from the defaults, and **Export** saves that list as HTML or Markdown — useful when setting up a new Mac the way you like it.
 
 ## Understanding Results
 

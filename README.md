@@ -8,7 +8,7 @@ SetShot captures a comprehensive snapshot of macOS's settings on your Mac, then 
 
 **[Download the latest release](https://github.com/adamengst/setshot-app/releases/latest)**
 
-SetShot requires macOS 13 Ventura or later, and has been tested with macOS 15 Sequoia and macOS 26 Tahoe. Your mileage may vary with other versions.
+SetShot runs on macOS 13 Ventura and later, and includes baselines of fresh installations of macOS 15 Sequoia, macOS 26 Tahoe, and macOS 27 Golden Gate.
 
 SetShot is undoubtedly not perfect. Treat surprising reports as an excuse to research further, and remember: SetShot never changes any settings. If something changes unexpectedly, that's macOS at work. SetShot does not track settings of non-Apple apps. The only files SetShot writes are its snapshots, journal, and anything you export. 
 
@@ -20,7 +20,7 @@ SetShot is undoubtedly not perfect. Treat surprising reports as an excuse to res
 2. **Make your changes** — apply an update, install software, adjust preferences, or whatever.
 3. **Take another snapshot** and click **Compare**. SetShot shows you every macOS setting that changed between the two.
 
-You can keep as many snapshots as you like and compare any pair, including against the baseline for a new installation of Sequoia or Tahoe, so you can compare (and export) your current collection of settings. You can rename snapshots to make them easier to distinguish or delete them if they're unnecessary (likely because they don't show any changes). Snapshots are stored in a gzip-compressed format so they don't take up much space (less than 1 MB each).
+You can keep as many snapshots as you like and compare any pair, including against the baseline for a new installation of your version of macOS from Sequoia on, so you can compare (and export) your current collection of settings. You can rename snapshots to make them easier to distinguish or delete them if they're unnecessary (likely because they don't show any changes). Snapshots are stored in a gzip-compressed format so they don't take up much space (less than 1 MB each).
 
 ---
 
