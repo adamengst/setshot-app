@@ -120,7 +120,12 @@ struct SnapshotLibraryView: View {
                 Text("About").tag(Tab.about)
             }
             .pickerStyle(.segmented)
-            .frame(width: 320)
+            // At its own size the control gives every segment the width of the widest
+            // label. A fixed 320-point frame squeezed it narrower, and each change of
+            // selection briefly put it back at its own width before the frame won,
+            // so the bar widened and shrank on every switch.
+            .labelsHidden()
+            .fixedSize()
             Spacer()
         }
         .padding(.horizontal, 20)

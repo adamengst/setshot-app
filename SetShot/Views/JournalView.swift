@@ -18,7 +18,7 @@ struct JournalView: View {
         return appModel.journal.filter { !ignored.covers(domain: $0.domain, key: $0.key) }
     }
 
-    private var filteredEntries: [JournalEntry] {
+    private func filteredEntries(_ journal: [JournalEntry]) -> [JournalEntry] {
         guard !searchQuery.isEmpty else { return journal }
         let q = searchQuery.lowercased()
         return journal.filter {
@@ -46,8 +46,8 @@ struct JournalView: View {
         let entries: [JournalEntry]
     }
 
-    private var sections: [JournalSection] {
-        let grouped = Dictionary(grouping: filteredEntries) { $0.afterSnapshotId }
+    private func sections(_ entries: [JournalEntry]) -> [JournalSection] {
+        let grouped = Dictionary(grouping: entries) { $0.afterSnapshotId }
         return grouped.map { snapshotId, entries in
             JournalSection(
                 snapshotId: snapshotId,
@@ -60,8 +60,12 @@ struct JournalView: View {
     }
 
     var body: some View {
+        // Each of these walks the whole journal, so they are worked out once per pass
+        // rather than read as computed properties at every place that needs them.
+        let journal = self.journal
+        let sections = sections(filteredEntries(journal))
         VStack(spacing: 0) {
-            searchField
+            searchField(hasEntries: !journal.isEmpty)
             Divider()
             if journal.isEmpty {
                 emptyState
@@ -70,10 +74,20 @@ struct JournalView: View {
             } else {
                 ScrollViewReader { proxy in
                     ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 24) {
+                        // Headers and rows are direct children of the stack, so only the
+                        // ones near the visible area are built. With each section in a
+                        // VStack of its own, the stack had to build and measure every row
+                        // of a section before placing it, and one comparison can record
+                        // hundreds of changes.
+                        LazyVStack(alignment: .leading, spacing: 0) {
                             Color.clear.frame(height: 0).id("journal-top")
                             ForEach(sections, id: \.snapshotId) { section in
-                                sectionBlock(section)
+                                sectionHeader(section)
+                                    .padding(.top, section.snapshotId == sections.first?.snapshotId ? 0 : 24)
+                                ForEach(section.entries) { entry in
+                                    journalRow(entry)
+                                        .padding(.top, 8)
+                                }
                             }
                         }
                         .padding(20)
@@ -95,7 +109,7 @@ struct JournalView: View {
         }
     }
 
-    private var searchField: some View {
+    private func searchField(hasEntries: Bool) -> some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
             TextField("Search journal", text: $searchQuery)
@@ -107,7 +121,7 @@ struct JournalView: View {
                 }
                 .buttonStyle(.plain)
             }
-            if !journal.isEmpty {
+            if hasEntries {
                 // Inline, SwiftUI draws a Menu's indicator as a filled badge in the
                 // accent colour whatever the menu or button style — borderless only
                 // removes it by removing the frame too. The comparison window's copy
@@ -185,18 +199,13 @@ struct JournalView: View {
             .padding()
     }
 
-    private func sectionBlock(_ section: JournalSection) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionHeader(section)
-            ForEach(section.entries) { entry in
-                JournalRow(entry: entry, kb: appModel.kb) { note in
-                    Task { await appModel.setJournalNote(entryID: entry.id, note: note) }
-                }
-                .contextMenu {
-                    Button("Delete Entry", role: .destructive) {
-                        Task { await appModel.deleteJournalEntry(entry) }
-                    }
-                }
+    private func journalRow(_ entry: JournalEntry) -> some View {
+        JournalRow(entry: entry, kb: appModel.kb) { note in
+            Task { await appModel.setJournalNote(entryID: entry.id, note: note) }
+        }
+        .contextMenu {
+            Button("Delete Entry", role: .destructive) {
+                Task { await appModel.deleteJournalEntry(entry) }
             }
         }
     }
