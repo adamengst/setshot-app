@@ -61,7 +61,94 @@ final class KBFetcherTests: XCTestCase {
         }
     }
 
+    private let host = KBSource.all[0]
+    private let github = KBSource.all[1]
+
+    /// Answers only the URLs it is given, and records every URL asked for.
+    private final class StubNetwork: @unchecked Sendable {
+        private let responses: [URL: Data]
+        private let lock = NSLock()
+        private var _requested: [URL] = []
+        var requested: [URL] { lock.withLock { _requested } }
+
+        init(_ responses: [URL: Data]) { self.responses = responses }
+
+        func fetch(_ request: URLRequest) -> Data? {
+            guard let url = request.url else { return nil }
+            lock.withLock { _requested.append(url) }
+            return responses[url]
+        }
+    }
+
+    private func fetcher(stub: StubNetwork) -> KBFetcher {
+        KBFetcher(defaults: defaults, bundledKBDirectory: bundledDir) { stub.fetch($0) }
+    }
+
     // MARK: - Tests
+
+    /// Installed copies fetch from these for as long as they run.
+    func testSourcesAreSetShotHostThenGitHub() {
+        XCTAssertEqual(host.version.absoluteString, "https://setshot.tidbits.com/kb/version.json")
+        XCTAssertEqual(host.entries.absoluteString, "https://setshot.tidbits.com/kb/settings-kb.json")
+        XCTAssertEqual(github.version.absoluteString,
+                       "https://raw.githubusercontent.com/adamengst/setshot-kb/main/version.json")
+        XCTAssertEqual(github.entries.absoluteString,
+                       "https://raw.githubusercontent.com/adamengst/setshot-kb/main/settings-kb.json")
+    }
+
+    func testHostAnswersAndGitHubIsNotAsked() async throws {
+        try writeBundled(version: 10, id: "bundled")
+        let stub = StubNetwork([host.version: versionJSON(20), host.entries: entries(id: "host"),
+                                github.version: versionJSON(20), github.entries: entries(id: "github")])
+        let (kb, _) = await fetcher(stub: stub).fetchIfNeeded()
+        XCTAssertEqual(kb.entries.map(\.id), ["host"])
+        XCTAssertEqual(stub.requested, [host.version, host.entries])
+    }
+
+    func testHostDownFallsBackToGitHub() async throws {
+        try writeBundled(version: 10, id: "bundled")
+        let stub = StubNetwork([github.version: versionJSON(20), github.entries: entries(id: "github")])
+        let (kb, unavailable) = await fetcher(stub: stub).fetchIfNeeded()
+        XCTAssertFalse(unavailable)
+        XCTAssertEqual(kb.version, 20)
+        XCTAssertEqual(kb.entries.map(\.id), ["github"])
+        XCTAssertEqual(defaults.integer(forKey: "kb_version"), 20)
+    }
+
+    func testHostEntriesFailingFallsBackToGitHub() async throws {
+        try writeBundled(version: 10, id: "bundled")
+        let stub = StubNetwork([host.version: versionJSON(20),
+                                github.version: versionJSON(20), github.entries: entries(id: "github")])
+        let (kb, _) = await fetcher(stub: stub).fetchIfNeeded()
+        XCTAssertEqual(kb.entries.map(\.id), ["github"])
+    }
+
+    func testHostAndGitHubDownFallsBackToBundled() async throws {
+        try writeBundled(version: 10, id: "bundled")
+        let stub = StubNetwork([:])
+        let (kb, unavailable) = await fetcher(stub: stub).fetchIfNeeded()
+        XCTAssertFalse(unavailable)
+        XCTAssertEqual(kb.entries.map(\.id), ["bundled"])
+        XCTAssertEqual(stub.requested, [host.version, github.version])
+    }
+
+    /// Both sources serve the same repository, so a current answer from the host
+    /// settles it.
+    func testHostNoNewerDoesNotAskGitHub() async throws {
+        try writeBundled(version: 20, id: "bundled")
+        let stub = StubNetwork([host.version: versionJSON(20), github.version: versionJSON(21),
+                                github.entries: entries(id: "github")])
+        let (kb, _) = await fetcher(stub: stub).fetchIfNeeded()
+        XCTAssertEqual(kb.entries.map(\.id), ["bundled"])
+        XCTAssertEqual(stub.requested, [host.version])
+    }
+
+    func testForceRefreshFallsBackToGitHub() async throws {
+        writeCache(version: 20, id: "cached")
+        let stub = StubNetwork([github.version: versionJSON(20), github.entries: entries(id: "github")])
+        let (kb, _) = await fetcher(stub: stub).forceRefresh()
+        XCTAssertEqual(kb.entries.map(\.id), ["github"])
+    }
 
     func testNoCacheNoNetworkLoadsBundledKB() async throws {
         try writeBundled(version: 10, id: "bundled")

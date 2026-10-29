@@ -93,14 +93,22 @@ final class UpdaterStateTests: XCTestCase {
 
     // If SUFeedURL is missing or points to the wrong URL, Sparkle checks the
     // wrong endpoint and users never receive updates regardless of how often it runs.
+    // A new feed URL only reaches people through an update found at the old one.
     func testFeedURLIsProductionAppcast() {
         let bundle = Bundle(for: UpdaterState.self)
         let feedURL = bundle.object(forInfoDictionaryKey: "SUFeedURL") as? String
         XCTAssertEqual(
             feedURL,
-            "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml",
+            "https://setshot.tidbits.com/appcast.xml",
             "SUFeedURL must point to the production appcast"
         )
+    }
+
+    // Info.plist is what ships, but project.yml sets the same key, and the two must
+    // not drift apart.
+    func testProjectYMLFeedURLMatchesInfoPlist() throws {
+        let yml = try String(contentsOf: TestSupport.repoRoot.appendingPathComponent("project.yml"), encoding: .utf8)
+        XCTAssertTrue(yml.contains(#"INFOPLIST_KEY_SUFeedURL: "https://setshot.tidbits.com/appcast.xml""#))
     }
 
     // If SUPublicEDKey is absent, Sparkle rejects every update as unsigned and

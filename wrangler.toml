@@ -3,5 +3,13 @@ main = "worker.js"
 compatibility_date = "2024-01-01"
 account_id = "0abf18578a8bf089f0816e1eb116f9c0"
 
+# setshot.tidbits.com is a Custom Domain: wrangler deploy creates its DNS record and
+# certificate in the tidbits.com zone. The workers.dev address stays on, because the
+# betas post to it and will keep doing so.
+workers_dev = true
+routes = [
+  { pattern = "setshot.tidbits.com", custom_domain = true }
+]
+
 [vars]
 GITHUB_REPO = "adamengst/setshot-submissions"

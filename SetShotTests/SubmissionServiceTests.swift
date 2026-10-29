@@ -3,6 +3,13 @@ import XCTest
 
 final class SubmissionServiceTests: XCTestCase {
 
+    // Every installed copy posts to these, so a change to them strands that copy.
+    func testEndpointsAreOnSetShotHost() {
+        XCTAssertEqual(SubmissionService.endpoint("/submit").absoluteString, "https://setshot.tidbits.com/submit")
+        XCTAssertEqual(SubmissionService.endpoint("/kb-feedback").absoluteString, "https://setshot.tidbits.com/kb-feedback")
+        XCTAssertEqual(SubmissionService.endpoint("/support").absoluteString, "https://setshot.tidbits.com/support")
+    }
+
     func testChunkingExactSize() {
         let chunks = SubmissionService.chunked(Array(0..<150), size: 150)
         XCTAssertEqual(chunks.count, 1)

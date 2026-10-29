@@ -13,7 +13,13 @@ struct UserFeedback {
 actor SubmissionService {
     static let shared = SubmissionService()
 
-    private let workerURL = URL(string: "https://setshot-submission.the-account-of-adam-engst.workers.dev")!
+    /// The worker on SetShot's own hostname, so the endpoint can move without an
+    /// update. Betas up to 1.0b32 post to the workers.dev address, which stays on.
+    static let workerURL = URL(string: "https://setshot.tidbits.com")!
+
+    static func endpoint(_ path: String) -> URL {
+        workerURL.appendingPathComponent(path)
+    }
 
     /// Which SetShot wrote the snapshot, and which knowledge base classified it.
     ///
@@ -35,13 +41,13 @@ actor SubmissionService {
     }
 
     func submit(_ diff: DiffLine, feedback: UserFeedback? = nil) async throws {
-        try await post(payload(for: diff, feedback: feedback))
+        try await post(payload(for: diff, feedback: feedback), path: "/submit")
     }
 
     func submitBatch(_ diffs: [DiffLine]) async throws {
         let items = diffs.map { payload(for: $0) }
         for chunk in Self.chunked(items, size: 40) {
-            try await post(chunk)
+            try await post(chunk, path: "/submit")
         }
     }
 
@@ -98,9 +104,8 @@ actor SubmissionService {
         try await post(request, path: "/support")
     }
 
-    private func post<T: Encodable>(_ body: T, path: String = "") async throws {
-        let url = path.isEmpty ? workerURL : workerURL.appendingPathComponent(path)
-        var request = URLRequest(url: url)
+    private func post<T: Encodable>(_ body: T, path: String) async throws {
+        var request = URLRequest(url: Self.endpoint(path))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)

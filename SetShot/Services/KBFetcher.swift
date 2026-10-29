@@ -1,7 +1,20 @@
 import Foundation
 
-private let kbVersionURL = URL(string: "https://raw.githubusercontent.com/adamengst/setshot-kb/main/version.json")!
-private let kbEntriesURL = URL(string: "https://raw.githubusercontent.com/adamengst/setshot-kb/main/settings-kb.json")!
+/// Where the KB is fetched from, in order. SetShot's own host comes first, so the KB
+/// can move without an update; the worker there proxies the GitHub copy, which is
+/// asked directly if the host fails. When neither answers, the cache or the bundled
+/// copy is used.
+struct KBSource: Equatable {
+    let version: URL
+    let entries: URL
+
+    static let all = [
+        KBSource(version: URL(string: "https://setshot.tidbits.com/kb/version.json")!,
+                 entries: URL(string: "https://setshot.tidbits.com/kb/settings-kb.json")!),
+        KBSource(version: URL(string: "https://raw.githubusercontent.com/adamengst/setshot-kb/main/version.json")!,
+                 entries: URL(string: "https://raw.githubusercontent.com/adamengst/setshot-kb/main/settings-kb.json")!)
+    ]
+}
 
 actor KBFetcher {
     static let shared = KBFetcher()
@@ -13,18 +26,24 @@ actor KBFetcher {
     private let defaults: UserDefaults
     /// Holds settings-kb.json and version.json, copied in by scripts/refresh-bundled-kb.sh.
     private let bundledKBDirectory: URL?
+    private let sources: [KBSource]
     private let fetch: @Sendable (URLRequest) async -> Data?
 
     init(defaults: UserDefaults = .standard,
          bundledKBDirectory: URL? = Bundle.main.url(forResource: "BundledKB", withExtension: nil),
+         sources: [KBSource] = KBSource.all,
          fetch: @escaping @Sendable (URLRequest) async -> Data? = KBFetcher.networkFetch) {
         self.defaults = defaults
         self.bundledKBDirectory = bundledKBDirectory
+        self.sources = sources
         self.fetch = fetch
     }
 
+    /// Only a 200 counts, so an error page is never taken for the KB.
     static func networkFetch(_ request: URLRequest) async -> Data? {
-        try? await URLSession.shared.data(for: request).0
+        guard let (data, response) = try? await URLSession.shared.data(for: request),
+              (response as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+        return data
     }
 
     // Returns the KB to use and whether it is completely unavailable (no cache, no
@@ -32,9 +51,7 @@ actor KBFetcher {
     func fetchIfNeeded() async -> (KnowledgeBase, unavailable: Bool) {
         let local = loadLocal()
 
-        if let remote = await fetchRemoteVersion(),
-           local.map({ remote.version > $0.version }) ?? true,
-           let kb = await fetchAndCacheKB(version: remote.version, updatedAt: remote.updatedAt) {
+        if let kb = await fetchRemote(newerThan: local?.version) {
             return (kb, false)
         }
 
@@ -43,8 +60,7 @@ actor KBFetcher {
     }
 
     func forceRefresh() async -> (KnowledgeBase, unavailable: Bool) {
-        if let remote = await fetchRemoteVersion(),
-           let kb = await fetchAndCacheKB(version: remote.version, updatedAt: remote.updatedAt) {
+        if let kb = await fetchRemote(newerThan: nil) {
             return (kb, false)
         }
         if let local = loadLocal() { return (local, false) }
@@ -107,14 +123,29 @@ actor KBFetcher {
         return (response.version, date)
     }
 
-    private func fetchRemoteVersion() async -> (version: Int, updatedAt: Date?)? {
-        let request = URLRequest(url: kbVersionURL, cachePolicy: .reloadIgnoringLocalCacheData)
+    /// Tries each source in turn and fetches the entries from the one that answered
+    /// version.json, so the version and the entries always come from the same place.
+    /// A source that answers with a version no newer than the local one ends the
+    /// search: the others hold the same repository.
+    private func fetchRemote(newerThan localVersion: Int?) async -> KnowledgeBase? {
+        for source in sources {
+            guard let remote = await fetchRemoteVersion(from: source) else { continue }
+            if let localVersion, remote.version <= localVersion { return nil }
+            if let kb = await fetchAndCacheKB(from: source, version: remote.version, updatedAt: remote.updatedAt) {
+                return kb
+            }
+        }
+        return nil
+    }
+
+    private func fetchRemoteVersion(from source: KBSource) async -> (version: Int, updatedAt: Date?)? {
+        let request = URLRequest(url: source.version, cachePolicy: .reloadIgnoringLocalCacheData)
         guard let data = await fetch(request) else { return nil }
         return decodeVersion(data)
     }
 
-    private func fetchAndCacheKB(version: Int, updatedAt: Date?) async -> KnowledgeBase? {
-        let request = URLRequest(url: kbEntriesURL, cachePolicy: .reloadIgnoringLocalCacheData)
+    private func fetchAndCacheKB(from source: KBSource, version: Int, updatedAt: Date?) async -> KnowledgeBase? {
+        let request = URLRequest(url: source.entries, cachePolicy: .reloadIgnoringLocalCacheData)
         guard let data = await fetch(request),
               let entries = try? JSONDecoder().decode([KBEntry].self, from: data) else { return nil }
         defaults.set(data, forKey: entriesKey)

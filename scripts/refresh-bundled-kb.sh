@@ -1,8 +1,9 @@
 #!/bin/bash
 #
 # Copies the knowledge base from a setshot-kb checkout into the app, so SetShot
-# has a KB on a first launch with no network or with raw.githubusercontent.com
-# blocked. The copies are checked in; commit them after running this.
+# has a KB on a first launch with no network or with both setshot.tidbits.com and
+# raw.githubusercontent.com blocked. The copies are checked in; commit them after
+# running this.
 #
 #   scripts/refresh-bundled-kb.sh                 # from ~/GitHub/setshot-kb
 #   SETSHOT_KB_REPO=/path/to/setshot-kb scripts/refresh-bundled-kb.sh

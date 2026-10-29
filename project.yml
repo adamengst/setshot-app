@@ -61,7 +61,7 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: SetShot
         INFOPLIST_KEY_NSHumanReadableCopyright: ""
         INFOPLIST_KEY_NSAppleMusicUsageDescription: "SetShot reads Music, TV, and media settings to detect changes to your media preferences."
-        INFOPLIST_KEY_SUFeedURL: "https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml"
+        INFOPLIST_KEY_SUFeedURL: "https://setshot.tidbits.com/appcast.xml"
         INFOPLIST_KEY_SUPublicEDKey: "7TX+CFEbqGbKIprRyq2sdjgmf7l3BrJf/bzp/Ss0ndg="
         # SUScheduledCheckInterval is set in SetShot/Info.plist, whose own keys win
         # over INFOPLIST_KEY_ settings here. It is one day, on top of the check at

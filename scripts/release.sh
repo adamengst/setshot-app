@@ -290,6 +290,11 @@ PY
 xmllint --noout appcast.xml 2>/dev/null || fail "appcast.xml is not valid XML — fix it before pushing"
 
 step "Committing and pushing the appcast"
+# appcast.xml on main is the one feed, read at two URLs. Releases from 1.0 on use
+# https://setshot.tidbits.com/appcast.xml, where the worker proxies this file with a
+# five-minute cache. The betas use the raw.githubusercontent.com URL for main
+# directly, and only an update found there can move them, so this file has to keep
+# being published on main, at this path, for good.
 git add appcast.xml
 git commit -q -m "Release $VERSION"
 git push origin main

@@ -157,6 +157,13 @@ if it fails partway.
     git push
     ```
 
+`appcast.xml` on `main` is the only feed, read at two URLs. Releases from 1.0 on use
+`https://setshot.tidbits.com/appcast.xml`, which the worker proxies from GitHub with a
+five-minute cache. The betas use
+`https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml` directly,
+and only an update found there can move them, so the file has to stay on `main` at
+that path for good. A push reaches the new URL within about five minutes.
+
 ### Deploying the Cloudflare worker
 
 After changes to `worker.js`, deploy with:
@@ -164,6 +171,34 @@ After changes to `worker.js`, deploy with:
 wrangler deploy
 ```
 (Run from the `setshot-app` repo directory. Requires `wrangler` installed via `npm install -g wrangler` and authenticated via `wrangler login`.)
+
+The worker answers at two addresses. `setshot.tidbits.com` is a Custom Domain in the
+`tidbits.com` zone, set in `wrangler.toml`; the app from 1.0 on uses only that host:
+
+| Path | Method | What |
+|---|---|---|
+| `/appcast.xml` | GET | Sparkle feed, proxied from `setshot-app` on `main` |
+| `/kb/version.json`, `/kb/settings-kb.json` | GET | KB, proxied from `setshot-kb` on `main` |
+| `/submit` | POST | Unrecognized-change submissions, single or batch |
+| `/kb-feedback` | POST | Corrections to KB entries |
+| `/support` | POST | Help → Contact Support |
+
+The proxied files are cached at the edge for five minutes. An upstream failure
+returns an uncached 502, never a 200. If the host fails, the app fetches the KB from
+raw.githubusercontent.com and then uses its cache or bundled copy. Sparkle has only
+the one feed URL.
+
+`setshot-submission.the-account-of-adam-engst.workers.dev` stays on
+(`workers_dev = true`) because the betas post to it, submissions at `/`. Don't remove
+it or the `/` route. The zone's Bot Fight Mode must stay off, since it challenges the
+app's requests.
+
+Check after a deploy:
+
+    curl -sI https://setshot.tidbits.com/appcast.xml
+    for p in /submit /kb-feedback /support; do curl -s -o /dev/null -w "$p %{http_code}\n" -X POST -H 'Content-Type: application/json' -d '{"x":1}' https://setshot.tidbits.com$p; done
+
+The POST loop sends invalid bodies, so each should print 400 without filing an issue.
 
 The worker files issues as the **SetShot Submissions** GitHub App, so they come from
 `setshot-submissions[bot]` and notify anyone watching the repo (Watch → Custom →

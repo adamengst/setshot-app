@@ -75,13 +75,69 @@ function checkRateLimit(ip, type, max) {
   return true;
 }
 
+// Files served from setshot.tidbits.com, so the URLs built into the app name a host
+// that can be pointed elsewhere without an update. The repositories stay the single
+// source: appcast.xml is still read straight from raw.githubusercontent.com by the
+// betas, which carry that URL as their feed, so it has to keep being published there.
+const PROXIED_FILES = {
+  '/appcast.xml': 'https://raw.githubusercontent.com/adamengst/setshot-app/main/appcast.xml',
+  '/kb/version.json': 'https://raw.githubusercontent.com/adamengst/setshot-kb/main/version.json',
+  '/kb/settings-kb.json': 'https://raw.githubusercontent.com/adamengst/setshot-kb/main/settings-kb.json'
+};
+const PROXY_CACHE_SECONDS = 300;
+
+// Only a success is cached at the edge. Any upstream failure becomes an uncached 502,
+// so a GitHub outage or a missing file never sits in the cache, or reaches the app,
+// as a 200 with an error page for a body.
+async function proxyFile(request, upstreamURL) {
+  let upstream;
+  try {
+    upstream = await fetch(upstreamURL, {
+      cf: {
+        cacheEverything: true,
+        cacheTtlByStatus: { '200-299': PROXY_CACHE_SECONDS, '300-599': 0 }
+      }
+    });
+  } catch {
+    return new Response(null, { status: 502, headers: { 'Cache-Control': 'no-store' } });
+  }
+  if (upstream.status !== 200) {
+    return new Response(null, { status: 502, headers: { 'Cache-Control': 'no-store' } });
+  }
+  const headers = { 'Cache-Control': `public, max-age=${PROXY_CACHE_SECONDS}` };
+  for (const name of ['Content-Type', 'ETag', 'Last-Modified']) {
+    const value = upstream.headers.get(name);
+    if (value) headers[name] = value;
+  }
+  if (request.method === 'HEAD') {
+    await upstream.body?.cancel();
+    return new Response(null, { status: 200, headers });
+  }
+  return new Response(upstream.body, { status: 200, headers });
+}
+
 export default {
   async fetch(request, env) {
+    const path = new URL(request.url).pathname;
+
+    if (Object.hasOwn(PROXIED_FILES, path)) {
+      if (request.method !== 'GET' && request.method !== 'HEAD') {
+        return new Response(null, { status: 405 });
+      }
+      return proxyFile(request, PROXIED_FILES[path]);
+    }
+
     if (request.method !== 'POST') {
       return new Response(null, { status: 405 });
     }
 
-    const path = new URL(request.url).pathname;
+    // Submissions answer at "/submit" and, for the betas, which post to the
+    // workers.dev root, at "/". Any other path used to be taken as a submission too;
+    // nothing ever posted to one, so it is now refused.
+    const isSubmission = path === '/' || path === '/submit';
+    if (!isSubmission && path !== '/kb-feedback' && path !== '/support') {
+      return new Response(null, { status: 404 });
+    }
 
     let body;
     try {
