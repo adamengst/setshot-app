@@ -45,7 +45,7 @@ SetShot identifies every setting that differs between the two snapshots and look
 
 ## Baselines
 
-A baseline is a snapshot of a fresh installation of macOS, with its settings at Apple's defaults. SetShot includes one for each version of macOS from 15 Sequoia on, and the snapshot library shows the one for the version you're running, named like “macOS 27.0 Golden Gate baseline defaults.” It sits at the end of the list, or at the top if you've turned on **Show oldest first**, and it can't be renamed or deleted.
+A baseline is a snapshot of a fresh installation of macOS, with its settings at Apple's defaults. SetShot includes one for macOS 15 Sequoia, macOS 26 Tahoe, and macOS 27 Golden Gate. The snapshot library shows the one for the version you're running, named like “macOS 27.0 Golden Gate baseline defaults.” It sits at the end of the list, or at the top if you've turned on **Show oldest first**, and it can't be renamed or deleted.
 
 Your first snapshot is compared against the baseline automatically. Its line in the library reads “First snapshot,” and the Journal labels that comparison's changes “from baseline.”
 
