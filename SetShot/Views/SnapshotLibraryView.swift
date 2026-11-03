@@ -88,6 +88,9 @@ struct SnapshotLibraryView: View {
             UserDefaults.standard.removeObject(forKey: "PendingComparisonAfterID")
             openComparison(beforeID: beforeID, afterID: afterID)
         }
+        .onChange(of: selectedIDs) { _ in
+            announceSelection()
+        }
         .onChange(of: activeTab) { newTab in
             if newTab != .about {
                 UserDefaults.standard.set(true, forKey: "HasSeenAbout")
@@ -160,6 +163,10 @@ struct SnapshotLibraryView: View {
                         changeDescriptions: descriptions[snapshot.id] ?? []
                     ) { flags in
                         toggleSelection(snapshot, modifiers: flags)
+                    } onSetBefore: {
+                        toggleSelection(snapshot, modifiers: .command)
+                    } onSetAfter: {
+                        toggleSelection(snapshot, modifiers: .shift)
                     } onRename: { newName in
                         Task { await appModel.renameSnapshot(snapshot, to: newName) }
                     } onDelete: {
@@ -249,6 +256,23 @@ struct SnapshotLibraryView: View {
     }
 
     // MARK: - Actions
+
+    /// Tells VoiceOver what the selection now is. Before and After are otherwise shown
+    /// only as small labels on the rows, which VoiceOver doesn't revisit on its own.
+    private func announceSelection() {
+        let text: String
+        if let before = effectiveBefore, let after = effectiveAfter, before.id != after.id {
+            text = "Before: \(before.displayName). After: \(after.displayName). Ready to compare."
+        } else if selectedIDs.count == 1 {
+            text = "1 snapshot selected. Select another to compare."
+        } else {
+            text = "No snapshots selected."
+        }
+        NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested, userInfo: [
+            .announcement: text,
+            .priority: NSAccessibilityPriorityLevel.high.rawValue,
+        ])
+    }
 
     private func toggleSelection(_ snapshot: StoredSnapshot, modifiers: NSEvent.ModifierFlags = []) {
         if modifiers.contains(.shift) {
@@ -344,6 +368,8 @@ private struct SnapshotRow: View {
     let role: String?
     let changeDescriptions: [String]
     let onTap: (NSEvent.ModifierFlags) -> Void
+    let onSetBefore: () -> Void
+    let onSetAfter: () -> Void
     let onRename: (String) -> Void
     let onDelete: () -> Void
 
@@ -392,6 +418,8 @@ private struct SnapshotRow: View {
                     Image(systemName: "checkmark")
                         .foregroundStyle(Color.accentColor)
                         .font(.caption.bold())
+                        // The selected trait below says the same thing.
+                        .accessibilityHidden(true)
                 }
             }
         }
@@ -400,8 +428,22 @@ private struct SnapshotRow: View {
         .background(isSelected ? Color.accentColor.opacity(0.12) : Color.clear)
         .contentShape(Rectangle())
         .onTapGesture(count: 1) { if !isEditing { onTap(NSApp.currentEvent?.modifierFlags ?? []) } }
+        // A tap gesture alone gives VoiceOver nothing to press, so the row was never
+        // selectable and Compare stayed disabled. One element per row, read as its
+        // name, summary and role, that VO-Space selects like a click. Command-click and
+        // Shift-click have no VoiceOver equivalent, so they become named actions
+        // (VO-Command-Space) and context menu items. While renaming, the text field
+        // has to stay reachable on its own.
+        .accessibilityElement(children: isEditing ? .contain : .combine)
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
+        .accessibilityAction { if !isEditing { onTap([]) } }
+        .accessibilityAction(named: "Use as Before") { onSetBefore() }
+        .accessibilityAction(named: "Use as After") { onSetAfter() }
         .contextMenu {
+            Button("Use as Before") { onSetBefore() }
+            Button("Use as After") { onSetAfter() }
             if !snapshot.isBaseSnapshot {
+                Divider()
                 Button("Rename") {
                     editText = snapshot.displayName
                     isEditing = true
