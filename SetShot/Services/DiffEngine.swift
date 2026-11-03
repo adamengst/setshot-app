@@ -718,7 +718,10 @@ struct DiffEngine {
             "com.apple.mail-shared",
             "com.apple.messages.pinning",
         ]
-        return gated.contains(domain)
+        // Not from the experiment above: setshot.sh reads VoiceOver's group container
+        // only with Full Disk Access, so every file in it (default, master, journal,
+        // custom.*, one profile-<UUID> per Activity) comes and goes with it.
+        return gated.contains(domain) || domain.hasPrefix("com.apple.VoiceOver4.")
     }
 
     /// The domains Media & Apple Music gates, mirroring _MUSIC_RE in setshot.sh — the
