@@ -145,7 +145,8 @@ def main():
     shutil.copytree(SITE / "static", DIST / "static")
     images_dir = copy_images()
 
-    # Overview: README, with its H1 and download line replaced by the hero block.
+    # Overview: README, with its H1 and download line replaced by the hero block,
+    # and its closing credit line (and the rule above it) left to the page footer.
     readme = (ROOT / "README.md").read_text()
     h1 = re.match(r"# (.+)\n", readme)
     if not h1:
@@ -154,6 +155,9 @@ def main():
     body, n = re.subn(r"^\*\*\[Download[^\n]*\n", "", body, flags=re.M)
     if n != 1:
         print("warning: README download line not found; nothing removed", file=sys.stderr)
+    body, n = re.subn(r"\n---\s*\n+SetShot is designed by[^\n]*\n?\s*\Z", "\n", body)
+    if n != 1:
+        print("warning: README credit line not found; nothing removed", file=sys.stderr)
     hero = f"""<section class="hero">
 <h1>{html.escape(h1.group(1))}</h1>
 <p class="lede">See what changed in your Mac's settings, in plain English.</p>
