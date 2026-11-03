@@ -508,6 +508,9 @@ NOISE_PATTERN='(
   universalaccess.*:: hoverTypingFontStyle\s*=|
   universalaccess.*:: History\.MouseKeys\[|
   :: VoiceOverTouchLanguageRotor\[|
+  # VoiceOver Utility stamps the time of every settings change here; the change itself
+  # shows up in com.apple.VoiceOver4.default or a profile.
+  ^[-+]?com\.apple\.VoiceOver4\.journal :: |
   universalaccess.*:: closeViewZoomDisplayID\s*=|
   universalaccess.*:: FontSizeCategory\.|
   universalaccess.*:: sessionChange\s*=|
@@ -1300,6 +1303,26 @@ do_snapshot() {
       | _filter_music_paths \
       | sort \
       | _flatten_plist_list
+
+    section "VOICEOVER (group.com.apple.VoiceOver)"
+    # VoiceOver Utility keeps nearly all of its settings -- verbosity, speech, navigation,
+    # braille, commanders, activities -- in VoiceOver's group container rather than in
+    # ~/Library/Preferences, as com.apple.VoiceOver4/default.plist. The container is
+    # protected, so it is read only when Full Disk Access is in place; touching it
+    # without that risks an "access data from other apps" prompt on every snapshot,
+    # scheduled ones included. The system TCC database is the same probe the privacy
+    # section below uses.
+    #
+    # Each file is labelled com.apple.VoiceOver4.<name> rather than by its path, whose
+    # last component ("default") would otherwise be all that is left of the domain.
+    if [ -r "/Library/Application Support/com.apple.TCC/TCC.db" ]; then
+      VO_PREFS="$HOME/Library/Group Containers/group.com.apple.VoiceOver/Library/Preferences/com.apple.VoiceOver4"
+      for f in "$VO_PREFS"/*.plist; do
+        [ -r "$f" ] || continue
+        _flatten_plist_stdin < "$f" \
+          | sed "s|^|com.apple.VoiceOver4.$(basename "$f" .plist) :: |"
+      done
+    fi
 
     section "PLIST FILES: /Library/Preferences"
     find "/Library/Preferences" -name "com.apple.*.plist" -maxdepth 2 2>/dev/null \
