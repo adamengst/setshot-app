@@ -32967,5 +32967,84 @@
     "notes": null,
     "ai_generated": false,
     "contributed_by_issue": 387
+  },
+  {
+    "id": "menubaragent-menubaranalytics",
+    "domain": "com.apple.MenuBarAgent",
+    "key": "",
+    "key_prefix": "MenuBarAnalytics.",
+    "source": "plist",
+    "value_type": "any",
+    "description": null,
+    "ui_location": null,
+    "settings_url": null,
+    "value_map": null,
+    "noise": true,
+    "noise_reason": "Counts the menu bar keeps for Apple's analytics, such as how many items sit at its trailing end. They change when an app like Bartender adds or hides an item; the setting is the item, not the count.",
+    "min_macos": null,
+    "notes": null,
+    "ai_generated": false,
+    "contributed_by_issue": 390
+  },
+  {
+    "id": "globaldomain.SwiftUIDisableSolarium",
+    "domain": "NSGlobalDomain",
+    "key": "com.apple.SwiftUI.DisableSolarium",
+    "key_prefix": null,
+    "source": "plist",
+    "value_type": "bool",
+    "description": "Turn off the Liquid Glass design in SwiftUI apps",
+    "ui_location": null,
+    "settings_url": null,
+    "value_map": {
+      "1": "Yes",
+      "0": "No"
+    },
+    "noise": false,
+    "noise_reason": null,
+    "min_macos": "26.0",
+    "notes": "Hidden setting with no control in System Settings; set with defaults write, or by a utility that offers it.",
+    "ai_generated": false,
+    "contributed_by_issue": 387
+  },
+  {
+    "id": "wallpaper.aerialShuffleFrequency",
+    "domain": "wallpaper",
+    "key": "",
+    "key_prefix": "AllSpacesAndDisplays.Linked.Content.EncodedOptionValues.values.aerialShuffleFrequency",
+    "source": "plist-wallpaper",
+    "value_type": "string",
+    "description": "How often a shuffling aerial wallpaper moves to the next aerial",
+    "ui_location": "System Settings → Wallpaper",
+    "settings_url": "x-apple.systempreferences:com.apple.Wallpaper-Settings.extension",
+    "value_map": {
+      "shuffle_every_12_hours": "Every 12 hours"
+    },
+    "noise": false,
+    "noise_reason": null,
+    "min_macos": "26.0",
+    "notes": null,
+    "ai_generated": false,
+    "contributed_by_issue": 387
+  },
+  {
+    "id": "wallpaper.systemDefault.aerialShuffleFrequency",
+    "domain": "wallpaper",
+    "key": "",
+    "key_prefix": "SystemDefault.Linked.Content.EncodedOptionValues.values.aerialShuffleFrequency",
+    "source": "plist-wallpaper",
+    "value_type": "string",
+    "description": "How often the system default aerial wallpaper moves to the next aerial",
+    "ui_location": "System Settings → Wallpaper",
+    "settings_url": "x-apple.systempreferences:com.apple.Wallpaper-Settings.extension",
+    "value_map": {
+      "shuffle_every_12_hours": "Every 12 hours"
+    },
+    "noise": false,
+    "noise_reason": null,
+    "min_macos": "26.0",
+    "notes": null,
+    "ai_generated": false,
+    "contributed_by_issue": 387
   }
 ]

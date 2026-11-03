@@ -1,4 +1,4 @@
-# SetShot 1.0 beta
+# SetShot 1.0
 
 SetShot captures a comprehensive snapshot of macOS's settings on your Mac, then lets you compare two snapshots to see what changed and what each change means. Why might you want to do this?
 

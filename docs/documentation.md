@@ -35,7 +35,7 @@ If a snapshot is superfluous — perhaps because it shows no changes — you can
 
 Once you've taken at least two snapshots, SetShot can compare them.
 
-The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them — the topmost selected is always **After** and the bottommost is always **Before** (reversed if you've turned on **Show oldest first** in Settings). Clicking a third snapshot replaces one of the current selections based on position. Click a selected snapshot to deselect it. Command-click to force-select a snapshot as **Before**; Shift-click to force-select it as **After**.
+The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them — the topmost selected is always **After** and the bottommost is always **Before** (reversed if you've turned on **Show oldest first** in Settings). Clicking a third snapshot replaces one of the current selections based on position. Click a selected snapshot to deselect it. Command-click to force-select a snapshot as **Before**; Shift-click to force-select it as **After**. You can also Control-click a snapshot and choose **Use as Before** or **Use as After**.
 
 ![Two snapshots selected and ready to compare](images/ScreenshotSnapshotsReady.png)
 

@@ -1,3 +1,11 @@
+## 1.0
+
+- **SetShot 1.0** — SetShot is ready for official release! Thanks to everyone who tested it and sent submissions, feedback, and bug reports along the way. Keep the feedback coming! I have ideas for additional things to add to SetShot, and I'm open to suggestions from the peanut gallery.
+
+- **Works with VoiceOver** — VoiceOver users can now select and compare snapshots. Each snapshot in the list responds to VO-Space like a click, and SetShot announces what's selected after each change. Thanks to Scott-H5 for finding and fixing the problem.
+
+- **Use as Before and Use as After** — Control-click a snapshot and choose **Use as Before** or **Use as After** to pick which side of the comparison it's on, the same as Command-click and Shift-click. VoiceOver users can find both in the Actions rotor.
+
 ## 1.0b34
 
 - **Steadier tab bar** — Ugh! The Snapshots, Journal, Settings, and About buttons at the top of the window no longer widen and shrink each time you switch between them.
