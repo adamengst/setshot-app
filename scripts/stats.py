@@ -137,7 +137,7 @@ def active(tok, days):
         new = len(nets - seen)
         seen |= nets
         ips_seen |= ips
-        if end > now - dt.timedelta(days=7):
+        if day >= today - dt.timedelta(days=6):  # today plus the six days before
             week |= nets
         if day >= first_table_day:
             rows.append((day, len(nets), new))
