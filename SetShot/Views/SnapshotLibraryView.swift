@@ -222,9 +222,19 @@ struct SnapshotLibraryView: View {
                     Text("Comparing…").foregroundStyle(.secondary).font(.callout)
                 }
             } else {
-                Button("Compare") { compare() }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(selectedSorted.count < 2)
+                // On macOS 15 with Increase Contrast, a disabled prominent button keeps
+                // its blue background but takes the dark disabled label color, so the
+                // Compare button read black on dark blue whenever fewer than two
+                // snapshots were selected (setshot-app issue 8). It is prominent only
+                // while it can be used, and otherwise a plain button macOS greys out.
+                if selectedSorted.count < 2 {
+                    Button("Compare") { compare() }
+                        .buttonStyle(.bordered)
+                        .disabled(true)
+                } else {
+                    Button("Compare") { compare() }
+                        .buttonStyle(.borderedProminent)
+                }
             }
         }
         .padding(.horizontal, 20)
