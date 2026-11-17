@@ -33,7 +33,7 @@ If you wish, you can rename a snapshot. Control-click it and choose **Rename**, 
 
 If a snapshot is superfluous — perhaps because it shows no changes — you can delete it. Control-click it and choose **Delete**.
 
-To find a snapshot's file, Control-click it and choose **Show in Finder**. Finder opens the snapshots folder with that file selected.
+To find a snapshot's file (mostly useful if I ask for it for troubleshooting reasons), Control-click it and choose **Show in Finder**. The Finder opens the snapshots folder with that file selected.
 
 ## Comparing Snapshots
 

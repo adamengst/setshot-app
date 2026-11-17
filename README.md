@@ -20,7 +20,7 @@ SetShot is not perfect. Treat surprising reports as an excuse to research furthe
 2. **Make your changes** by applying an update, installing software, or adjusting preferences.
 3. **Take another snapshot.** SetShot compares it with the previous one and opens a list of the macOS settings that changed between the two. (If you'd rather choose comparisons yourself, turn this off in **Settings**.)
 
-You can keep as many snapshots as you like and compare any pair by selecting two and clicking **Compare**, including against the baseline for a new installation of your version of macOS (macOS 15 Sequoia or later), so you can see (and export) everything you've changed from a fresh installation. You can rename snapshots to make them easier to distinguish, delete them if they're unnecessary (likely because they don't show any changes), or Control-click one and choose **Show in Finder** to find its file. Snapshots are gzip-compressed, so each takes less than 1 MB.
+You can keep as many snapshots as you like and compare any pair by selecting two and clicking **Compare**, including against the baseline for a new installation of your version of macOS (macOS 15 Sequoia or later), so you can see (and export) everything you've changed from a fresh installation. You can rename snapshots to make them easier to distinguish, delete them if they're unnecessary (likely because they don't show any changes), or Control-click one and choose **Show in Finder** to find its file (if I ask you for a copy while troubleshooting some problem). Snapshots are gzip-compressed, so each takes less than 1 MB.
 
 ---
 
