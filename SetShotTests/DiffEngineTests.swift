@@ -697,6 +697,36 @@ final class DiffEngineTests: XCTestCase {
         XCTAssertTrue(keys.contains("available"), "The row explaining the results must stay")
     }
 
+    func testLosingFullDiskAccessWithholdsVoiceOverUtilitySettings() {
+        // setshot.sh skips VoiceOver's group container without Full Disk Access, so
+        // every VoiceOver Utility setting vanishes at once. A setting changed in the
+        // same interval has a value on both sides and is still reported.
+        let result = engine().parse(diffOutput: """
+            -TCC :: available = 1
+            +TCC :: available = 0
+            -com.apple.VoiceOver4.default :: SCRCategories_SCRCategoryVerbosity_SCRSpeakTextAttributesKey = 1
+            -com.apple.VoiceOver4.local :: SCRBrailleDriverCache = x
+            -com.apple.VoiceOver4.profile-39BFEE91-4B51-4106-8928-3E6C534DA59F :: SCRProfileName = Testing
+            -/Users/x/Library/Preferences/com.apple.dock.plist :: autohide = 0
+            +/Users/x/Library/Preferences/com.apple.dock.plist :: autohide = 1
+            """, kb: tccKB())
+
+        let keys = Set(result.recognized.map(\.diff.key) + result.unrecognized.map(\.key))
+        XCTAssertTrue(keys.contains("autohide"), "A real change must not be withheld")
+        XCTAssertFalse(keys.contains { $0.hasPrefix("SCR") }, "VoiceOver only became unreadable")
+    }
+
+    func testVoiceOverUtilityChangeIsReportedUnderItsOwnDomain() {
+        // The script labels the file com.apple.VoiceOver4.default instead of by its
+        // path, which would otherwise leave only "default" as the domain.
+        let result = engine().parse(diffOutput: """
+            -com.apple.VoiceOver4.default :: SCRCategories_SCRCategoryVerbosity_SCRSpeakTextAttributesKey = 0
+            +com.apple.VoiceOver4.default :: SCRCategories_SCRCategoryVerbosity_SCRSpeakTextAttributesKey = 1
+            """, kb: tccKB())
+
+        XCTAssertEqual(result.unrecognized.map(\.domain), ["com.apple.VoiceOver4.default"])
+    }
+
     func testLosingFullDiskAccessSuppressesTheFloodOfPermissions() {
         let result = engine().parse(diffOutput: """
             -TCC :: available = 1
