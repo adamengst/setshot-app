@@ -26,6 +26,9 @@ struct DiffResult {
     let noise: [(entry: KBEntry, diff: DiffLine)]
     let unrecognizedOverflow: Int  // items dropped past the cap; 0 = none
     let limitedAccessWarning: String?  // non-nil when a snapshot was taken without Full Disk Access
+    /// The script's noise filter could not run, so `unrecognized` holds noise that is
+    /// normally hidden. Submitting it would fill the queue with it (support issue 430).
+    var noiseFilterFailed = false
 
     static let empty = DiffResult(recognized: [], unrecognized: [], noise: [], unrecognizedOverflow: 0, limitedAccessWarning: nil)
 
@@ -34,7 +37,8 @@ struct DiffResult {
         let filtered = recognized.filter { $0.entry.requiresHardware?.contains("battery") != true }
         guard filtered.count != recognized.count else { return self }
         return DiffResult(recognized: filtered, unrecognized: unrecognized, noise: noise,
-                          unrecognizedOverflow: unrecognizedOverflow, limitedAccessWarning: limitedAccessWarning)
+                          unrecognizedOverflow: unrecognizedOverflow, limitedAccessWarning: limitedAccessWarning,
+                          noiseFilterFailed: noiseFilterFailed)
     }
 
     /// Drops the recognized changes the user has chosen to ignore in Settings. Applied
@@ -45,6 +49,7 @@ struct DiffResult {
         let filtered = recognized.filter { !ignored.covers(domain: $0.diff.domain, key: $0.diff.key) }
         guard filtered.count != recognized.count else { return self }
         return DiffResult(recognized: filtered, unrecognized: unrecognized, noise: noise,
-                          unrecognizedOverflow: unrecognizedOverflow, limitedAccessWarning: limitedAccessWarning)
+                          unrecognizedOverflow: unrecognizedOverflow, limitedAccessWarning: limitedAccessWarning,
+                          noiseFilterFailed: noiseFilterFailed)
     }
 }

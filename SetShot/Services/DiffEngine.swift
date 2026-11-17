@@ -53,8 +53,18 @@ struct DiffEngine {
         let beforeFormat = Self.snapshotFormat(of: before.rawOutput)
         let afterFormat = Self.snapshotFormat(of: after.rawOutput)
 
+        // The script's noise filter could not run, so its output is unfiltered:
+        // complete, but carrying changes that are normally hidden (support issue 430).
+        let filterFailure = diffOutput.components(separatedBy: "\n")
+            .first { $0.hasPrefix(Self.noiseFilterFailedMarker) }
+            .map { $0.dropFirst(Self.noiseFilterFailedMarker.count).trimmingCharacters(in: .whitespaces) }
+
         let warning: String?
-        if beforeFormat != afterFormat {
+        if let filterFailure {
+            warning = "SetShot couldn't filter out macOS noise on this Mac, so this comparison "
+                + "includes changes it normally hides. Please report this with Help \u{2192} "
+                + "Contact Support. (\(filterFailure))"
+        } else if beforeFormat != afterFormat {
             // Names the releases each format belongs to, so this needs revisiting
             // whenever SNAPSHOT_FORMAT is bumped in setshot.sh.
             warning = "These snapshots were taken by different versions of SetShot, which "
@@ -86,8 +96,12 @@ struct DiffEngine {
 
         return DiffResult(recognized: parsed.recognized, unrecognized: parsed.unrecognized,
                           noise: parsed.noise, unrecognizedOverflow: parsed.unrecognizedOverflow,
-                          limitedAccessWarning: warning)
+                          limitedAccessWarning: warning,
+                          noiseFilterFailed: filterFailure != nil)
     }
+
+    /// Matches NOISE_FILTER_FAILED in setshot.sh.
+    static let noiseFilterFailedMarker = "# SetShot noise filter failed:"
 
     // Caps to prevent UI hangs when comparing snapshots across major version
     // boundaries (e.g. a snapshot taken before a domain filter change vs. after).
@@ -122,6 +136,25 @@ struct DiffEngine {
     /// release after 1.0b32 on.
     static func hasOpenAtLogin(_ snapshot: String) -> Bool {
         snapshot.contains("\nBTM-login :: ") || snapshot.hasPrefix("BTM-login :: ")
+    }
+
+    static let pointerColorDomain = "com.apple.universalaccess"
+    static let pointerColorKeys = ["cursorFill", "cursorOutline"]
+
+    /// "#941F92" for a pointer color whose components are 0...1, or nil when the
+    /// snapshot has no such color. A color that is not fully opaque adds its opacity,
+    /// "#941F92 at 50%", though System Settings offers no way to set one.
+    static func pointerColor(_ color: String, from snapshot: String) -> String? {
+        func component(_ name: String) -> Double? {
+            value(ofKey: "\(color).\(name)", inDomain: pointerColorDomain, from: snapshot)
+                .flatMap { Double($0.trimmingCharacters(in: .whitespaces)) }
+        }
+        guard let r = component("red"), let g = component("green"), let b = component("blue")
+        else { return nil }
+        let byte = { (v: Double) in Int((min(max(v, 0), 1) * 255).rounded()) }
+        let hex = String(format: "#%02X%02X%02X", byte(r), byte(g), byte(b))
+        guard let a = component("alpha"), byte(a) < 255 else { return hex }
+        return "\(hex) at \(Int((a * 100).rounded()))%"
     }
 
     /// Reads a key's value straight out of a snapshot, for values the display needs
@@ -595,6 +628,25 @@ struct DiffEngine {
             pairs[i].before = choice(pairs[i].before, in: beforeSnapshot)
             pairs[i].after = choice(pairs[i].after, in: afterSnapshot)
             pairs.removeAll { $0.domain == siriDomain && $0.key == "UserPreferredVoiceTriggerPhraseType" }
+        }
+
+        // The pointer's fill and outline colors are stored as four numbers each --
+        // cursorFill.red, .green, .blue and .alpha -- so one color change arrived as up
+        // to four rows of decimals. They were filtered as noise until 1.0.1, which hid
+        // the change altogether. Each color is now one row, valued as its hex code and
+        // read whole from each snapshot, since a component that did not change is not
+        // in the diff.
+        if !beforeSnapshot.isEmpty, !afterSnapshot.isEmpty {
+            for color in Self.pointerColorKeys {
+                let parts = pairs.filter {
+                    $0.domain == Self.pointerColorDomain && $0.key.hasPrefix(color + ".")
+                }
+                guard let first = parts.first else { continue }
+                pairs.removeAll { $0.domain == Self.pointerColorDomain && $0.key.hasPrefix(color + ".") }
+                pairs.append(Pair(domain: Self.pointerColorDomain, key: color, rawDomain: first.rawDomain,
+                                  before: Self.pointerColor(color, from: beforeSnapshot),
+                                  after: Self.pointerColor(color, from: afterSnapshot)))
+            }
         }
 
         for p in pairs {

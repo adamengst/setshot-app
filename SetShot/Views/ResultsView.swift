@@ -132,6 +132,7 @@ struct ResultsView: View {
                     UnrecognizedRow(
                         diff: line,
                         isSubmitted: submittedIDs.contains(line.id),
+                        canSubmit: !diff.noiseFilterFailed,
                         onMarkSubmitted: { submittedIDs.insert(line.id) }
                     )
                 }
@@ -142,7 +143,7 @@ struct ResultsView: View {
     @ViewBuilder
     private var submitAllButton: some View {
         let unsubmitted = diff.unrecognized.filter { !submittedIDs.contains($0.id) }
-        if !unsubmitted.isEmpty {
+        if !unsubmitted.isEmpty, !diff.noiseFilterFailed {
             if isSubmittingAll {
                 HStack(spacing: 6) {
                     ProgressView().controlSize(.mini)
@@ -931,6 +932,8 @@ private struct ComparisonWindowPositioner: NSViewRepresentable {
 private struct UnrecognizedRow: View {
     let diff: DiffLine
     let isSubmitted: Bool
+    /// False when the noise filter failed, since most of these rows are then noise.
+    let canSubmit: Bool
     let onMarkSubmitted: () -> Void
     @State private var showSheet = false
 
@@ -946,7 +949,7 @@ private struct UnrecognizedRow: View {
                 Label("Submitted", systemImage: "checkmark.circle.fill")
                     .foregroundStyle(.secondary)
                     .font(.caption)
-            } else {
+            } else if canSubmit {
                 Button("Submit") { showSheet = true }
                     .controlSize(.small)
             }

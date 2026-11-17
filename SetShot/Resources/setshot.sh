@@ -497,8 +497,6 @@ NOISE_PATTERN='(
   finder.*:: Bulk[A-Za-z]+\s*=|
   finder.*:: DataSeparatedDisplayNameCache\s*=|
   finder.*:: CopyProgressWindowLocation\s*=|
-  universalaccess.*:: cursorFill\.|
-  universalaccess.*:: cursorOutline\.|
   :: NSColorPanel|
   :: NSToolbar Configuration|
   :: SpokenContentDefaultVoiceSelections|
@@ -1031,16 +1029,34 @@ NOISE_RE="$(echo "$NOISE_PATTERN" | sed 's/^[[:space:]]*//' | grep -v '^#' | tr 
 # Chunks are numbered by `split` and their outputs concatenated in that order, so
 # the result is byte-identical to filtering in one pass. Falls back to a single
 # grep when a temp directory cannot be made.
+#
+# grep exits 1 when it filters out every line, which is fine, and 2 when it fails,
+# as when it rejects the pattern. A failure used to leave every chunk empty, so the
+# comparison reported no changes at all, not even unrecognized ones (support issue
+# 430). A chunk grep cannot filter now passes through unfiltered, and the line
+# below tells DiffEngine to say so, with grep's own message.
+NOISE_FILTER_FAILED="# SetShot noise filter failed:"
 _filter_noise() {
-  local dir jobs
-  dir="$(mktemp -d 2>/dev/null)" || { grep -vE "$NOISE_RE" || true; return; }
+  local dir jobs err
+  if ! dir="$(mktemp -d 2>/dev/null)"; then
+    grep -vE "$NOISE_RE" 2>/dev/null
+    # grep compiles the pattern before reading, so on failure stdin is still unread.
+    if [ $? -gt 1 ]; then cat; echo "$NOISE_FILTER_FAILED grep could not be run"; fi
+    return 0
+  fi
   jobs="$(sysctl -n hw.ncpu 2>/dev/null || echo 4)"
   split -l 3000 - "$dir/chunk." 2>/dev/null
   # Listed before any .out file exists, so the glob cannot pick up its own output.
   find "$dir" -type f -name 'chunk.*' ! -name '*.out' 2>/dev/null \
     | sort \
-    | xargs -P "$jobs" -I{} sh -c 'grep -vE "$1" "$2" > "$2.out" || true' _ "$NOISE_RE" {}
+    | xargs -P "$jobs" -I{} sh -c '
+        grep -vE "$1" "$2" > "$2.out" 2> "$2.err"
+        if [ $? -gt 1 ]; then cp "$2" "$2.out"; else rm -f "$2.err"; fi
+      ' _ "$NOISE_RE" {}
   cat "$dir"/chunk.*.out 2>/dev/null
+  err="$(cat "$dir"/chunk.*.err 2>/dev/null | head -1)"
+  [ -n "$(ls "$dir"/chunk.*.err 2>/dev/null)" ] \
+    && echo "$NOISE_FILTER_FAILED ${err:-grep failed without a message}"
   rm -rf "$dir"
 }
 
@@ -1174,13 +1190,18 @@ usage() {
 }
 
 # Read a setshot file, transparently decompressing .gz files
+# A setting whose value holds a NUL byte puts one in the snapshot, and one NUL
+# anywhere makes diff call the whole file binary: it printed "Binary files differ"
+# and nothing else, so every comparison on that Mac came back empty (support issue
+# 430). grep and awk mistreat such lines too, so NULs are dropped here, the same way
+# on both sides, and diff is told the input is text as well.
 cat_snapshot() {
   local f="$1"
   if [[ "$f" == *.gz ]]; then
     gunzip -c "$f"
   else
     cat "$f"
-  fi
+  fi | tr -d '\000'
 }
 
 # Compress setshots older than 7 days in a device directory
@@ -2192,9 +2213,9 @@ do_diff() {
   echo ""
 
   if [ "$raw" = true ]; then
-    diff --unified=0 <(cat_snapshot "$before") <(cat_snapshot "$after") || true
+    diff --text --unified=0 <(cat_snapshot "$before") <(cat_snapshot "$after") || true
   else
-    diff --unified=0 <(cat_snapshot "$before") <(cat_snapshot "$after") \
+    diff --text --unified=0 <(cat_snapshot "$before") <(cat_snapshot "$after") \
       | grep -vE '^@@' \
       | _filter_noise \
       | _drop_bool_recodings \
