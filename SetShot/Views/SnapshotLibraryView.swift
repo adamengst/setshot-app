@@ -10,6 +10,7 @@ struct SnapshotLibraryView: View {
     @State private var runningTask: Task<Void, Never>?
     @State private var errorMessage: String?
     @AppStorage("OldestFirst") private var oldestFirst = false
+    @AppStorage("CompareAfterSnapshot") private var compareAfterSnapshot = true
     private enum Tab { case snapshots, journal, settings, about }
     @State private var activeTab: Tab = UserDefaults.standard.bool(forKey: "HasSeenAbout") ? .snapshots : .about
 
@@ -300,7 +301,8 @@ struct SnapshotLibraryView: View {
         isTakingSnapshot = true
         runningTask = Task {
             do {
-                _ = try await appModel.takeSnapshot()
+                let taken = try await appModel.takeSnapshot(openComparison: compareAfterSnapshot)
+                if let id = taken.comparisonID { openWindow(value: id) }
             } catch is CancellationError {
                 // Cancelling is a choice, not a failure: no alert.
             } catch {
@@ -447,6 +449,9 @@ private struct SnapshotRow: View {
                 Button("Rename") {
                     editText = snapshot.displayName
                     isEditing = true
+                }
+                Button("Show in Finder") {
+                    NSWorkspace.shared.activateFileViewerSelecting([snapshot.url])
                 }
                 Divider()
                 Button("Delete", role: .destructive) { onDelete() }

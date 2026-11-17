@@ -4,7 +4,7 @@ Have you ever thought a macOS update changed some setting silently? Or have you 
 
 SetShot lets you capture a complete snapshot of your Mac's settings at any point in time so you can compare any two snapshots and see exactly what changed, in plain English. Each recognized change comes with a description, its location in System Settings, and — where possible — a button that opens the exact pane directly.
 
-**TL;DR:** To use SetShot, click **Take Snapshot**, make some changes in System Settings, take another snapshot, select both snapshots, and click **Compare**. For full background and detailed instructions, read on.
+**TL;DR:** To use SetShot, click **Take Snapshot**, make some changes in System Settings, and click **Take Snapshot** again. SetShot opens a comparison showing what changed. To compare any other pair, select both snapshots and click **Compare**. For full background and detailed instructions, read on.
 
 ## SetShot Views
 
@@ -14,7 +14,7 @@ SetShot has four views, accessed by clicking the buttons at the top of the windo
 
 - **Snapshots:** Shows all the snapshots you've taken in a single list, newest first.
 - **Journal:** A chronological log of all recognized changes across your comparisons.
-- **Settings:** Set up automatic snapshots, choose which changes to ignore, and reverse the sort order.
+- **Settings:** Set up automatic snapshots, choose which changes to ignore, decide whether each new snapshot is compared automatically, and reverse the sort order.
 - **About:** You're reading it now.
 
 ## Taking Snapshots
@@ -22,6 +22,8 @@ SetShot has four views, accessed by clicking the buttons at the top of the windo
 SetShot's core function is to take and compare snapshots. To that end, it reads 20 system data sources, including Apple's preference files, of which a Mac in regular use has over 500. It currently recognizes over 830 settings and knows to ignore over 1750 additional changes that are just macOS noise.
 
 To take a snapshot of the current state of your Mac's settings, click **Take Snapshot** at the bottom of the Snapshots view. SetShot saves the result to the snapshot library with the date and time. Snapshots are stored in `~/Library/Application Support/SetShot/snapshots` as gzipped files that occupy little space. Capturing typically takes less than a minute.
+
+As soon as the snapshot is saved, SetShot compares it with the one before it and opens the results, so you can see what changed without selecting anything. Your first snapshot is compared with the baseline for your version of macOS. If you'd rather choose comparisons yourself, turn off **Automatically compare each new snapshot with the preceding one** in Settings.
 
 Each snapshot line shows when the snapshot was taken, a brief summary of the first few recognized changes from the previous snapshot, the number of recognized changes from the previous snapshot, and the size of the snapshot file.
 
@@ -31,9 +33,11 @@ If you wish, you can rename a snapshot. Control-click it and choose **Rename**, 
 
 If a snapshot is superfluous — perhaps because it shows no changes — you can delete it. Control-click it and choose **Delete**.
 
+To find a snapshot's file, Control-click it and choose **Show in Finder**. Finder opens the snapshots folder with that file selected.
+
 ## Comparing Snapshots
 
-Once you've taken at least two snapshots, SetShot can compare them.
+Once you've taken at least two snapshots, SetShot can compare them. Each new snapshot is compared with the one before it automatically; this section covers choosing any two yourself.
 
 The Snapshots view shows all your snapshots in a single list. Click any two snapshots to select them — the topmost selected is always **After** and the bottommost is always **Before** (reversed if you've turned on **Show oldest first** in Settings). Clicking a third snapshot replaces one of the current selections based on position. Click a selected snapshot to deselect it. Command-click to force-select a snapshot as **Before**; Shift-click to force-select it as **After**. You can also Control-click a snapshot and choose **Use as Before** or **Use as After**.
 

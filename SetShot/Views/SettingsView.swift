@@ -7,6 +7,7 @@ struct SettingsView: View {
     @EnvironmentObject private var updaterState: UpdaterState
     @AppStorage("SUEnableAutomaticChecks") private var autoCheckForUpdates = true
     @AppStorage("OldestFirst") private var oldestFirst = false
+    @AppStorage("CompareAfterSnapshot") private var compareAfterSnapshot = true
     @AppStorage("AutoDeleteEmptyScheduledSnapshots") private var autoDeleteEmpty = true
     @State private var isEnabled = SchedulerManager.isInstalled && !Translocation.isActive
     @State private var fdaGranted: Bool? = nil
@@ -37,6 +38,7 @@ struct SettingsView: View {
                 schedulerSection
                 dataSourcesSection
                 ignoredChangesSection
+                comparisonsSection
                 displayOrderSection
                 updatesSection
             }
@@ -58,6 +60,15 @@ struct SettingsView: View {
             ForEach(IgnoredChangeGroup.allCases) { group in
                 IgnoredChangeToggle(group: group)
             }
+        }
+    }
+
+    private var comparisonsSection: some View {
+        SettingsSection("Comparisons") {
+            Toggle("Automatically compare each new snapshot with the preceding one", isOn: $compareAfterSnapshot)
+            Text("Take Snapshot then opens the comparison as soon as the snapshot is saved. The first snapshot is compared with the baseline for your version of macOS.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 

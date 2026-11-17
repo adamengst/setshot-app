@@ -68,7 +68,10 @@ class AppModel: ObservableObject {
         journal = await journalStore.updateNote(for: entryID, note: note)
     }
 
-    func takeSnapshot() async throws -> StoredSnapshot {
+    /// Saves a new snapshot and records what changed since the one before it, or since
+    /// the baseline if it is the first. With `openComparison`, that comparison is also
+    /// kept for a results window and its id returned, so showing it costs no second diff.
+    func takeSnapshot(openComparison: Bool = false) async throws -> (snapshot: StoredSnapshot, comparisonID: UUID?) {
         let previous = snapshots.sorted { $0.date < $1.date }.last
         let snapshot = try await SnapshotRunner().run()
         // Checked before anything reaches the library, so cancelling during the
@@ -84,11 +87,12 @@ class AppModel: ObservableObject {
             throw error
         }
         snapshots = (try? await store.list()) ?? []
+        var comparison: ComparisonRecord?
         if let previous {
-            await updateCountsAndJournal(before: previous, after: stored)
+            comparison = await updateCountsAndJournal(before: previous, after: stored)
             snapshots = (try? await store.list()) ?? []
         } else if let baseline = matchingBaseline() {
-            await updateCountsAndJournal(before: baseline, after: stored, fromBaseline: true)
+            comparison = await updateCountsAndJournal(before: baseline, after: stored, fromBaseline: true)
             snapshots = (try? await store.list()) ?? []
         }
         // The journal work above compares against the previous snapshot and can take
@@ -100,7 +104,10 @@ class AppModel: ObservableObject {
             await deleteSnapshot(stored)
             throw error
         }
-        return stored
+        guard openComparison, let comparison else { return (stored, nil) }
+        let id = UUID()
+        comparisons[id] = comparison
+        return (stored, id)
     }
 
     private func matchingBaseline() -> StoredSnapshot? {
@@ -176,17 +183,22 @@ class AppModel: ObservableObject {
         }
     }
 
-    private func updateCountsAndJournal(before: StoredSnapshot, after: StoredSnapshot, fromBaseline: Bool = false) async {
+    @discardableResult
+    private func updateCountsAndJournal(before: StoredSnapshot, after: StoredSnapshot, fromBaseline: Bool = false) async -> ComparisonRecord? {
         async let beforeText = try? store.load(before)
         async let afterText = try? store.load(after)
-        guard let b = await beforeText, let a = await afterText else { return }
+        guard let b = await beforeText, let a = await afterText else { return nil }
         guard let result = try? await DiffEngine().diff(
             before: Snapshot(takenAt: before.date, rawOutput: b),
             after: Snapshot(takenAt: after.date, rawOutput: a),
             kb: kb)
-            .filteringHardware(hasBattery: SnapshotRunner.hasBattery).filteringIgnored() else { return }
+            .filteringHardware(hasBattery: SnapshotRunner.hasBattery).filteringIgnored() else { return nil }
         try? await store.saveMeta(for: after, recognized: result.recognized.count, unrecognized: result.unrecognized.count, scheduled: false, fromBaseline: fromBaseline)
         journal = await journalStore.add(recognized: result.recognized, afterSnapshot: after, fromBaseline: fromBaseline)
+        // The listing is re-read after this, so the window gets the saved snapshot's
+        // final entry, carrying the counts just written.
+        let listed = (try? await store.list())?.first { $0.id == after.id } ?? after
+        return ComparisonRecord(before: before, after: listed, diff: result)
     }
 
     private func updateJournal(before: StoredSnapshot, after: StoredSnapshot) async {
