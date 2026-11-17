@@ -37,7 +37,7 @@ actor SnapshotStore {
                 return n.hasPrefix("setshot_") && (n.hasSuffix(".txt") || n.hasSuffix(".txt.gz"))
             }
             .compactMap { url -> StoredSnapshot? in
-                guard let (date, label) = parseDateAndLabel(from: url.lastPathComponent) else { return nil }
+                guard let (date, label) = Self.parseDateAndLabel(from: url.lastPathComponent) else { return nil }
                 let meta = loadMeta(for: url)
                 return StoredSnapshot(url: url, date: date, customLabel: label,
                                       recognizedCount: meta?.recognized,
@@ -79,9 +79,7 @@ actor SnapshotStore {
 
     func rename(_ snapshot: StoredSnapshot, to label: String) throws -> StoredSnapshot {
         let trimmed = label.trimmingCharacters(in: .whitespaces)
-        let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd_HHmm"
-        let dateStr = f.string(from: snapshot.date)
+        let dateStr = Self.fileNameFormatter("yyyy-MM-dd_HHmm").string(from: snapshot.date)
         let newName: String
         let newLabel: String?
         if trimmed.isEmpty {
@@ -164,32 +162,96 @@ actor SnapshotStore {
         return Int(String(parts[1]).split(separator: ".").first ?? "")
     }
 
-    private func filename(for date: Date) -> String {
+    /// File names carry the date in a fixed form, so the formatter must not follow the
+    /// Mac's region or clock. Without en_US_POSIX a Mac could turn HH into a 12-hour
+    /// clock and write "setshot_2026-11-01_83822 AM.txt.gz", which the list could not
+    /// read back, so every snapshot taken there vanished from it (support issue 389).
+    static func fileNameFormatter(_ format: String) -> DateFormatter {
         let f = DateFormatter()
-        f.dateFormat = "yyyy-MM-dd_HHmmss"
-        return "setshot_\(f.string(from: date)).txt.gz"
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = Calendar(identifier: .gregorian)
+        f.dateFormat = format
+        return f
     }
 
-    private func parseDateAndLabel(from name: String) -> (date: Date, label: String?)? {
+    private func filename(for date: Date) -> String {
+        "setshot_\(Self.fileNameFormatter("yyyy-MM-dd_HHmmss").string(from: date)).txt.gz"
+    }
+
+    /// The date and any label in a snapshot's file name. Names written before 1.0.1
+    /// followed the Mac's own settings, so besides the fixed form this reads the
+    /// 12-hour names those could produce and, failing both, the Mac's own format.
+    nonisolated static func parseDateAndLabel(from name: String) -> (date: Date, label: String?)? {
         var s = name
         if s.hasSuffix(".gz") { s = String(s.dropLast(3)) }
         if s.hasSuffix(".txt") { s = String(s.dropLast(4)) }
         guard s.hasPrefix("setshot_") else { return nil }
         let rest = String(s.dropFirst(8))
+        return parseFixed(rest, with: fileNameFormatter)
+            ?? parseTwelveHour(rest)
+            ?? parseFixed(rest, with: { format in
+                let f = DateFormatter(); f.dateFormat = format; return f
+            })
+    }
+
+    /// "yyyy-MM-dd_HHmmss", or "yyyy-MM-dd_HHmm" for the oldest files, then an
+    /// optional "_label".
+    private static func parseFixed(_ rest: String,
+                                   with formatter: (String) -> DateFormatter) -> (date: Date, label: String?)? {
         guard rest.count >= 15 else { return nil }
         // Position 15 is a digit only in the seconds format (yyyy-MM-dd_HHmmss = 17 chars);
         // legacy files use minute format (yyyy-MM-dd_HHmm = 15 chars).
         let idx15 = rest.index(rest.startIndex, offsetBy: 15)
         let useSeconds = rest.count > 15 && rest[idx15].isNumber
         let dateLen = useSeconds ? 17 : 15
-        guard rest.count >= dateLen else { return nil }
-        let dateStr = String(rest.prefix(dateLen))
-        let f = DateFormatter()
-        f.dateFormat = useSeconds ? "yyyy-MM-dd_HHmmss" : "yyyy-MM-dd_HHmm"
-        guard let date = f.date(from: dateStr) else { return nil }
-        let suffix = String(rest.dropFirst(dateLen))
-        let label = suffix.hasPrefix("_") ? String(suffix.dropFirst()) : nil
-        return (date, label.flatMap { $0.isEmpty ? nil : $0 })
+        guard rest.count >= dateLen,
+              let date = formatter(useSeconds ? "yyyy-MM-dd_HHmmss" : "yyyy-MM-dd_HHmm")
+                  .date(from: String(rest.prefix(dateLen)))
+        else { return nil }
+        // A Mac on another calendar wrote its own year -- 2569 on the Buddhist one --
+        // which reads as a Gregorian date centuries ahead. Leave that to the Mac's
+        // own formatter, which wrote it.
+        guard date < Date().addingTimeInterval(86_400) else { return nil }
+        // "2026-10-26_110930 PM" starts with a valid fixed date too; what follows the
+        // time is what says which clock it was.
+        let suffix = rest.dropFirst(dateLen)
+        guard suffix.isEmpty || suffix.hasPrefix("_") else { return nil }
+        return (date, label(after: suffix))
+    }
+
+    /// "2026-11-01_83822 AM" or "2026-10-26_110930 PM": the hour without its leading
+    /// zero, then AM or PM in English or in the Mac's own language.
+    private static func parseTwelveHour(_ rest: String) -> (date: Date, label: String?)? {
+        let marks = Set(["AM", "PM", Calendar.current.amSymbol.uppercased(),
+                         Calendar.current.pmSymbol.uppercased()])
+        let pattern = #"^([0-9]{4})-([0-9]{2})-([0-9]{2})_([0-9]{1,2})([0-9]{2})([0-9]{2})?\s?("#
+            + marks.map(NSRegularExpression.escapedPattern(for:)).joined(separator: "|") + ")"
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+              let m = regex.firstMatch(in: rest, range: NSRange(rest.startIndex..., in: rest))
+        else { return nil }
+        func group(_ i: Int) -> String? {
+            Range(m.range(at: i), in: rest).map { String(rest[$0]) }
+        }
+        guard let year = group(1).flatMap(Int.init), let month = group(2).flatMap(Int.init),
+              let day = group(3).flatMap(Int.init), let hour12 = group(4).flatMap(Int.init),
+              let minute = group(5).flatMap(Int.init), (1...12).contains(hour12),
+              let mark = group(7)?.uppercased()
+        else { return nil }
+        let isPM = mark == "PM" || mark == Calendar.current.pmSymbol.uppercased()
+        var c = DateComponents()
+        c.year = year; c.month = month; c.day = day
+        c.hour = hour12 % 12 + (isPM ? 12 : 0); c.minute = minute
+        c.second = group(6).flatMap(Int.init) ?? 0
+        guard let date = Calendar(identifier: .gregorian).date(from: c),
+              let end = Range(m.range, in: rest)?.upperBound
+        else { return nil }
+        return (date, label(after: rest[end...]))
+    }
+
+    private static func label(after suffix: Substring) -> String? {
+        guard suffix.hasPrefix("_") else { return nil }
+        let label = String(suffix.dropFirst())
+        return label.isEmpty ? nil : label
     }
 
     // Use file-based I/O for gzip to avoid Pipe buffer deadlock on large snapshots.
