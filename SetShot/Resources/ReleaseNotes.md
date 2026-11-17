@@ -2,13 +2,15 @@
 
 - **Compare automatically after each snapshot** — Click **Take Snapshot**, and as soon as the snapshot is saved, SetShot compares it with the one before it and opens the results. You no longer need to select two snapshots and click **Compare** to see what you just changed. Your first snapshot is compared with the baseline for your version of macOS. If you'd rather choose comparisons yourself, turn off **Automatically compare each new snapshot with the preceding one** in Settings.
 
-- **Show in Finder** — Control-click a snapshot and choose **Show in Finder** to open the snapshots folder with that snapshot's file selected.
+- **Show in Finder** — Control-click a snapshot and choose **Show in Finder** to open the snapshots folder with that snapshot's file selected. The main reason to do this is if I ask you for some snapshots while troubleshooting.
 
-- **Pointer colors are tracked** — Changing the pointer fill or outline color in System Settings → Accessibility → Display went unreported because SetShot had been treating those settings as noise. Each color now appears as one change, with the before and after colors shown as hex codes.
+- **Pointer colors are tracked** — Changing the pointer fill or outline color in System Settings → Accessibility → Display now appears, with the before and after colors shown as hex codes.
 
-- **Fixed: snapshots missing from the list** — On some Macs, snapshots were saved but never appeared in the Snapshots list, so each new snapshot was compared with the baseline instead of the one before it. SetShot wrote the time into each snapshot's file name in a form that depended on the Mac's clock settings, and then couldn't read some of those names back. Names now use a fixed form, and snapshots saved under the old names reappear. Thanks to Steve Kawalko for the report and the details that pinned it down.
+- **Fixed: snapshots missing from the list** — On some Macs, snapshots were saved but never appeared in the Snapshots list. The problem turned out to be some sort of clock/region settings that caused SetShot to write snapshot names with a timestamp format it didn't expect. Names now use a fixed form, and snapshots saved under the old names reappear. Thanks to Stephen Kawalko for the report and the details that pinned it down.
 
-- **Fixed: comparisons that found nothing** — On some Macs, every comparison showed no changes at all, not even unrecognized ones. One setting held an invisible null character, and that was enough for the tool SetShot uses to compare snapshots to treat them as unreadable. SetShot now ignores such characters when comparing. And if the step that hides macOS noise ever fails, a comparison now shows everything it found with a warning, rather than nothing, and hides the Submit buttons so the noise doesn't end up in the submissions queue. Thanks to Joe Bayly for the report and for running the test that found the cause.
+- **Fixed: comparisons that found nothing** — On some Macs, every comparison showed no changes at all. The problem was that if only one setting held an invisible null character, the tool SetShot uses to compare snapshots treated them as unreadable. SetShot now ignores such characters when comparing. And if the step that hides macOS noise ever fails, a comparison now shows everything it found with a warning and hides the Submit buttons so the noise doesn't end up in the submissions queue. Thanks to Joe Bayly for the report and for running the test that found the cause.
+
+- **Fixed: unreadable Compare button** — With Increase Contrast turned on in macOS 15 Sequoia, the Compare button stayed blue while it was unavailable, with black text that was nearly impossible to read. Until you select two snapshots, it's now a plain gray button, as unavailable buttons usually are. Thanks to betalogue for the report.
 
 ## 1.0
 
